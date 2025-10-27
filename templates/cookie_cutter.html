@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Cutter Generator - ZoolZ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e1a;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(0, 149, 255, 0.1), rgba(0, 200, 255, 0.1));
+            padding: 20px;
+            border-bottom: 2px solid #0095ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .back-btn {
+            background: rgba(0, 149, 255, 0.2);
+            border: 2px solid #0095ff;
+            color: #0095ff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 149, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 149, 255, 0.5);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            height: calc(100vh - 84px);
+            gap: 0;
+        }
+
+        .sidebar {
+            background: rgba(10, 14, 26, 0.95);
+            border-right: 2px solid #0095ff;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .viewer-container {
+            position: relative;
+            background: #050810;
+        }
+
+        #viewer {
+            width: 100%;
+            height: 100%;
+        }
+
+        .section {
+            background: rgba(0, 149, 255, 0.05);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .section h3 {
+            color: #00c8ff;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .upload-zone {
+            border: 2px dashed #0095ff;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0, 149, 255, 0.05);
+        }
+
+        .upload-zone:hover {
+            background: rgba(0, 149, 255, 0.15);
+            border-color: #00c8ff;
+        }
+
+        .upload-zone.dragover {
+            background: rgba(0, 149, 255, 0.25);
+            border-color: #00ff88;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 2px solid #0095ff;
+        }
+
+        .param-group {
+            margin-bottom: 15px;
+        }
+
+        .param-group label {
+            display: block;
+            color: #8ab4f8;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .param-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .param-value {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #00c8ff;
+            font-weight: 600;
+        }
+
+        .param-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 0 30px rgba(0, 149, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(0, 149, 255, 0.2);
+            color: #0095ff;
+            border: 2px solid #0095ff;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(0, 149, 255, 0.3);
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .status.success {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+
+        .status.error {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .status.processing {
+            background: rgba(255, 200, 0, 0.2);
+            border: 1px solid #ffc800;
+            color: #ffc800;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stat-box {
+            background: rgba(0, 149, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #8ab4f8;
+            font-size: 0.8rem;
+        }
+
+        .stat-value {
+            color: #00c8ff;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 200, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00c8ff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .rotation-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .rotation-arrows {
+            display: flex;
+            gap: 5px;
+        }
+
+        .arrow-btn {
+            width: 35px;
+            height: 35px;
+            background: rgba(0, 149, 255, 0.2);
+            border: 1px solid #0095ff;
+            color: #0095ff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .arrow-btn:hover {
+            background: rgba(0, 149, 255, 0.4);
+        }
+
+        .rotation-input {
+            width: 80px;
+            padding: 8px;
+            background: rgba(0, 149, 255, 0.1);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 5px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🍪 Cookie Cutter Generator</h1>
+        <a href="/" class="back-btn">← Back to HUB</a>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <!-- Upload Section -->
+            <div class="section">
+                <h3>1. Upload Image</h3>
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <div>Click or drag image here</div>
+                    <div style="font-size: 0.8rem; color: #8ab4f8; margin-top: 5px;">
+                        PNG, JPG, JPEG, WebP, GIF, BMP
+                    </div>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                <img id="preview" class="preview-img" style="display: none;">
+            </div>
+
+            <!-- Parameters Section -->
+            <div class="section">
+                <h3>2. Adjust Parameters</h3>
+
+                <div class="param-group">
+                    <label>Detail Level</label>
+                    <input type="range" id="detailLevel" min="0" max="100" step="1" value="50">
+                    <div class="param-value">
+                        <span>Smooth ←</span>
+                        <span id="detailValue">0.5</span>
+                        <span>→ Detailed</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>Blade Thickness (mm)</label>
+                    <input type="range" id="bladeThick" min="0.5" max="5" step="0.1" value="2">
+                    <div class="param-value">
+                        <span id="bladeThickValue">2.0</span>
+                        <span>mm</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>Blade Height (mm)</label>
+                    <input type="range" id="bladeHeight" min="5" max="60" step="0.5" value="20">
+                    <div class="param-value">
+                        <span id="bladeHeightValue">20</span>
+                        <span>mm</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>Base Thickness (mm)</label>
+                    <input type="range" id="baseThick" min="0.5" max="10" step="0.1" value="3">
+                    <div class="param-value">
+                        <span id="baseThickValue">3.0</span>
+                        <span>mm</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>Base Extension (mm)</label>
+                    <input type="range" id="baseExtra" min="2" max="40" step="0.5" value="10">
+                    <div class="param-value">
+                        <span id="baseExtraValue">10</span>
+                        <span>mm</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>Max Dimension (mm)</label>
+                    <input type="range" id="maxDim" min="20" max="300" step="1" value="90">
+                    <div class="param-value">
+                        <span id="maxDimValue">90</span>
+                        <span>mm</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="noBase">
+                        <span>No Base (blade only)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Model Controls Section -->
+            <div class="section">
+                <h3>Model Controls</h3>
+
+                <div class="param-group">
+                    <label>Rotate Model (Z-axis)</label>
+                    <div class="rotation-controls">
+                        <div class="rotation-arrows">
+                            <button class="arrow-btn" id="rotateLeft" title="Rotate Left">↶</button>
+                            <button class="arrow-btn" id="rotateRight" title="Rotate Right">↷</button>
+                        </div>
+                        <input type="number" id="rotationDegrees" class="rotation-input" value="90" min="1" max="180" placeholder="Degrees">
+                        <span style="color: #8ab4f8; font-size: 0.9rem;">°</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary btn-small" id="snapBtn" style="display: none;">
+                    Snap to Build Plate
+                </button>
+                <button class="btn btn-secondary btn-small" id="curaBtn" style="display: none; margin-top: 8px;">
+                    Export to Cura
+                </button>
+            </div>
+
+            <!-- Generate Section -->
+            <div class="section">
+                <h3>3. Generate</h3>
+                <button class="btn btn-primary" id="generateBtn" disabled>
+                    <span id="generateText">Upload Image First</span>
+                </button>
+                <button class="btn btn-secondary" id="downloadBtn" style="display: none;">
+                    Download STL
+                </button>
+                <div id="status"></div>
+                <div id="stats" class="stats" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div class="viewer-container">
+            <div id="viewer"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/cookie_viewer.js"></script>
+</body>
+</html>

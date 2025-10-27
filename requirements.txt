@@ -1,0 +1,31 @@
+# Flask and web framework
+Flask==3.0.0
+Werkzeug==3.0.0
+
+# Image processing for cookie cutters
+numpy==1.26.0
+opencv-python==4.8.1.78
+Pillow==10.1.0
+
+# 3D mesh processing
+trimesh==4.0.5
+shapely==2.0.2
+mapbox-earcut  # Required by trimesh for polygon triangulation
+
+# Parametric CAD (will be used for OpenSCAD-like features)
+# build123d==0.5.0  # Uncomment when ready to use
+# cadquery==2.4.0   # Alternative option
+
+# Mesh repair and processing
+pymeshlab==2023.12.post3
+# open3d==0.18.0    # For advanced point cloud/mesh ops (optional)
+
+# 2D geometry operations
+pyclipper==1.3.0.post5
+
+# File format support
+# ezdxf==1.1.0      # For DXF import/export (optional)
+# pygltflib==1.16.1 # For GLTF/GLB export (optional)
+
+# Math and scientific computing
+scipy==1.11.4
