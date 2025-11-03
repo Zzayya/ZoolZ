@@ -1,203 +1,124 @@
-# 3D Modulator - Flask Edition
+# ZoolZ - Multi-Purpose 3D Design Toolkit
 
-**Modular Python-based 3D modeling toolkit with parametric CAD and cookie cutter generation**
-
-## 🎯 Project Vision
-
-A powerful, modular 3D modeling application with multiple specialized modes:
-- **Parametric CAD** - OpenSCAD-like programmatic modeling with full control
-- **Cookie Cutter Generator** - Image to cookie cutter STL converter
-- **Future Modes** - Expandable architecture for additional tools
-
-## 🏗️ Current Architecture
-
-```
-3d-modulator-flask/
-├── app.py                          # Main Flask application
-├── blueprints/                     # View logic (routes & endpoints)
-│   ├── parametric_cad.py          # OpenSCAD-like CAD mode
-│   └── cookie_cutter.py           # Cookie cutter generation
-├── utils/                          # Business logic (isolated from views)
-│   ├── cookie_logic.py            # Cookie cutter mesh generation
-│   ├── cad_operations.py          # Parametric CAD operations
-│   └── mesh_ops.py                # (Future) General mesh utilities
-├── templates/                      # HTML templates
-│   ├── hub.html                   # Main HUB with mode selection
-│   ├── parametric_cad.html        # Parametric CAD UI
-│   └── cookie_cutter.html         # Cookie cutter UI
-├── static/                         # Static assets
-│   ├── js/
-│   │   └── viewer.js              # Three.js 3D viewer (shared)
-│   └── css/
-│       └── style.css
-├── uploads/                        # User uploads
-└── outputs/                        # Generated STL files
-```
+A modular Flask-based web application for 3D modeling and design workflows.
 
 ## 🚀 Quick Start
 
-### 1. Setup Python Environment
+### Launch the App (Recommended)
 
+**Mac/Linux:**
 ```bash
-# Create virtual environment
-python3 -m venv venv
-
-# Activate it
-source venv/bin/activate  # On Mac/Linux
-# OR
-venv\Scripts\activate     # On Windows
-
-# Install dependencies
-pip install -r requirements.txt
+./scripts/START_ZOOLZ.command
 ```
 
-### 2. Run the Application
+**Windows:**
+```cmd
+scripts\START_ZOOLZ.bat
+```
+
+### Manual Setup
+
+1. **Create virtual environment:**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # Mac/Linux
+   # venv\Scripts\activate   # Windows
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the app:**
+   ```bash
+   python app.py
+   ```
+
+4. **Open browser:** http://localhost:5001
+
+## 🎨 Features
+
+### 🍪 Cookie Cutter Generator
+Convert images to 3D-printable cookie cutter STL files with smart background detection and adjustable detail levels.
+
+### 🔧 Parametric CAD
+OpenSCAD-like programmatic 3D modeling with boolean operations and real-time preview.
+
+### 🕵️ People Finder
+Search public records, validate phone numbers, and discover web mentions across multiple sources.
+
+## 📁 Project Structure
+
+```
+ZoolZ/
+├── app.py              # Flask application entry point
+├── config.py           # Configuration settings
+├── requirements.txt    # Python dependencies
+├── docs/               # 📚 Full documentation
+│   ├── CLAUDE.md       # Development guide
+│   ├── LAUNCH_CHECKLIST.md
+│   └── WHATS_NOT_WORKING.md
+├── scripts/            # Launcher scripts & tests
+│   ├── START_ZOOLZ.command
+│   ├── START_ZOOLZ.bat
+│   ├── test_all_images.py
+│   └── TestImages/
+├── blueprints/         # Flask route modules
+├── templates/          # HTML templates
+├── static/             # CSS, JavaScript, assets
+├── utils/              # Business logic modules
+├── uploads/            # User uploads
+├── outputs/            # Generated STL files
+└── database/           # SQLite caches
+```
+
+## 📚 Documentation
+
+- **[Full Documentation](docs/CLAUDE.md)** - Architecture, development guide, API reference
+- **[Launch Checklist](docs/LAUNCH_CHECKLIST.md)** - Pre-deployment testing
+- **[Known Issues](docs/WHATS_NOT_WORKING.md)** - Current limitations
+
+## 🔑 Optional API Keys
+
+People Finder works without API keys but results are enhanced with:
+
+- **Google Custom Search API** (100 free queries/day)
+  Sign up: https://developers.google.com/custom-search
+
+- **NumVerify Phone API** (250 free lookups/month)
+  Sign up: https://numverify.com/
+
+Set in environment or use the **"G" settings button** in People Finder UI.
+
+## 🧪 Testing
 
 ```bash
+# Test cookie cutter with all images
+python scripts/test_all_images.py
+
+# Run Flask in debug mode
+export FLASK_ENV=development
 python app.py
 ```
 
-The app will start on `http://localhost:5000`
+## 🛠️ Tech Stack
 
-### 3. Using Claude Code (in VS Code)
+- **Backend:** Flask, Python 3.12+
+- **3D Processing:** Trimesh, Shapely, OpenCV, PyMeshLab
+- **Frontend:** Three.js, Vanilla JavaScript
+- **Database:** SQLite (caching)
+- **Async:** aiohttp, asyncio
 
-```bash
-# From terminal in VS Code
-claude code "help me implement the box creation function in utils/cad_operations.py"
-```
+## 📝 License
 
-## 📋 Status & Roadmap
+Private project - All rights reserved
 
-### ✅ Completed
-- [x] Flask application structure
-- [x] Blueprint architecture (separate views)
-- [x] Cookie cutter logic ported from Python script
-- [x] HUB design with neon blue grid background
-- [x] Modular, expandable architecture
+## 🤝 Contributing
 
-### 🚧 In Progress
-- [ ] Cookie cutter UI template
-- [ ] Parametric CAD UI template
-- [ ] Three.js viewer integration
-- [ ] Implement cookie cutter endpoints
-
-### 📝 TODO - Cookie Cutter Mode
-- [ ] Upload image endpoint
-- [ ] Generate STL with live params
-- [ ] Preview in 3D viewer
-- [ ] Download STL
-- [ ] Param adjustment after generation
-
-### 📝 TODO - Parametric CAD Mode
-- [ ] Implement build123d shape creation
-- [ ] Basic shapes: box, cylinder, sphere, cone, torus, prism
-- [ ] Boolean operations: union, difference, intersection
-- [ ] Advanced operations:
-  - [ ] Hollow/shell with optional closed ends
-  - [ ] Chamfer & fillet
-  - [ ] Male/female screw threads
-  - [ ] Brims & inverse brims
-  - [ ] Bevels
-- [ ] Properties panel with organized sections
-- [ ] OpenSCAD code generation
-- [ ] Render button → STL export
-- [ ] Multi-shape scene management
-
-### 🔮 Future Modes
-- [ ] Design Mode (TBD)
-- [ ] AI Assistant Mode (TBD)
-
-## 🛠️ Key Technologies
-
-### Cookie Cutter
-- **OpenCV** - Image processing & contour detection
-- **Shapely** - 2D polygon operations & buffering
-- **Trimesh** - 3D mesh creation & export
-
-### Parametric CAD
-- **build123d** (planned) - Modern Pythonic CAD with threads support
-- **Trimesh** - Mesh export & operations
-- **OpenSCAD** code generation
-
-### Web Framework
-- **Flask** - Lightweight Python web framework
-- **Three.js** - 3D visualization in browser
-
-## 💡 Design Principles
-
-1. **Separation of Concerns**
-   - Views (blueprints) handle routes & HTTP
-   - Utils handle business logic & algorithms
-   - Keep them completely separate
-
-2. **Modularity**
-   - Each mode is independent
-   - Shared utilities when needed
-   - Easy to add new modes
-
-3. **Python-First**
-   - All heavy lifting in Python
-   - Use best-in-class Python CAD/mesh libraries
-   - Browser just for UI & visualization
-
-## 📦 Dependencies Explained
-
-### Core (Required)
-- `Flask` - Web framework
-- `numpy` - Numerical operations
-- `opencv-python` - Image processing
-- `trimesh` - 3D mesh operations
-- `shapely` - 2D geometry
-- `pymeshlab` - Mesh repair & cleanup
-
-### Parametric CAD (To be installed)
-- `build123d` - Parametric CAD (recommended)
-- `cadquery` - Alternative CAD library
-
-### Optional Enhancements
-- `pyclipper` - Advanced 2D polygon ops
-- `open3d` - Point cloud & advanced mesh ops
-- `ezdxf` - DXF import/export
-- `pygltflib` - GLTF/GLB export
-
-## 🔧 Development
-
-### Adding a New Mode
-
-1. Create blueprint in `blueprints/new_mode.py`
-2. Create utility functions in `utils/new_mode_logic.py`
-3. Create template in `templates/new_mode.html`
-4. Add route in `app.py`
-5. Add bubble to HUB in `templates/hub.html`
-
-### Working with Claude Code
-
-Claude Code is integrated with VS Code and can help you:
-- Generate boilerplate code
-- Implement complex algorithms
-- Debug issues
-- Refactor code
-
-## ❓ Questions & Next Steps
-
-### Need to Know:
-1. Do you have the `OutLineLogic.py` file? (Referenced in cookie cutter)
-2. Which shapes should we prioritize for Parametric CAD?
-3. Any specific thread sizes needed? (M6, M8, custom?)
-
-### Ready to Build:
-- Cookie cutter UI (simple form with sliders)
-- Three.js viewer integration
-- First parametric shape (box with hollow option)
-
-## 📝 Notes
-
-- Cookie cutter default params already match your Python script
-- Parametric CAD uses build123d which has built-in thread generation
-- HUB design uses neon blue crosshatch grid as requested
-- All generation logic separated from views
-- Ready for modular expansion
+This is a private project. For development guidance, see [docs/CLAUDE.md](docs/CLAUDE.md).
 
 ---
 
-**Let's build this thing! 🚀**
+**Version:** 1.0.0-alpha
+**Port:** 5001 (changed from 5000 to avoid macOS AirPlay conflicts)

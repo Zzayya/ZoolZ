@@ -13,6 +13,16 @@ SHAPE_REGISTRY = {}
 _shape_counter = 0
 
 
+def reset_shape_registry():
+    """
+    Clear all shapes from registry and reset counter
+    Call this to prevent memory leaks between sessions
+    """
+    global SHAPE_REGISTRY, _shape_counter
+    SHAPE_REGISTRY.clear()
+    _shape_counter = 0
+
+
 class Shape3D:
     """Wrapper class for 3D shapes with metadata"""
 
@@ -245,21 +255,26 @@ def combine_shapes(shape_ids: List[str], operation: str) -> Shape3D:
     # Get meshes from registry
     meshes = [SHAPE_REGISTRY[sid].geometry for sid in shape_ids]
 
-    # Perform boolean operation
-    if operation == 'union':
-        result = meshes[0]
-        for mesh in meshes[1:]:
-            result = result.union(mesh, engine='blender')
-    elif operation == 'difference':
-        result = meshes[0]
-        for mesh in meshes[1:]:
-            result = result.difference(mesh, engine='blender')
-    elif operation == 'intersection':
-        result = meshes[0]
-        for mesh in meshes[1:]:
-            result = result.intersection(mesh, engine='blender')
-    else:
-        raise ValueError(f"Unknown operation: {operation}")
+    # Perform boolean operation using trimesh default engine (no Blender required)
+    # trimesh will try multiple backends: scad (OpenSCAD), manifold, or pure Python
+    try:
+        if operation == 'union':
+            result = meshes[0]
+            for mesh in meshes[1:]:
+                result = result.union(mesh)
+        elif operation == 'difference':
+            result = meshes[0]
+            for mesh in meshes[1:]:
+                result = result.difference(mesh)
+        elif operation == 'intersection':
+            result = meshes[0]
+            for mesh in meshes[1:]:
+                result = result.intersection(mesh)
+        else:
+            raise ValueError(f"Unknown operation: {operation}")
+    except Exception as e:
+        raise Exception(f"Boolean operation '{operation}' failed: {str(e)}. " +
+                       "Consider installing OpenSCAD for better boolean operations.")
 
     return Shape3D(result, 'combined', {'operation': operation, 'shape_ids': shape_ids}, [])
 
@@ -370,12 +385,80 @@ def generate_openscad_code(shape_id: str) -> str:
         for sid in shape_ids:
             if sid in SHAPE_REGISTRY:
                 child_shape = SHAPE_REGISTRY[sid]
-                code += f"  // Shape: {child_shape.shape_type}\n"
-                # Would recursively generate code for each child
+                # Recursively generate code for each child shape
+                child_code = _generate_shape_code_only(child_shape)
+                # Indent the child code
+                indented = '\n'.join('  ' + line for line in child_code.split('\n') if line.strip())
+                code += indented + '\n'
         code += "}\n"
 
     else:
         code += f"// Unknown shape type: {shape.shape_type}\n"
+
+    return code
+
+
+def _generate_shape_code_only(shape: Shape3D) -> str:
+    """
+    Generate only the OpenSCAD shape code without comments (for recursive use)
+
+    Args:
+        shape: Shape3D object
+
+    Returns:
+        OpenSCAD code for just the shape
+    """
+    code = ""
+
+    if shape.shape_type == 'box':
+        w = shape.params.get('width', 10)
+        h = shape.params.get('height', 10)
+        d = shape.params.get('depth', 10)
+        center = shape.params.get('center', True)
+        code = f"cube([{w}, {d}, {h}], center={str(center).lower()});"
+
+    elif shape.shape_type == 'cylinder':
+        r = shape.params.get('radius', 5)
+        h = shape.params.get('height', 10)
+        segments = shape.params.get('segments', 32)
+        center = shape.params.get('center', True)
+        code = f"cylinder(r={r}, h={h}, center={str(center).lower()}, $fn={segments});"
+
+    elif shape.shape_type == 'sphere':
+        r = shape.params.get('radius', 5)
+        subdivisions = shape.params.get('subdivisions', 3)
+        fn = 2 ** (subdivisions + 3)
+        code = f"sphere(r={r}, $fn={fn});"
+
+    elif shape.shape_type == 'cone':
+        r = shape.params.get('radius', 5)
+        h = shape.params.get('height', 10)
+        segments = shape.params.get('segments', 32)
+        center = shape.params.get('center', True)
+        code = f"cylinder(r1={r}, r2=0, h={h}, center={str(center).lower()}, $fn={segments});"
+
+    elif shape.shape_type == 'torus':
+        major_r = shape.params.get('major_radius', 10)
+        minor_r = shape.params.get('minor_radius', 3)
+        code = f"rotate_extrude($fn=64) translate([{major_r}, 0, 0]) circle(r={minor_r}, $fn=32);"
+
+    elif shape.shape_type == 'prism':
+        sides = shape.params.get('sides', 6)
+        radius = shape.params.get('radius', 5)
+        height = shape.params.get('height', 10)
+        code = f"linear_extrude(height={height}) circle(r={radius}, $fn={sides});"
+
+    elif shape.shape_type == 'combined':
+        operation = shape.params.get('operation', 'union')
+        shape_ids = shape.params.get('shape_ids', [])
+        code += f"{operation}() {{\n"
+        for sid in shape_ids:
+            if sid in SHAPE_REGISTRY:
+                child_shape = SHAPE_REGISTRY[sid]
+                child_code = _generate_shape_code_only(child_shape)
+                indented = '\n'.join('  ' + line for line in child_code.split('\n') if line.strip())
+                code += indented + '\n'
+        code += "}"
 
     return code
 

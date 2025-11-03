@@ -19,6 +19,11 @@ uploads/*
 outputs/*
 !outputs/.gitkeep
 
+# Database files (People Finder cache)
+database/*.db
+database/*.db-journal
+!database/.gitkeep
+
 # IDEs
 .vscode/
 .idea/

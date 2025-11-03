@@ -4,13 +4,15 @@ Parametric CAD Blueprint
 OpenSCAD-like programmatic 3D modeling
 """
 
-from flask import Blueprint, render_template, request, jsonify, send_file
+from flask import Blueprint, render_template, request, jsonify, send_file, current_app
 import os
-from utils.cad_operations import (
-    create_shape, 
-    combine_shapes, 
+from utils.parametric_cad.cad_operations import (
+    create_shape,
+    combine_shapes,
     generate_openscad_code,
-    render_to_stl
+    render_to_stl,
+    reset_shape_registry,
+    SHAPE_REGISTRY
 )
 
 parametric_bp = Blueprint('parametric', __name__)
@@ -139,7 +141,7 @@ def combine():
 def render():
     """
     Render current design to STL
-    
+
     Expects JSON:
     {
         "shape_id": "...",
@@ -150,15 +152,15 @@ def render():
         data = request.get_json()
         shape_id = data.get('shape_id')
         filename = data.get('filename', 'design.stl')
-        
-        output_path = os.path.join('outputs', filename)
+
+        output_path = os.path.join(current_app.config['OUTPUT_FOLDER'], filename)
         render_to_stl(shape_id, output_path)
-        
+
         return jsonify({
             'success': True,
             'download_url': f'/parametric/download/{filename}'
         })
-    
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -167,7 +169,7 @@ def render():
 def download(filename):
     """Download generated STL file"""
     try:
-        filepath = os.path.join('outputs', filename)
+        filepath = os.path.join(current_app.config['OUTPUT_FOLDER'], filename)
         if os.path.exists(filepath):
             return send_file(filepath, as_attachment=True)
         else:
@@ -180,7 +182,7 @@ def download(filename):
 def export_openscad():
     """
     Export design as OpenSCAD script
-    
+
     Expects JSON:
     {
         "shape_id": "..."
@@ -189,13 +191,51 @@ def export_openscad():
     try:
         data = request.get_json()
         shape_id = data.get('shape_id')
-        
+
         code = generate_openscad_code(shape_id)
-        
+
         return jsonify({
             'success': True,
             'code': code
         })
-    
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@parametric_bp.route('/api/shapes/reset', methods=['POST'])
+def reset_shapes():
+    """
+    Clear all shapes from the registry (memory cleanup)
+    """
+    try:
+        reset_shape_registry()
+        return jsonify({
+            'success': True,
+            'message': 'All shapes cleared'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@parametric_bp.route('/api/shapes/list', methods=['GET'])
+def list_shapes():
+    """
+    Get list of all shapes in the registry
+    """
+    try:
+        shapes_list = []
+        for shape_id, shape in SHAPE_REGISTRY.items():
+            shapes_list.append({
+                'id': shape_id,
+                'type': shape.shape_type,
+                'params': shape.params
+            })
+
+        return jsonify({
+            'success': True,
+            'shapes': shapes_list,
+            'count': len(shapes_list)
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

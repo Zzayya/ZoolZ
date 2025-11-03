@@ -2,9 +2,10 @@
 # ZoolZ Flask App Launcher (Mac/Linux)
 # Double-click this file to start the app
 
-# Get the directory where this script is located
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$DIR"
+# Get the directory where this script is located, then go to parent (project root)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
 
 echo "========================================="
 echo "   ZoolZ - Multi-Purpose 3D Design Tool"

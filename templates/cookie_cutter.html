@@ -256,44 +256,56 @@
         }
 
         .rotation-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
             margin-bottom: 15px;
         }
 
-        .rotation-arrows {
-            display: flex;
-            gap: 5px;
+        .rotation-slider-group {
+            margin-bottom: 12px;
         }
 
-        .arrow-btn {
-            width: 35px;
-            height: 35px;
-            background: rgba(0, 149, 255, 0.2);
-            border: 1px solid #0095ff;
-            color: #0095ff;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.2rem;
+        .rotation-label {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            margin-bottom: 5px;
+            color: #8ab4f8;
+            font-size: 0.9rem;
         }
 
-        .arrow-btn:hover {
-            background: rgba(0, 149, 255, 0.4);
+        .rotation-value {
+            color: #00c8ff;
+            font-weight: 600;
+            font-size: 0.95rem;
         }
 
-        .rotation-input {
-            width: 80px;
-            padding: 8px;
-            background: rgba(0, 149, 255, 0.1);
-            border: 1px solid rgba(0, 149, 255, 0.3);
-            border-radius: 5px;
-            color: #fff;
-            text-align: center;
+        .rotation-slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 149, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .rotation-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 149, 255, 0.5);
+        }
+
+        .rotation-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 149, 255, 0.5);
         }
 
         .btn-small {
@@ -396,14 +408,29 @@
                 <h3>Model Controls</h3>
 
                 <div class="param-group">
-                    <label>Rotate Model (Z-axis)</label>
+                    <label>Rotate Model (Cura Style)</label>
                     <div class="rotation-controls">
-                        <div class="rotation-arrows">
-                            <button class="arrow-btn" id="rotateLeft" title="Rotate Left">↶</button>
-                            <button class="arrow-btn" id="rotateRight" title="Rotate Right">↷</button>
+                        <div class="rotation-slider-group">
+                            <div class="rotation-label">
+                                <span>Rotate X</span>
+                                <span class="rotation-value" id="rotationXValue">0°</span>
+                            </div>
+                            <input type="range" id="rotationX" class="rotation-slider" min="-180" max="180" value="0" step="1">
                         </div>
-                        <input type="number" id="rotationDegrees" class="rotation-input" value="90" min="1" max="180" placeholder="Degrees">
-                        <span style="color: #8ab4f8; font-size: 0.9rem;">°</span>
+                        <div class="rotation-slider-group">
+                            <div class="rotation-label">
+                                <span>Rotate Y</span>
+                                <span class="rotation-value" id="rotationYValue">0°</span>
+                            </div>
+                            <input type="range" id="rotationY" class="rotation-slider" min="-180" max="180" value="0" step="1">
+                        </div>
+                        <div class="rotation-slider-group">
+                            <div class="rotation-label">
+                                <span>Rotate Z</span>
+                                <span class="rotation-value" id="rotationZValue">0°</span>
+                            </div>
+                            <input type="range" id="rotationZ" class="rotation-slider" min="-180" max="180" value="0" step="1">
+                        </div>
                     </div>
                 </div>
 

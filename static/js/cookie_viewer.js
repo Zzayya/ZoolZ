@@ -41,8 +41,9 @@ function initViewer() {
     directionalLight2.position.set(-50, -50, -50);
     scene.add(directionalLight2);
 
-    // Grid
+    // Grid - positioned at y=0 (horizontal plane, build plate level)
     const gridHelper = new THREE.GridHelper(200, 20, 0x0095ff, 0x003366);
+    gridHelper.position.y = 0; // Ensure it's at ground level
     scene.add(gridHelper);
 
     // Axes
@@ -86,28 +87,36 @@ function loadSTL(url) {
             flatShading: false
         });
 
-        // Create mesh
-        mesh = new THREE.Mesh(geometry, material);
-
-        // Position on build plate (bottom at z=0, centered in XY)
+        // Center geometry at origin FIRST (for proper rotation axis)
         geometry.computeBoundingBox();
         const bbox = geometry.boundingBox;
-        const centerX = (bbox.min.x + bbox.max.x) / 2;
-        const centerY = (bbox.min.y + bbox.max.y) / 2;
-        const minZ = bbox.min.z;
+        const center = bbox.getCenter(new THREE.Vector3());
 
-        // Move so bottom sits on z=0 and centered in XY
-        mesh.position.set(-centerX, -centerY, -minZ);
+        // Translate geometry so its center is at (0,0,0)
+        geometry.translate(-center.x, -center.y, -center.z);
+
+        // Create mesh (now centered at origin)
+        mesh = new THREE.Mesh(geometry, material);
+
+        // NOW position the mesh so base sits on build plate
+        // In Three.js: Y is up, XZ is the ground plane
+        // Recompute bbox after centering
+        geometry.computeBoundingBox();
+        const newBbox = geometry.boundingBox;
+        const minY = newBbox.min.y;
+
+        // Lift mesh so bottom is at y=0 (base flush on build plate)
+        mesh.position.set(0, -minY, 0);
 
         // Add to scene
         scene.add(mesh);
 
-        // Adjust camera
-        const size = geometry.boundingBox.getSize(new THREE.Vector3());
+        // Adjust camera to look at model center
+        const size = newBbox.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        const modelHeight = size.z;
+        const modelHeight = size.y; // Y is up in Three.js
         camera.position.set(maxDim, maxDim, maxDim);
-        controls.target.set(0, 0, modelHeight / 2);  // Look at center of model
+        controls.target.set(0, modelHeight / 2, 0);  // Look at center of model (Y-up)
         controls.update();
     }, undefined, function(error) {
         console.error('Error loading STL:', error);
@@ -295,43 +304,72 @@ function showStats(stats) {
     statsEl.style.display = 'grid';
 }
 
-// Model control buttons
-const rotateLeftBtn = document.getElementById('rotateLeft');
-const rotateRightBtn = document.getElementById('rotateRight');
-const rotationDegreesInput = document.getElementById('rotationDegrees');
+// Model control buttons and sliders
+const rotationXSlider = document.getElementById('rotationX');
+const rotationYSlider = document.getElementById('rotationY');
+const rotationZSlider = document.getElementById('rotationZ');
+const rotationXValue = document.getElementById('rotationXValue');
+const rotationYValue = document.getElementById('rotationYValue');
+const rotationZValue = document.getElementById('rotationZValue');
 const snapBtn = document.getElementById('snapBtn');
 const curaBtn = document.getElementById('curaBtn');
 
-// Rotation controls
-rotateLeftBtn.addEventListener('click', () => {
+// Rotation sliders - Cura style
+rotationXSlider.addEventListener('input', (e) => {
     if (mesh) {
-        const degrees = parseFloat(rotationDegreesInput.value) || 90;
+        const degrees = parseFloat(e.target.value);
         const radians = (degrees * Math.PI) / 180;
-        mesh.rotation.z += radians;
+        mesh.rotation.x = radians;
+        rotationXValue.textContent = `${degrees}°`;
     }
 });
 
-rotateRightBtn.addEventListener('click', () => {
+rotationYSlider.addEventListener('input', (e) => {
     if (mesh) {
-        const degrees = parseFloat(rotationDegreesInput.value) || 90;
+        const degrees = parseFloat(e.target.value);
         const radians = (degrees * Math.PI) / 180;
-        mesh.rotation.z -= radians;
+        mesh.rotation.y = radians;
+        rotationYValue.textContent = `${degrees}°`;
+    }
+});
+
+rotationZSlider.addEventListener('input', (e) => {
+    if (mesh) {
+        const degrees = parseFloat(e.target.value);
+        const radians = (degrees * Math.PI) / 180;
+        mesh.rotation.z = radians;
+        rotationZValue.textContent = `${degrees}°`;
     }
 });
 
 // Snap to build plate
 snapBtn.addEventListener('click', () => {
     if (mesh) {
-        // Reset rotation and position
+        // Reset rotation
         mesh.rotation.set(0, 0, 0);
 
-        // Recalculate position to sit on build plate
+        // Reset sliders
+        rotationXSlider.value = 0;
+        rotationYSlider.value = 0;
+        rotationZSlider.value = 0;
+        rotationXValue.textContent = '0°';
+        rotationYValue.textContent = '0°';
+        rotationZValue.textContent = '0°';
+
+        // Position base flush on build plate
+        // Geometry is already centered at origin, just need to lift to y=0
         mesh.geometry.computeBoundingBox();
         const bbox = mesh.geometry.boundingBox;
-        const centerX = (bbox.min.x + bbox.max.x) / 2;
-        const centerY = (bbox.min.y + bbox.max.y) / 2;
-        const minZ = bbox.min.z;
-        mesh.position.set(-centerX, -centerY, -minZ);
+        const minY = bbox.min.y; // Y is up in Three.js
+        mesh.position.set(0, -minY, 0);
+
+        // Reset camera to optimal view
+        const size = bbox.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const modelHeight = size.y; // Y is height
+        camera.position.set(maxDim, maxDim, maxDim);
+        controls.target.set(0, modelHeight / 2, 0); // Y-up coordinate system
+        controls.update();
 
         showStatus('Model snapped to build plate', 'success');
     }

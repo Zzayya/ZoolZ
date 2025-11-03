@@ -7,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
     <style>
         * {
             margin: 0;
@@ -56,9 +57,31 @@
 
         .container {
             display: grid;
-            grid-template-columns: 350px 1fr 400px;
+            grid-template-columns: 350px 250px 300px 1fr 400px;
             height: calc(100vh - 84px);
             gap: 0;
+        }
+
+        /* Properties Panel - NEW */
+        .properties-panel {
+            background: rgba(5, 8, 16, 0.98);
+            border-right: 2px solid rgba(0, 149, 255, 0.5);
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .property-section {
+            background: rgba(0, 149, 255, 0.05);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .property-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            color: #00c8ff;
         }
 
         .sidebar {
@@ -68,9 +91,65 @@
             overflow-y: auto;
         }
 
+        .shapes-list-panel {
+            background: rgba(5, 8, 16, 0.98);
+            border-right: 2px solid rgba(0, 149, 255, 0.5);
+            padding: 15px;
+            overflow-y: auto;
+        }
+
         .viewer-container {
             position: relative;
             background: #050810;
+        }
+
+        /* Transform Controls - NEW */
+        .transform-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 100;
+        }
+
+        .transform-btn {
+            background: rgba(0, 149, 255, 0.2);
+            border: 2px solid #0095ff;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .transform-btn:hover {
+            background: rgba(0, 149, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 149, 255, 0.5);
+        }
+
+        .transform-btn.active {
+            background: rgba(0, 200, 255, 0.6);
+            border-color: #00c8ff;
+            box-shadow: 0 0 20px rgba(0, 200, 255, 0.7);
+        }
+
+        .keyboard-hint {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #8ab4f8;
+            z-index: 100;
+        }
+
+        .keyboard-hint strong {
+            color: #00c8ff;
         }
 
         .code-panel {
@@ -222,6 +301,123 @@
             color: #8ab4f8;
             margin-top: 3px;
         }
+
+        /* Shape List Styles */
+        .shape-item {
+            background: rgba(0, 149, 255, 0.1);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .shape-item:hover {
+            background: rgba(0, 149, 255, 0.2);
+            border-color: #0095ff;
+        }
+
+        .shape-item.selected {
+            background: rgba(0, 200, 255, 0.3);
+            border: 2px solid #00c8ff;
+            box-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
+        }
+
+        .shape-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .shape-item-title {
+            font-weight: 600;
+            color: #00c8ff;
+            font-size: 0.9rem;
+        }
+
+        .shape-item-delete {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shape-item-delete:hover {
+            background: rgba(255, 107, 107, 0.4);
+        }
+
+        .shape-item-info {
+            font-size: 0.75rem;
+            color: #8ab4f8;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-right: 8px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        /* Boolean Operations Panel */
+        .boolean-ops {
+            margin-top: 10px;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .bool-btn {
+            flex: 1;
+            padding: 8px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 5px;
+            color: #00ff88;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bool-btn:hover:not(:disabled) {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+        }
+
+        .bool-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #8ab4f8;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -257,19 +453,81 @@
             </div>
 
             <div class="section">
-                <h3>3. Generate</h3>
+                <h3>3. Add to Scene</h3>
                 <button class="btn btn-primary" id="generateBtn" disabled>
                     <span id="generateText">Select Shape First</span>
-                </button>
-                <button class="btn btn-secondary" id="downloadBtn" style="display: none;">
-                    Download STL
                 </button>
                 <div id="status"></div>
             </div>
         </div>
 
+        <!-- Shape List Panel -->
+        <div class="shapes-list-panel">
+            <div class="section" style="padding: 10px;">
+                <h3 style="font-size: 1rem; margin-bottom: 10px;">Scene Shapes</h3>
+                <div class="toolbar">
+                    <button class="btn btn-secondary btn-small" id="clearAllBtn" style="flex: 1;">
+                        Clear All
+                    </button>
+                </div>
+                <div id="shapesList" class="empty-state">
+                    No shapes yet.<br>Add shapes to begin!
+                </div>
+            </div>
+
+            <div class="section" style="padding: 10px; margin-top: 10px;">
+                <h3 style="font-size: 0.95rem; margin-bottom: 10px;">Boolean Ops</h3>
+                <p style="font-size: 0.75rem; color: #8ab4f8; margin-bottom: 8px;">Select 2+ shapes:</p>
+                <div class="boolean-ops">
+                    <button class="bool-btn" id="unionBtn" disabled>Union</button>
+                    <button class="bool-btn" id="differenceBtn" disabled>Difference</button>
+                    <button class="bool-btn" id="intersectionBtn" disabled>Intersect</button>
+                </div>
+            </div>
+
+            <div class="section" style="padding: 10px; margin-top: 10px;">
+                <h3 style="font-size: 0.95rem; margin-bottom: 10px;">Export</h3>
+                <button class="btn btn-secondary btn-small" id="downloadBtn" style="display: none; margin-bottom: 5px;">
+                    Download STL
+                </button>
+                <button class="btn btn-secondary btn-small" id="exportAllBtn" style="display: none;">
+                    Export Scene
+                </button>
+            </div>
+        </div>
+
+        <!-- Properties Panel - NEW -->
+        <div class="properties-panel">
+            <h2 style="margin-bottom: 15px; color: #00c8ff;">Properties</h2>
+            <div id="propertiesPanel">
+                <p style="color: #8ab4f8;">Select a shape to edit properties</p>
+            </div>
+        </div>
+
         <!-- Center: 3D Viewer -->
         <div class="viewer-container">
+            <!-- Transform Controls - NEW -->
+            <div class="transform-controls">
+                <button class="transform-btn active" id="moveBtn" title="Move (G key)">
+                    Move (G)
+                </button>
+                <button class="transform-btn" id="rotateBtn" title="Rotate (R key)">
+                    Rotate (R)
+                </button>
+                <button class="transform-btn" id="scaleBtn" title="Scale (S key)">
+                    Scale (S)
+                </button>
+            </div>
+
+            <!-- Keyboard Hints - NEW -->
+            <div class="keyboard-hint">
+                <strong>G</strong> = Move |
+                <strong>R</strong> = Rotate |
+                <strong>S</strong> = Scale |
+                <strong>Esc</strong> = Deselect |
+                <strong>Del</strong> = Delete
+            </div>
+
             <div id="viewer"></div>
         </div>
 
@@ -293,6 +551,7 @@
         </div>
     </div>
 
-    <script src="/static/js/parametric_viewer.js"></script>
+    <!-- Use Enhanced Viewer with Transform Controls -->
+    <script src="/static/js/parametric_viewer_enhanced.js"></script>
 </body>
 </html>

@@ -318,9 +318,16 @@ def generate_cookie_cutter(image_path: str, params: dict) -> trimesh.Trimesh:
         base_thick=base_thick,
         base_extra=base_extra
     )
-    
-    # Orient for printing (rotate 180° around Z)
+
+    # Orient correctly for viewing:
+    # The 2D image becomes a thin 3D extrusion (like a coin standing on edge)
+    # Goal: Front of image faces camera, back lays flat on build plate
+    # Trimesh creates mesh with Z-axis as height, XY as the image plane
+    # We need: Back flat on XY plane (z=0), front facing +Y direction
     from trimesh.transformations import rotation_matrix
-    mesh.apply_transform(rotation_matrix(np.pi, [0, 0, 1]))
-    
+
+    # Rotate 90° around X axis to lay it down
+    # This puts the back on the XY plane
+    mesh.apply_transform(rotation_matrix(np.pi / 2, [1, 0, 0]))
+
     return mesh

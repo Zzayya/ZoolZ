@@ -2,7 +2,9 @@
 REM ZoolZ Flask App Launcher (Windows)
 REM Double-click this file to start the app
 
+REM Change to script directory, then go to parent (project root)
 cd /d "%~dp0"
+cd ..
 
 echo =========================================
 echo    ZoolZ - Multi-Purpose 3D Design Tool

@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>People Finder - Zoolz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* Search Form */
+        .search-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42, 82, 152, 0.4);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .example-btn {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .example-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Input Validation Feedback */
+        .form-group input.valid,
+        .form-group select.valid {
+            border-color: #4CAF50 !important;
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        .form-group input.invalid,
+        .form-group select.invalid {
+            border-color: #f44336 !important;
+            background: rgba(244, 67, 54, 0.05);
+        }
+
+        .validation-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        /* Error Alert */
+        .error-alert {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #c62828;
+            font-weight: 500;
+        }
+
+        .error-alert strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        /* Settings Button */
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* Settings Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #2a5298;
+            padding-bottom: 10px;
+        }
+
+        .modal-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .api-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .api-section h3 {
+            color: #2a5298;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .api-section p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .api-section input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .api-section input:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .api-section small {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42, 82, 152, 0.4);
+        }
+
+        .modal-btn-secondary {
+            background: #ddd;
+            color: #333;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #ccc;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 2em;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            line-height: 0.8;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        /* Progress Bars */
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 30px;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .progress-label {
+            color: #333;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        /* Results */
+        .results-container {
+            display: none;
+        }
+
+        .results-summary {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .person-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            color: #333;
+        }
+
+        .person-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .person-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .person-name {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+
+        .confidence-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .confidence-high {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .confidence-medium {
+            background: #FFC107;
+            color: #333;
+        }
+
+        .confidence-low {
+            background: #ff9800;
+            color: white;
+        }
+
+        .person-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Detailed View (hidden by default) */
+        .person-details {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        .person-details.active {
+            display: block;
+        }
+
+        .detail-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .detail-tab {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .detail-tab.active {
+            background: #2a5298;
+            color: white;
+        }
+
+        .detail-content {
+            display: none;
+        }
+
+        .detail-content.active {
+            display: block;
+        }
+
+        .data-list {
+            list-style: none;
+        }
+
+        .data-item {
+            padding: 12px;
+            background: #f9f9f9;
+            border-left: 4px solid #2a5298;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .data-item.flagged {
+            border-left-color: #ff9800;
+            background: #fff3e0;
+        }
+
+        .flag-badge {
+            background: #ff9800;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-left: 10px;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .back-btn {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #555;
+        }
+
+        /* Settings Button */
+        .settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(42, 82, 152, 0.9);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        .settings-btn:hover {
+            background: rgba(30, 60, 114, 1);
+            transform: scale(1.1);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            color: #333;
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: #1e3c72;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .api-section {
+            margin-bottom: 25px;
+        }
+
+        .api-section h3 {
+            color: #2a5298;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .api-section p {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .api-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .api-section input:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .api-status {
+            font-size: 0.85em;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .api-status.configured {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .api-status.not-configured {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .save-settings-btn {
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .save-settings-btn:hover {
+            opacity: 0.9;
+        }
+
+        .link-btn {
+            color: #2a5298;
+            text-decoration: none;
+            font-size: 0.85em;
+        }
+
+        .link-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Settings Button -->
+    <button class="settings-btn" onclick="openSettings()" title="API Settings">
+        G
+    </button>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ API Settings</h2>
+                <button class="close-btn" onclick="closeSettings()">&times;</button>
+            </div>
+
+            <div class="api-section">
+                <h3>Google Custom Search API (Optional)</h3>
+                <p>Enhances web and social media searches. Free tier: 100 queries/day.</p>
+                <input type="text" id="googleApiKey" placeholder="Enter Google API Key">
+                <input type="text" id="googleSearchEngineId" placeholder="Enter Search Engine ID">
+                <div class="api-status" id="googleStatus">
+                    <span id="googleStatusText">Not configured - using DuckDuckGo fallback</span>
+                </div>
+                <a href="https://developers.google.com/custom-search" target="_blank" class="link-btn">
+                    📚 Get free API key
+                </a>
+            </div>
+
+            <div class="api-section">
+                <h3>NumVerify Phone API (Optional)</h3>
+                <p>Enhances phone validation with carrier info. Free tier: 250 lookups/month.</p>
+                <input type="text" id="numverifyApiKey" placeholder="Enter NumVerify API Key">
+                <div class="api-status" id="numverifyStatus">
+                    <span id="numverifyStatusText">Not configured - using area code lookup only</span>
+                </div>
+                <a href="https://numverify.com/product" target="_blank" class="link-btn">
+                    📚 Get free API key
+                </a>
+            </div>
+
+            <p style="font-size: 0.85em; color: #666; margin-top: 20px;">
+                <strong>Note:</strong> API keys are stored locally in your browser. The People Finder works without API keys, but results will be more limited.
+            </p>
+
+            <button class="save-settings-btn" onclick="saveSettings()">
+                💾 Save Settings
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🔍 People Finder</h1>
+            <p>Comprehensive people search using public records, phone lookup, and web search</p>
+            <button class="settings-btn" onclick="openSettings()" title="API Settings">
+                ⚙️ API Settings
+            </button>
+        </div>
+
+        <!-- Search Form -->
+        <div class="search-card">
+            <form id="searchForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" placeholder="John Smith">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" placeholder="(123) 456-7890">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <input type="text" id="address" name="address" placeholder="123 Main St">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="john@example.com">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <select id="state" name="state" onchange="updateCountyOptions()">
+                            <option value="">All States (Comprehensive Search)</option>
+                            <option value="OH">Ohio (OH) - All 88 Counties</option>
+                            <option value="PA">Pennsylvania (PA) - All 67 Counties</option>
+                            <option value="WV">West Virginia (WV) - All 55 Counties</option>
+                            <option value="IN">Indiana (IN)</option>
+                            <option value="IL">Illinois (IL)</option>
+                            <option value="KY">Kentucky (KY)</option>
+                            <option value="TN">Tennessee (TN)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="county">County (Optional)</label>
+                        <select id="county" name="county" disabled>
+                            <option value="">Select state first...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="search-btn" id="searchBtn" style="flex: 2;">
+                        🔎 Search
+                    </button>
+                    <button type="button" class="example-btn" onclick="fillExampleData()" style="flex: 1;">
+                        ✨ Try Example
+                    </button>
+                </div>
+
+                <!-- Progress Bars -->
+                <div class="progress-container" id="progressContainer">
+                    <div>
+                        <div class="progress-label">Official Records & Phone Validation</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress1">0%</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="progress-label">Web Search & Social Media</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress2">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results -->
+        <div class="results-container" id="resultsContainer">
+            <button class="back-btn" onclick="resetSearch()">← New Search</button>
+            
+            <div class="results-summary" id="resultsSummary"></div>
+            
+            <div id="personsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/people/api';
+
+        // County Data by State
+        const COUNTY_DATA = {
+            'OH': ['Adams', 'Allen', 'Ashland', 'Ashtabula', 'Athens', 'Auglaize', 'Belmont', 'Brown', 'Butler', 'Carroll', 'Champaign', 'Clark', 'Clermont', 'Clinton', 'Columbiana', 'Coshocton', 'Crawford', 'Cuyahoga', 'Darke', 'Defiance', 'Delaware', 'Erie', 'Fairfield', 'Fayette', 'Franklin', 'Fulton', 'Gallia', 'Geauga', 'Greene', 'Guernsey', 'Hamilton', 'Hancock', 'Hardin', 'Harrison', 'Henry', 'Highland', 'Hocking', 'Holmes', 'Huron', 'Jackson', 'Jefferson', 'Knox', 'Lake', 'Lawrence', 'Licking', 'Logan', 'Lorain', 'Lucas', 'Madison', 'Mahoning', 'Marion', 'Medina', 'Meigs', 'Mercer', 'Miami', 'Monroe', 'Montgomery', 'Morgan', 'Morrow', 'Muskingum', 'Noble', 'Ottawa', 'Paulding', 'Perry', 'Pickaway', 'Pike', 'Portage', 'Preble', 'Putnam', 'Richland', 'Ross', 'Sandusky', 'Scioto', 'Seneca', 'Shelby', 'Stark', 'Summit', 'Trumbull', 'Tuscarawas', 'Union', 'Van Wert', 'Vinton', 'Warren', 'Washington', 'Wayne', 'Williams', 'Wood', 'Wyandot'],
+            'PA': ['Adams', 'Allegheny', 'Armstrong', 'Beaver', 'Bedford', 'Berks', 'Blair', 'Bradford', 'Bucks', 'Butler', 'Cambria', 'Cameron', 'Carbon', 'Centre', 'Chester', 'Clarion', 'Clearfield', 'Clinton', 'Columbia', 'Crawford', 'Cumberland', 'Dauphin', 'Delaware', 'Elk', 'Erie', 'Fayette', 'Forest', 'Franklin', 'Fulton', 'Greene', 'Huntingdon', 'Indiana', 'Jefferson', 'Juniata', 'Lackawanna', 'Lancaster', 'Lawrence', 'Lebanon', 'Lehigh', 'Luzerne', 'Lycoming', 'McKean', 'Mercer', 'Mifflin', 'Monroe', 'Montgomery', 'Montour', 'Northampton', 'Northumberland', 'Perry', 'Philadelphia', 'Pike', 'Potter', 'Schuylkill', 'Snyder', 'Somerset', 'Sullivan', 'Susquehanna', 'Tioga', 'Union', 'Venango', 'Warren', 'Washington', 'Wayne', 'Westmoreland', 'Wyoming', 'York'],
+            'WV': ['Barbour', 'Berkeley', 'Boone', 'Braxton', 'Brooke', 'Cabell', 'Calhoun', 'Clay', 'Doddridge', 'Fayette', 'Gilmer', 'Grant', 'Greenbrier', 'Hampshire', 'Hancock', 'Hardy', 'Harrison', 'Jackson', 'Jefferson', 'Kanawha', 'Lewis', 'Lincoln', 'Logan', 'Marion', 'Marshall', 'Mason', 'McDowell', 'Mercer', 'Mineral', 'Mingo', 'Monongalia', 'Monroe', 'Morgan', 'Nicholas', 'Ohio', 'Pendleton', 'Pleasants', 'Pocahontas', 'Preston', 'Putnam', 'Raleigh', 'Randolph', 'Ritchie', 'Roane', 'Summers', 'Taylor', 'Tucker', 'Tyler', 'Upshur', 'Wayne', 'Webster', 'Wetzel', 'Wirt', 'Wood', 'Wyoming']
+        };
+
+        // Update county dropdown when state changes
+        function updateCountyOptions() {
+            const stateSelect = document.getElementById('state');
+            const countySelect = document.getElementById('county');
+            const selectedState = stateSelect.value;
+
+            // Clear existing options
+            countySelect.innerHTML = '';
+
+            if (!selectedState || !COUNTY_DATA[selectedState]) {
+                countySelect.disabled = true;
+                countySelect.innerHTML = '<option value="">Select state first...</option>';
+                return;
+            }
+
+            // Enable county select
+            countySelect.disabled = false;
+
+            // Add "All Counties" option with actual count
+            const allOption = document.createElement('option');
+            allOption.value = '';
+            const counties = COUNTY_DATA[selectedState];
+            allOption.textContent = `All ${counties.length} Counties in ${selectedState}`;
+            countySelect.appendChild(allOption);
+
+            // Add counties for selected state
+            counties.forEach(county => {
+                const option = document.createElement('option');
+                option.value = county;
+                option.textContent = county + ' County';
+                countySelect.appendChild(option);
+            });
+        }
+
+        // API Key Management (localStorage)
+        function loadApiKeys() {
+            const googleApiKey = localStorage.getItem('googleApiKey') || '';
+            const googleSearchEngineId = localStorage.getItem('googleSearchEngineId') || '';
+            const numverifyApiKey = localStorage.getItem('numverifyApiKey') || '';
+
+            document.getElementById('googleApiKey').value = googleApiKey;
+            document.getElementById('googleSearchEngineId').value = googleSearchEngineId;
+            document.getElementById('numverifyApiKey').value = numverifyApiKey;
+
+            updateApiStatus('google', googleApiKey && googleSearchEngineId);
+            updateApiStatus('numverify', numverifyApiKey);
+        }
+
+        function updateApiStatus(apiName, isConfigured) {
+            const statusDiv = document.getElementById(apiName + 'Status');
+            const statusText = document.getElementById(apiName + 'StatusText');
+
+            if (isConfigured) {
+                statusDiv.className = 'api-status configured';
+                if (apiName === 'google') {
+                    statusText.textContent = '✓ Configured - Enhanced web searches enabled';
+                } else {
+                    statusText.textContent = '✓ Configured - Enhanced phone validation enabled';
+                }
+            } else {
+                statusDiv.className = 'api-status not-configured';
+                if (apiName === 'google') {
+                    statusText.textContent = 'Not configured - using DuckDuckGo fallback';
+                } else {
+                    statusText.textContent = 'Not configured - using area code lookup only';
+                }
+            }
+        }
+
+        function openSettings() {
+            loadApiKeys();
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function saveSettings() {
+            const googleApiKey = document.getElementById('googleApiKey').value.trim();
+            const googleSearchEngineId = document.getElementById('googleSearchEngineId').value.trim();
+            const numverifyApiKey = document.getElementById('numverifyApiKey').value.trim();
+
+            // Save to localStorage
+            localStorage.setItem('googleApiKey', googleApiKey);
+            localStorage.setItem('googleSearchEngineId', googleSearchEngineId);
+            localStorage.setItem('numverifyApiKey', numverifyApiKey);
+
+            // Update status
+            updateApiStatus('google', googleApiKey && googleSearchEngineId);
+            updateApiStatus('numverify', numverifyApiKey);
+
+            alert('✓ Settings saved! API keys are stored locally in your browser.');
+            closeSettings();
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('settingsModal');
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeSettings();
+                }
+            });
+        });
+
+        // Form submission with real-time SSE progress
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                state: document.getElementById('state').value,
+                county: document.getElementById('county').value,
+                email: document.getElementById('email').value,
+
+                // Include API keys from localStorage (optional)
+                google_api_key: localStorage.getItem('googleApiKey') || '',
+                google_search_engine_id: localStorage.getItem('googleSearchEngineId') || '',
+                numverify_api_key: localStorage.getItem('numverifyApiKey') || ''
+            };
+
+            // Validate at least one field
+            if (!formData.name && !formData.phone && !formData.address && !formData.email) {
+                showError('Please provide at least one search parameter (name, phone, address, or email).');
+                return;
+            }
+
+            // Show progress with real-time updates
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('searchBtn').disabled = true;
+            document.getElementById('searchBtn').textContent = '⏳ Searching...';
+
+            // Reset progress display
+            updateRealTimeProgress('Connecting to search engine...', 0);
+
+            try {
+                // Use Server-Sent Events for real-time progress
+                await searchWithProgress(formData);
+            } catch (error) {
+                showError('Search failed: ' + error.message);
+                document.getElementById('searchBtn').disabled = false;
+                document.getElementById('searchBtn').textContent = '🔎 Search';
+                document.getElementById('progressContainer').style.display = 'none';
+            }
+        });
+
+        function searchWithProgress(formData) {
+            return new Promise((resolve, reject) => {
+                // Use regular fetch for POST with EventSource-like streaming
+                fetch(`${API_BASE}/search/stream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Search failed');
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+
+                    function processStream() {
+                        reader.read().then(({done, value}) => {
+                            if (done) {
+                                // Stream ended
+                                document.getElementById('searchBtn').disabled = false;
+                                document.getElementById('searchBtn').textContent = '🔎 Search';
+                                resolve();
+                                return;
+                            }
+
+                            // Decode chunk
+                            buffer += decoder.decode(value, {stream: true});
+
+                            // Process complete SSE messages
+                            const lines = buffer.split('\n\n');
+                            buffer = lines.pop(); // Keep incomplete message in buffer
+
+                            lines.forEach(line => {
+                                if (line.startsWith('data: ')) {
+                                    const jsonData = line.substring(6); // Remove "data: " prefix
+
+                                    try {
+                                        const message = JSON.parse(jsonData);
+
+                                        if (message.type === 'progress') {
+                                            // Real-time progress update
+                                            updateRealTimeProgress(message.message, message.percent);
+                                        } else if (message.type === 'result') {
+                                            // Final results received
+                                            updateRealTimeProgress('Search complete!', 100);
+                                            setTimeout(() => {
+                                                document.getElementById('progressContainer').style.display = 'none';
+                                                displayResults(message.data);
+                                            }, 500);
+                                        } else if (message.type === 'error') {
+                                            // Error occurred
+                                            showError(message.message);
+                                            document.getElementById('progressContainer').style.display = 'none';
+                                            document.getElementById('searchBtn').disabled = false;
+                                            document.getElementById('searchBtn').textContent = '🔎 Search';
+                                        }
+                                    } catch (e) {
+                                        console.error('Failed to parse SSE message:', e);
+                                    }
+                                }
+                            });
+
+                            // Continue reading
+                            processStream();
+                        });
+                    }
+
+                    processStream();
+                })
+                .catch(error => {
+                    reject(error);
+                });
+            });
+        }
+
+        function updateRealTimeProgress(message, percent) {
+            /**
+             * Update progress bars with REAL-TIME updates from backend.
+             * Shows actual search operations as they happen.
+             */
+
+            // Update progress bar width
+            const progress1 = document.getElementById('progress1');
+            const progress2 = document.getElementById('progress2');
+
+            // Determine which progress bar to update based on percentage
+            if (percent <= 60) {
+                // Official sources phase (0-60%)
+                const officialPercent = (percent / 60) * 100;
+                progress1.style.width = officialPercent + '%';
+                progress1.textContent = message;
+                progress2.style.width = '0%';
+                progress2.textContent = 'Waiting...';
+            } else if (percent <= 90) {
+                // Web sources phase (60-90%)
+                progress1.style.width = '100%';
+                progress1.textContent = 'Official sources complete ✓';
+                const webPercent = ((percent - 60) / 30) * 100;
+                progress2.style.width = webPercent + '%';
+                progress2.textContent = message;
+            } else {
+                // Final aggregation (90-100%)
+                progress1.style.width = '100%';
+                progress1.textContent = 'Official sources complete ✓';
+                progress2.style.width = '100%';
+                progress2.textContent = message;
+            }
+        }
+        
+        function displayResults(results) {
+            document.querySelector('.search-card').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'block';
+            
+            // Summary
+            const summary = document.getElementById('resultsSummary');
+            summary.innerHTML = `
+                <h2>Search Results</h2>
+                <p><strong>${results.total_persons_found}</strong> potential matches found</p>
+                <p>Searched: ${new Date(results.search_timestamp).toLocaleString()}</p>
+            `;
+            
+            // Persons list
+            const personsList = document.getElementById('personsList');
+            personsList.innerHTML = '';
+            
+            results.persons.forEach((person, index) => {
+                const personCard = createPersonCard(person, index);
+                personsList.appendChild(personCard);
+            });
+        }
+        
+        function createPersonCard(person, index) {
+            const card = document.createElement('div');
+            card.className = 'person-card';
+            card.id = `person-${index}`;
+            
+            const confidenceClass = person.overall_confidence >= 70 ? 'high' :
+                                  person.overall_confidence >= 40 ? 'medium' : 'low';
+            
+            card.innerHTML = `
+                <div class="person-header">
+                    <div class="person-name">${person.name || 'Unknown'}</div>
+                    <div class="confidence-badge confidence-${confidenceClass}">
+                        ${Math.round(person.overall_confidence)}% Match
+                    </div>
+                </div>
+                
+                <div class="person-summary">
+                    <div class="summary-item">
+                        <div class="summary-label">Phone Numbers</div>
+                        <div class="summary-value">${person.organized_data.phone_numbers.length || 'None'}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Addresses</div>
+                        <div class="summary-value">${person.organized_data.addresses.length || 'None'}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Emails</div>
+                        <div class="summary-value">${person.organized_data.emails.length || 'None'}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Public Records</div>
+                        <div class="summary-value">${person.organized_data.public_records.length || 'None'}</div>
+                    </div>
+                </div>
+                
+                <div class="person-details" id="details-${index}">
+                    ${createDetailedView(person)}
+                </div>
+            `;
+            
+            // Toggle details on click
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.detail-tabs')) {
+                    const details = document.getElementById(`details-${index}`);
+                    details.classList.toggle('active');
+                }
+            });
+            
+            return card;
+        }
+        
+        function createDetailedView(person) {
+            return `
+                <div class="detail-tabs">
+                    <button class="detail-tab active" onclick="showTab(event, 'phones')">Phone Numbers</button>
+                    <button class="detail-tab" onclick="showTab(event, 'addresses')">Addresses</button>
+                    <button class="detail-tab" onclick="showTab(event, 'emails')">Emails</button>
+                    <button class="detail-tab" onclick="showTab(event, 'records')">Public Records</button>
+                    <button class="detail-tab" onclick="showTab(event, 'social')">Social Media</button>
+                </div>
+                
+                <div class="detail-content active" data-tab="phones">
+                    ${createPhonesList(person.organized_data.phone_numbers)}
+                </div>
+                <div class="detail-content" data-tab="addresses">
+                    ${createAddressesList(person.organized_data.addresses)}
+                </div>
+                <div class="detail-content" data-tab="emails">
+                    ${createEmailsList(person.organized_data.emails)}
+                </div>
+                <div class="detail-content" data-tab="records">
+                    ${createPublicRecordsDisplay(person.organized_data.public_records, person.organized_data.county_records, person.organized_data.federal_records)}
+                </div>
+                <div class="detail-content" data-tab="social">
+                    ${createSocialList(person.organized_data.social_media)}
+                </div>
+            `;
+        }
+        
+        function createPhonesList(phones) {
+            if (!phones.length) return '<p>No phone numbers found</p>';
+            return '<ul class="data-list">' + phones.map(phone => `
+                <li class="data-item">
+                    <strong>${phone.number}</strong>
+                    <br><small>Source: ${phone.source} | Confidence: ${phone.confidence}</small>
+                </li>
+            `).join('') + '</ul>';
+        }
+        
+        function createAddressesList(addresses) {
+            if (!addresses.length) return '<p>No addresses found</p>';
+            return '<ul class="data-list">' + addresses.map(addr => `
+                <li class="data-item">
+                    ${addr.full_address}
+                    <br><small>Confidence: ${addr.confidence}</small>
+                </li>
+            `).join('') + '</ul>';
+        }
+        
+        function createEmailsList(emails) {
+            if (!emails.length) return '<p>No emails found</p>';
+            return '<ul class="data-list">' + emails.map(email => `
+                <li class="data-item">
+                    ${email.email}
+                    <br><small>Confidence: ${email.confidence}</small>
+                </li>
+            `).join('') + '</ul>';
+        }
+        
+        function createPublicRecordsDisplay(legacyRecords, countyRecords, federalRecords) {
+            let html = '';
+
+            // County Records Table
+            if (countyRecords && countyRecords.length > 0) {
+                html += `
+                    <h3 style="color: #0095ff; margin-top: 0;">County Records (${countyRecords.length})</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                            <thead>
+                                <tr style="background: rgba(0, 149, 255, 0.1); text-align: left;">
+                                    <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">Search Name</th>
+                                    <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">County</th>
+                                    <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">State</th>
+                                    <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">Record Type</th>
+                                    <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">Source</th>
+                                    <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${countyRecords.map(record => `
+                                    <tr style="border-bottom: 1px solid rgba(0, 149, 255, 0.2);">
+                                        <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);"><strong>${record.search_name || 'N/A'}</strong></td>
+                                        <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);">${record.county}</td>
+                                        <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);">${record.state}</td>
+                                        <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);">
+                                            ${record.type === 'county_court_records' ? '⚖️ Court Records' : '🏠 Property Records'}
+                                        </td>
+                                        <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2); font-size: 0.9em;">
+                                            ${record.source}
+                                            ${record.notes ? '<br><small style="color: #8ab4f8;">' + record.notes + '</small>' : ''}
+                                        </td>
+                                        <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);">
+                                            <a href="${record.url}" target="_blank"
+                                               style="color: #0095ff; text-decoration: none; font-weight: 600;">
+                                                🔗 Search Portal
+                                            </a>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            // Federal Records by Category
+            if (federalRecords && Object.keys(federalRecords).length > 0) {
+                html += `<h3 style="color: #0095ff; margin-top: 20px;">Federal Records</h3>`;
+
+                // Federal Courts
+                if (federalRecords.federal_courts && federalRecords.federal_courts.length > 0) {
+                    html += createFederalRecordsTable('⚖️ Federal Courts', federalRecords.federal_courts);
+                }
+
+                // Criminal Records
+                if (federalRecords.criminal_records && federalRecords.criminal_records.length > 0) {
+                    html += createFederalRecordsTable('🚨 Criminal & Background', federalRecords.criminal_records);
+                }
+
+                // Licenses
+                if (federalRecords.licenses && federalRecords.licenses.length > 0) {
+                    html += createFederalRecordsTable('📜 Federal Licenses', federalRecords.licenses);
+                }
+
+                // Professional Licenses
+                if (federalRecords.professional_licenses && federalRecords.professional_licenses.length > 0) {
+                    html += createFederalRecordsTable('👔 Professional Licenses', federalRecords.professional_licenses);
+                }
+
+                // Vital Records
+                if (federalRecords.vital_records && federalRecords.vital_records.length > 0) {
+                    html += createFederalRecordsTable('📋 Vital Records', federalRecords.vital_records);
+                }
+
+                // Property Records
+                if (federalRecords.property_records && federalRecords.property_records.length > 0) {
+                    html += createFederalRecordsTable('🏛️ Federal Property', federalRecords.property_records);
+                }
+            }
+
+            // Legacy records (fallback for old format)
+            if ((!countyRecords || countyRecords.length === 0) &&
+                (!federalRecords || Object.keys(federalRecords).length === 0) &&
+                legacyRecords && legacyRecords.length > 0) {
+                html += '<p style="color: #8ab4f8;">Found ' + legacyRecords.length + ' public record sources. Details available in search results.</p>';
+            }
+
+            if (!html) {
+                html = '<p style="color: #8ab4f8;">No public records found. Try searching with different parameters.</p>';
+            }
+
+            return html;
+        }
+
+        function createFederalRecordsTable(title, records) {
+            return `
+                <h4 style="color: #8ab4f8; margin-top: 15px; margin-bottom: 10px;">${title}</h4>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background: rgba(0, 149, 255, 0.1); text-align: left;">
+                                <th style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.3);">Search Name</th>
+                                <th style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.3);">Source</th>
+                                <th style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.3);">Description</th>
+                                <th style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.3);">Cost</th>
+                                <th style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.3);">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${records.map(record => `
+                                <tr style="border-bottom: 1px solid rgba(0, 149, 255, 0.2);">
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);"><strong>${record.search_name || 'N/A'}</strong></td>
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);">${record.source}</td>
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2); font-size: 0.9em;">
+                                        ${record.description}
+                                        ${record.notes ? '<br><small style="color: #8ab4f8;">' + record.notes + '</small>' : ''}
+                                    </td>
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);">
+                                        ${record.free ? '<span style="color: #4caf50; font-weight: 600;">FREE</span>' :
+                                          '<span style="color: #ff9800;">PAID</span>'}
+                                    </td>
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);">
+                                        <a href="${record.url}" target="_blank"
+                                           style="color: #0095ff; text-decoration: none; font-weight: 600;">
+                                            🔗 Search
+                                        </a>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        function createSocialList(social) {
+            if (!social.length) return '<p style="color: #8ab4f8;">No social media profiles found</p>';
+
+            return `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: rgba(0, 149, 255, 0.1); text-align: left;">
+                                <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">Profile Name</th>
+                                <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">Platform</th>
+                                <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">URL</th>
+                                <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">Details</th>
+                                <th style="padding: 12px; border: 1px solid rgba(0, 149, 255, 0.3);">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${social.map(link => `
+                                <tr style="border-bottom: 1px solid rgba(0, 149, 255, 0.2);">
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);"><strong>${link.profile_name || extractProfileName(link.url) || 'Unknown'}</strong></td>
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);">
+                                        <span style="padding: 4px 10px; background: rgba(0, 149, 255, 0.2); border-radius: 12px; font-size: 0.85em;">
+                                            ${link.platform || detectPlatform(link.url)}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2); max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                                        <a href="${link.url}" target="_blank" style="color: #0095ff; text-decoration: none;">${link.url}</a>
+                                    </td>
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2); font-size: 0.9em; color: #8ab4f8;">
+                                        ${link.snippet || link.description || 'No details available'}
+                                    </td>
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2); text-align: center;">
+                                        <span style="padding: 4px 8px; background: rgba(255, 152, 0, 0.2); color: #ff9800; border-radius: 8px; font-size: 0.75em; font-weight: 600;">
+                                            VERIFY
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function extractProfileName(url) {
+            // Try to extract profile name from URL
+            if (!url) return null;
+
+            // Match common patterns like /username or @username
+            const patterns = [
+                /\/([^\/\?]+)\/?$/,  // Last part of URL
+                /@([a-zA-Z0-9_]+)/,   // @username
+                /user\/([^\/\?]+)/,   // /user/username
+                /profile\/([^\/\?]+)/ // /profile/username
+            ];
+
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1] && match[1].length > 0 && match[1].length < 50) {
+                    return match[1];
+                }
+            }
+            return null;
+        }
+
+        function detectPlatform(url) {
+            // Detect platform from URL
+            if (!url) return 'Unknown';
+
+            const lowerUrl = url.toLowerCase();
+            if (lowerUrl.includes('facebook.com') || lowerUrl.includes('fb.com')) return 'Facebook';
+            if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return 'Twitter/X';
+            if (lowerUrl.includes('instagram.com')) return 'Instagram';
+            if (lowerUrl.includes('linkedin.com')) return 'LinkedIn';
+            if (lowerUrl.includes('tiktok.com')) return 'TikTok';
+            if (lowerUrl.includes('youtube.com')) return 'YouTube';
+            if (lowerUrl.includes('snapchat.com')) return 'Snapchat';
+            if (lowerUrl.includes('pinterest.com')) return 'Pinterest';
+            if (lowerUrl.includes('reddit.com')) return 'Reddit';
+            if (lowerUrl.includes('github.com')) return 'GitHub';
+
+            return 'Web Profile';
+        }
+        
+        function showTab(event, tabName) {
+            const detailsContainer = event.target.closest('.person-details');
+            
+            // Update tabs
+            detailsContainer.querySelectorAll('.detail-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update content
+            detailsContainer.querySelectorAll('.detail-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            detailsContainer.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        }
+        
+        function showError(message) {
+            // Hide search form but keep it available
+            document.querySelector('.search-card').style.display = 'block';
+
+            // Remove any existing error alerts
+            const existingAlert = document.querySelector('.error-alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            // Determine error type and provide helpful suggestions
+            let suggestion = '';
+            if (message.includes('at least one')) {
+                suggestion = 'Try filling out at least one field, or click "Try Example" to test with sample data.';
+            } else if (message.includes('timeout') || message.includes('network')) {
+                suggestion = 'Check your internet connection and try again.';
+            } else if (message.includes('API') || message.includes('rate limit')) {
+                suggestion = 'You may have hit the free tier limit. Try again later or configure API keys in Settings.';
+            } else if (message.includes('404') || message.includes('not found')) {
+                suggestion = 'The search service may be temporarily unavailable. Try again in a moment.';
+            } else {
+                suggestion = 'Try searching with different criteria or fewer fields.';
+            }
+
+            // Create error alert
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'error-alert';
+            errorAlert.innerHTML = `
+                <strong>⚠️ Search Error</strong>
+                <p>${message}</p>
+                <p style="margin-top: 8px; color: #d32f2f; font-weight: 400;">
+                    <em>Suggestion:</em> ${suggestion}
+                </p>
+            `;
+
+            // Insert after search form
+            const searchCard = document.querySelector('.search-card');
+            searchCard.appendChild(errorAlert);
+
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                errorAlert.style.transition = 'opacity 0.5s';
+                errorAlert.style.opacity = '0';
+                setTimeout(() => errorAlert.remove(), 500);
+            }, 10000);
+
+            // Scroll to error
+            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        function resetSearch() {
+            document.querySelector('.search-card').style.display = 'block';
+            document.getElementById('resultsContainer').style.display = 'none';
+            document.getElementById('searchForm').reset();
+            clearValidation();
+        }
+
+        // ============================================
+        // EXAMPLE DATA & INPUT VALIDATION
+        // ============================================
+
+        function fillExampleData() {
+            // Fill form with example data for quick testing
+            document.getElementById('name').value = 'John A Smith';
+            document.getElementById('phone').value = '(555) 123-4567';
+            document.getElementById('address').value = '123 Main Street, Columbus';
+            document.getElementById('email').value = 'john.smith@example.com';
+            document.getElementById('state').value = 'OH';
+
+            // Trigger county update
+            updateCountyOptions();
+
+            // Show visual feedback
+            const formInputs = document.querySelectorAll('#searchForm input, #searchForm select');
+            formInputs.forEach(input => {
+                if (input.value) {
+                    input.classList.add('valid');
+                    input.classList.remove('invalid');
+                }
+            });
+
+            // Brief notification
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Example Loaded!';
+            btn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '';
+            }, 2000);
+        }
+
+        // Real-time input validation
+        document.addEventListener('DOMContentLoaded', () => {
+            const nameInput = document.getElementById('name');
+            const phoneInput = document.getElementById('phone');
+            const emailInput = document.getElementById('email');
+
+            nameInput?.addEventListener('input', (e) => {
+                const value = e.target.value.trim();
+                if (value.length >= 2 && /^[a-zA-Z\s]+$/.test(value)) {
+                    e.target.classList.add('valid');
+                    e.target.classList.remove('invalid');
+                } else if (value.length > 0) {
+                    e.target.classList.add('invalid');
+                    e.target.classList.remove('valid');
+                } else {
+                    e.target.classList.remove('valid', 'invalid');
+                }
+            });
+
+            phoneInput?.addEventListener('input', (e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                if (value.length === 10 || value.length === 11) {
+                    e.target.classList.add('valid');
+                    e.target.classList.remove('invalid');
+                } else if (value.length > 0) {
+                    e.target.classList.add('invalid');
+                    e.target.classList.remove('valid');
+                } else {
+                    e.target.classList.remove('valid', 'invalid');
+                }
+            });
+
+            emailInput?.addEventListener('input', (e) => {
+                const value = e.target.value.trim();
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (emailRegex.test(value)) {
+                    e.target.classList.add('valid');
+                    e.target.classList.remove('invalid');
+                } else if (value.length > 0) {
+                    e.target.classList.add('invalid');
+                    e.target.classList.remove('valid');
+                } else {
+                    e.target.classList.remove('valid', 'invalid');
+                }
+            });
+        });
+
+        function clearValidation() {
+            const formInputs = document.querySelectorAll('#searchForm input, #searchForm select');
+            formInputs.forEach(input => {
+                input.classList.remove('valid', 'invalid');
+            });
+        }
+
+        // ============================================
+        // API SETTINGS MODAL
+        // ============================================
+
+        function openSettings() {
+            // Load saved API keys from localStorage
+            document.getElementById('googleApiKey').value = localStorage.getItem('googleApiKey') || '';
+            document.getElementById('googleSearchEngineId').value = localStorage.getItem('googleSearchEngineId') || '';
+            document.getElementById('numverifyApiKey').value = localStorage.getItem('numverifyApiKey') || '';
+
+            // Show modal
+            document.getElementById('settingsModal').style.display = 'block';
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function saveSettings() {
+            // Get values from form
+            const googleApiKey = document.getElementById('googleApiKey').value.trim();
+            const googleSearchEngineId = document.getElementById('googleSearchEngineId').value.trim();
+            const numverifyApiKey = document.getElementById('numverifyApiKey').value.trim();
+
+            // Save to localStorage
+            if (googleApiKey) {
+                localStorage.setItem('googleApiKey', googleApiKey);
+            } else {
+                localStorage.removeItem('googleApiKey');
+            }
+
+            if (googleSearchEngineId) {
+                localStorage.setItem('googleSearchEngineId', googleSearchEngineId);
+            } else {
+                localStorage.removeItem('googleSearchEngineId');
+            }
+
+            if (numverifyApiKey) {
+                localStorage.setItem('numverifyApiKey', numverifyApiKey);
+            } else {
+                localStorage.removeItem('numverifyApiKey');
+            }
+
+            // Show success message
+            alert('API keys saved successfully! They will be used for future searches.');
+
+            // Close modal
+            closeSettings();
+        }
+
+        function clearSettings() {
+            if (confirm('Are you sure you want to clear all API keys?')) {
+                localStorage.removeItem('googleApiKey');
+                localStorage.removeItem('googleSearchEngineId');
+                localStorage.removeItem('numverifyApiKey');
+
+                document.getElementById('googleApiKey').value = '';
+                document.getElementById('googleSearchEngineId').value = '';
+                document.getElementById('numverifyApiKey').value = '';
+
+                alert('All API keys cleared.');
+            }
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('settingsModal');
+            if (event.target == modal) {
+                closeSettings();
+            }
+        }
+    </script>
+
+    <!-- API Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeSettings()">&times;</span>
+            <div class="modal-header">⚙️ API Settings</div>
+            <p class="modal-description">
+                All API keys are <strong>optional</strong>. The app works great without them!
+                API keys enhance results (verified data instead of estimates) and are stored only in your browser.
+            </p>
+
+            <!-- Google Custom Search API -->
+            <div class="api-section">
+                <h3>🔍 Google Custom Search API (Optional)</h3>
+                <p>Better web search quality. Free tier: 100 queries/day.</p>
+                <p><small>Get free key at: <a href="https://developers.google.com/custom-search" target="_blank">developers.google.com/custom-search</a></small></p>
+
+                <label style="color: #333; font-weight: 600; display: block; margin-top: 10px; margin-bottom: 5px;">API Key:</label>
+                <input type="text" id="googleApiKey" placeholder="Enter Google API Key (optional)">
+
+                <label style="color: #333; font-weight: 600; display: block; margin-top: 10px; margin-bottom: 5px;">Search Engine ID:</label>
+                <input type="text" id="googleSearchEngineId" placeholder="Enter Custom Search Engine ID (optional)">
+            </div>
+
+            <!-- NumVerify Phone API -->
+            <div class="api-section">
+                <h3>📱 NumVerify Phone API (Optional)</h3>
+                <p>Verified carrier info (AT&T, Verizon, etc.) and line type. Free tier: 250 lookups/month.</p>
+                <p><small>Get free key at: <a href="https://numverify.com/" target="_blank">numverify.com</a></small></p>
+
+                <label style="color: #333; font-weight: 600; display: block; margin-top: 10px; margin-bottom: 5px;">API Key:</label>
+                <input type="text" id="numverifyApiKey" placeholder="Enter NumVerify API Key (optional)">
+            </div>
+
+            <!-- Info Box -->
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                <strong style="color: #1976d2;">ℹ️ Without API Keys:</strong>
+                <ul style="color: #666; margin-top: 10px; padding-left: 20px; line-height: 1.8;">
+                    <li>DuckDuckGo web search (no API needed)</li>
+                    <li>Built-in area code database (55 area codes)</li>
+                    <li>Carrier hints via pattern analysis</li>
+                    <li>All 210 county portals + 21 federal sources</li>
+                </ul>
+            </div>
+
+            <!-- Modal Buttons -->
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="clearSettings()">Clear All Keys</button>
+                <button class="modal-btn modal-btn-secondary" onclick="closeSettings()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
