@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Zoolz → GitHub one-shot (creates or overwrites <your-login>/Zoolz)
+# ZoolZ → GitHub one-shot (creates or overwrites <your-login>/ZoolZ)
 set -euo pipefail
 
 # Always run from the script's folder (project root)
@@ -16,7 +16,7 @@ fi
 
 # Figure out your GitHub username automatically (e.g., 'Zzayya')
 owner="$(gh api user -q .login)"
-repo_name="Zoolz"
+repo_name="ZoolZ"
 repo="${owner}/${repo_name}"
 
 # --- git init & commit ---
@@ -69,14 +69,12 @@ msg="${1:-initial push}"
 git commit -m "$msg" || true
 git branch -M main
 
-# --- remote & push (SSH) ---
+# --- ensure a REAL repo named "ZoolZ" exists, then push to it (SSH) ---
+# Try to create it every time; if it already exists, ignore the error.
+gh repo create "${repo_name}" --private >/dev/null 2>&1 || true
+
 git remote remove origin 2>/dev/null || true
 git remote add origin "git@github.com:${repo}.git"
-
-# Create repo on GitHub if it doesn't exist
-if ! gh repo view "${repo}" >/dev/null 2>&1; then
-  gh repo create "${repo_name}" --private
-fi
 
 # Overwrite remote with local contents
 git push -u origin main --force
