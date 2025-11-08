@@ -16,12 +16,38 @@
             background: #0a0e1a;
             color: #fff;
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated neon purple crosshatch grid background */
+        .grid-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(90deg, transparent 48%, rgba(168, 85, 247, 0.15) 49%, rgba(168, 85, 247, 0.15) 51%, transparent 52%),
+                linear-gradient(0deg, transparent 48%, rgba(168, 85, 247, 0.15) 49%, rgba(168, 85, 247, 0.15) 51%, transparent 52%),
+                linear-gradient(135deg, transparent 48%, rgba(217, 70, 239, 0.08) 49%, rgba(217, 70, 239, 0.08) 51%, transparent 52%),
+                linear-gradient(45deg, transparent 48%, rgba(217, 70, 239, 0.08) 49%, rgba(217, 70, 239, 0.08) 51%, transparent 52%);
+            background-size: 50px 50px, 50px 50px, 50px 50px, 50px 50px;
+            background-position: 0 0, 0 0, 0 0, 0 0;
+            animation: gridPulse 8s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
         }
 
         /* Header */
         .header {
-            background: rgba(0, 149, 255, 0.1);
-            border-bottom: 2px solid #0095ff;
+            position: relative;
+            z-index: 1;
+            background: rgba(168, 85, 247, 0.1);
+            border-bottom: 2px solid #a855f7;
             padding: 20px;
             display: flex;
             justify-content: space-between;
@@ -30,15 +56,15 @@
 
         .header h1 {
             font-size: 2rem;
-            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            background: linear-gradient(135deg, #a855f7, #d946ef);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
         .back-btn {
-            background: rgba(0, 149, 255, 0.2);
-            border: 1px solid #0095ff;
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid #a855f7;
             color: #fff;
             padding: 10px 20px;
             border-radius: 5px;
@@ -49,12 +75,14 @@
         }
 
         .back-btn:hover {
-            background: rgba(0, 149, 255, 0.4);
-            box-shadow: 0 0 15px rgba(0, 149, 255, 0.5);
+            background: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
         }
 
         /* Main Container */
         .container {
+            position: relative;
+            z-index: 1;
             max-width: 1400px;
             margin: 0 auto;
             padding: 40px 20px;
@@ -81,15 +109,15 @@
 
         /* Search Form */
         .search-section {
-            background: rgba(0, 149, 255, 0.05);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.3);
             border-radius: 10px;
             padding: 30px;
             margin-bottom: 30px;
         }
 
         .search-section h2 {
-            color: #00c8ff;
+            color: #d946ef;
             margin-bottom: 20px;
         }
 
@@ -113,7 +141,7 @@
 
         .form-group input {
             background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            border: 1px solid rgba(168, 85, 247, 0.3);
             border-radius: 5px;
             padding: 12px;
             color: #fff;
@@ -122,8 +150,8 @@
 
         .form-group input:focus {
             outline: none;
-            border-color: #0095ff;
-            box-shadow: 0 0 10px rgba(0, 149, 255, 0.3);
+            border-color: #a855f7;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
         }
 
         .form-group input::placeholder {
@@ -131,7 +159,7 @@
         }
 
         .search-btn {
-            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            background: linear-gradient(135deg, #a855f7, #d946ef);
             border: none;
             color: #fff;
             padding: 15px 40px;
@@ -140,12 +168,12 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 149, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
         }
 
         .search-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 149, 255, 0.5);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
         }
 
         .search-btn:disabled {
@@ -156,8 +184,8 @@
         /* Progress Section */
         .progress-section {
             display: none;
-            background: rgba(0, 149, 255, 0.05);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.3);
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 30px;
@@ -174,7 +202,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #0095ff, #00c8ff);
+            background: linear-gradient(90deg, #a855f7, #d946ef);
             transition: width 0.3s;
             display: flex;
             align-items: center;
@@ -255,8 +283,8 @@
         }
 
         .stat-card {
-            background: rgba(0, 149, 255, 0.05);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.3);
             border-radius: 10px;
             padding: 20px;
             text-align: center;
@@ -265,7 +293,7 @@
         .stat-number {
             font-size: 2.5rem;
             font-weight: 700;
-            color: #00c8ff;
+            color: #d946ef;
             margin-bottom: 10px;
         }
 
@@ -276,15 +304,15 @@
 
         /* Actions Section */
         .actions-section {
-            background: rgba(0, 149, 255, 0.05);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.3);
             border-radius: 10px;
             padding: 30px;
             margin-bottom: 30px;
         }
 
         .actions-section h2 {
-            color: #00c8ff;
+            color: #d946ef;
             margin-bottom: 20px;
         }
 
@@ -363,15 +391,15 @@
 
         /* Findings Section */
         .findings-section {
-            background: rgba(0, 149, 255, 0.05);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.3);
             border-radius: 10px;
             padding: 30px;
             margin-bottom: 30px;
         }
 
         .findings-section h2 {
-            color: #00c8ff;
+            color: #d946ef;
             margin-bottom: 20px;
         }
 
@@ -383,8 +411,8 @@
         }
 
         .tab-btn {
-            background: rgba(0, 149, 255, 0.1);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
             color: #fff;
             padding: 10px 20px;
             border-radius: 5px;
@@ -393,8 +421,8 @@
         }
 
         .tab-btn.active {
-            background: rgba(0, 149, 255, 0.3);
-            border-color: #0095ff;
+            background: rgba(168, 85, 247, 0.3);
+            border-color: #a855f7;
         }
 
         .tab-content {
@@ -414,7 +442,7 @@
 
         .finding-platform {
             font-weight: 600;
-            color: #00c8ff;
+            color: #d946ef;
             margin-bottom: 5px;
         }
 
@@ -430,7 +458,7 @@
         }
 
         .finding-url a:hover {
-            color: #00c8ff;
+            color: #d946ef;
         }
 
         .risk-badge {
@@ -457,8 +485,8 @@
 
         /* Export Button */
         .export-btn {
-            background: rgba(0, 149, 255, 0.2);
-            border: 1px solid #0095ff;
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid #a855f7;
             color: #fff;
             padding: 10px 20px;
             border-radius: 5px;
@@ -468,7 +496,7 @@
         }
 
         .export-btn:hover {
-            background: rgba(0, 149, 255, 0.4);
+            background: rgba(168, 85, 247, 0.4);
         }
 
         /* Empty State */
@@ -485,6 +513,8 @@
     </style>
 </head>
 <body>
+    <div class="grid-background"></div>
+
     <!-- Header -->
     <div class="header">
         <h1>👤 Digital Footprint Finder</h1>

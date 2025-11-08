@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>People Finder - ZoolZ</title>
+    <title>People Finder - Zoolz</title>
     <style>
         * {
             margin: 0;
@@ -13,154 +13,97 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0e1a;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: #fff;
             min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Animated neon blue crosshatch grid background */
-        .grid-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                linear-gradient(90deg, transparent 48%, rgba(0, 149, 255, 0.15) 49%, rgba(0, 149, 255, 0.15) 51%, transparent 52%),
-                linear-gradient(0deg, transparent 48%, rgba(0, 149, 255, 0.15) 49%, rgba(0, 149, 255, 0.15) 51%, transparent 52%),
-                linear-gradient(135deg, transparent 48%, rgba(0, 200, 255, 0.08) 49%, rgba(0, 200, 255, 0.08) 51%, transparent 52%),
-                linear-gradient(45deg, transparent 48%, rgba(0, 200, 255, 0.08) 49%, rgba(0, 200, 255, 0.08) 51%, transparent 52%);
-            background-size: 50px 50px, 50px 50px, 50px 50px, 50px 50px;
-            background-position: 0 0, 0 0, 0 0, 0 0;
-            animation: gridPulse 8s ease-in-out infinite;
-            z-index: 0;
-        }
-
-        @keyframes gridPulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
+            padding: 20px;
         }
 
         .container {
-            position: relative;
-            z-index: 1;
             max-width: 1400px;
             margin: 0 auto;
-            padding: 40px 20px;
         }
 
-        /* Header */
         .header {
             text-align: center;
-            margin-bottom: 40px;
-            position: relative;
+            margin-bottom: 30px;
         }
 
         .header h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #0095ff, #00c8ff, #0095ff);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: titleShimmer 4s ease-in-out infinite;
+            font-size: 2.5em;
             margin-bottom: 10px;
-        }
-
-        @keyframes titleShimmer {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .header p {
-            color: #8ab4f8;
-            font-size: 1.1rem;
+            font-size: 1.1em;
+            opacity: 0.9;
         }
 
-        .back-to-hub {
-            position: absolute;
-            top: 0;
-            left: 0;
-            background: rgba(0, 149, 255, 0.2);
-            border: 1px solid #0095ff;
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .back-to-hub:hover {
-            background: rgba(0, 149, 255, 0.4);
-            box-shadow: 0 0 15px rgba(0, 149, 255, 0.5);
-        }
-
-        /* Search Card */
+        /* Search Form */
         .search-card {
-            background: rgba(0, 149, 255, 0.05);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             padding: 30px;
             margin-bottom: 30px;
-            box-shadow: 0 0 20px rgba(0, 149, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
         }
 
         .form-group label {
-            color: #8ab4f8;
+            color: #333;
             font-weight: 600;
-            margin-bottom: 8px;
-            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
         }
 
         .form-group input,
         .form-group select {
-            width: 100%;
             padding: 12px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            border: 2px solid #ddd;
             border-radius: 8px;
-            color: #fff;
-            font-size: 1rem;
-            transition: all 0.3s;
+            font-size: 1em;
+            transition: border 0.3s;
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #0095ff;
-            box-shadow: 0 0 15px rgba(0, 149, 255, 0.3);
-        }
-
-        .form-group input::placeholder {
-            color: #666;
+            border-color: #2a5298;
         }
 
         .search-btn {
-            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
             border: none;
-            color: #fff;
             padding: 15px 40px;
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 1.1em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 149, 255, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
             width: 100%;
+            margin-top: 10px;
         }
 
         .search-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 149, 255, 0.5);
+            box-shadow: 0 5px 15px rgba(42, 82, 152, 0.4);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
         }
 
         .search-btn:disabled {
@@ -169,47 +112,226 @@
         }
 
         .example-btn {
-            background: rgba(0, 149, 255, 0.2);
-            border: 1px solid #0095ff;
-            color: #fff;
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+            border: none;
             padding: 15px 30px;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 1.1em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .example-btn:hover {
-            background: rgba(0, 149, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .example-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Input Validation Feedback */
+        .form-group input.valid,
+        .form-group select.valid {
+            border-color: #4CAF50 !important;
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        .form-group input.invalid,
+        .form-group select.invalid {
+            border-color: #f44336 !important;
+            background: rgba(244, 67, 54, 0.05);
+        }
+
+        .validation-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        /* Error Alert */
+        .error-alert {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #c62828;
+            font-weight: 500;
+        }
+
+        .error-alert strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.1em;
         }
 
         /* Settings Button */
         .settings-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 149, 255, 0.3);
-            border: 1px solid #0095ff;
-            color: #fff;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             transition: all 0.3s;
-            box-shadow: 0 0 20px rgba(0, 149, 255, 0.3);
-            z-index: 1000;
+            margin-top: 15px;
         }
 
         .settings-btn:hover {
-            background: rgba(0, 149, 255, 0.5);
-            box-shadow: 0 0 30px rgba(0, 149, 255, 0.5);
-            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* Settings Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #2a5298;
+            padding-bottom: 10px;
+        }
+
+        .modal-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .api-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .api-section h3 {
+            color: #2a5298;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .api-section p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .api-section input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .api-section input:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .api-section small {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42, 82, 152, 0.4);
+        }
+
+        .modal-btn-secondary {
+            background: #ddd;
+            color: #333;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #ccc;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 2em;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            line-height: 0.8;
+        }
+
+        .close-modal:hover {
+            color: #333;
         }
 
         /* Progress Bars */
@@ -218,32 +340,30 @@
             margin-top: 20px;
         }
 
-        .progress-label {
-            color: #8ab4f8;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
         .progress-bar {
-            background: rgba(0, 0, 0, 0.3);
+            background: #e0e0e0;
             border-radius: 10px;
             overflow: hidden;
             height: 30px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            margin-bottom: 10px;
         }
 
         .progress-fill {
-            background: linear-gradient(90deg, #0095ff, #00c8ff);
+            background: linear-gradient(90deg, #4CAF50, #45a049);
             height: 100%;
             width: 0%;
             transition: width 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
+            color: white;
             font-weight: 600;
-            font-size: 0.9rem;
+        }
+
+        .progress-label {
+            color: #333;
+            font-size: 0.9em;
+            margin-bottom: 5px;
         }
 
         /* Results */
@@ -252,53 +372,47 @@
         }
 
         .results-summary {
-            background: rgba(0, 149, 255, 0.05);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
-            padding: 25px;
+            padding: 20px;
             margin-bottom: 20px;
-        }
-
-        .results-summary h2 {
-            color: #00c8ff;
-            margin-bottom: 15px;
+            color: #333;
         }
 
         .person-card {
-            background: rgba(0, 149, 255, 0.05);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 20px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            color: #333;
         }
 
         .person-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 149, 255, 0.3);
-            border-color: #0095ff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
         }
 
         .person-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid rgba(0, 149, 255, 0.3);
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
             padding-bottom: 15px;
         }
 
         .person-name {
-            font-size: 1.8rem;
+            font-size: 1.5em;
             font-weight: 700;
-            color: #00c8ff;
+            color: #1e3c72;
         }
 
         .confidence-badge {
             padding: 8px 15px;
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: 0.9em;
             font-weight: 600;
         }
 
@@ -309,7 +423,7 @@
 
         .confidence-medium {
             background: #FFC107;
-            color: #000;
+            color: #333;
         }
 
         .confidence-low {
@@ -319,32 +433,33 @@
 
         .person-summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
         }
 
         .summary-item {
-            text-align: center;
+            display: flex;
+            flex-direction: column;
         }
 
         .summary-label {
-            font-size: 0.85rem;
-            color: #8ab4f8;
+            font-size: 0.85em;
+            color: #666;
             margin-bottom: 5px;
         }
 
         .summary-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #00c8ff;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
         }
 
-        /* Details */
+        /* Detailed View (hidden by default) */
         .person-details {
             display: none;
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 2px solid rgba(0, 149, 255, 0.3);
+            border-top: 2px solid #eee;
         }
 
         .person-details.active {
@@ -360,19 +475,17 @@
 
         .detail-tab {
             padding: 10px 20px;
-            background: rgba(0, 149, 255, 0.1);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: #f0f0f0;
+            border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            color: #8ab4f8;
-            transition: all 0.3s;
+            transition: background 0.3s;
         }
 
         .detail-tab.active {
-            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            background: #2a5298;
             color: white;
-            border-color: #0095ff;
         }
 
         .detail-content {
@@ -388,14 +501,93 @@
         }
 
         .data-item {
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-left: 4px solid #0095ff;
+            padding: 12px;
+            background: #f9f9f9;
+            border-left: 4px solid #2a5298;
             margin-bottom: 10px;
             border-radius: 5px;
         }
 
-        /* Modal */
+        .data-item.flagged {
+            border-left-color: #ff9800;
+            background: #fff3e0;
+        }
+
+        .flag-badge {
+            background: #ff9800;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-left: 10px;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .back-btn {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #555;
+        }
+
+        /* Settings Button */
+        .settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(42, 82, 152, 0.9);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        .settings-btn:hover {
+            background: rgba(30, 60, 114, 1);
+            transform: scale(1.1);
+        }
+
+        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -403,7 +595,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.7);
             z-index: 2000;
             align-items: center;
             justify-content: center;
@@ -414,15 +606,15 @@
         }
 
         .modal-content {
-            background: #0a0e1a;
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            background: white;
             border-radius: 15px;
             padding: 30px;
             max-width: 600px;
             width: 90%;
+            color: #333;
+            position: relative;
             max-height: 80vh;
             overflow-y: auto;
-            box-shadow: 0 0 30px rgba(0, 149, 255, 0.3);
         }
 
         .modal-header {
@@ -430,42 +622,46 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            border-bottom: 2px solid rgba(0, 149, 255, 0.3);
+            border-bottom: 2px solid #eee;
             padding-bottom: 15px;
         }
 
         .modal-header h2 {
-            color: #00c8ff;
+            color: #1e3c72;
             margin: 0;
         }
 
         .close-btn {
             background: none;
             border: none;
-            font-size: 2rem;
-            color: #8ab4f8;
+            font-size: 2em;
+            color: #666;
             cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .close-btn:hover {
-            color: #00c8ff;
+            color: #333;
         }
 
         .api-section {
             margin-bottom: 25px;
-            padding: 20px;
-            background: rgba(0, 149, 255, 0.05);
-            border: 1px solid rgba(0, 149, 255, 0.2);
-            border-radius: 10px;
         }
 
         .api-section h3 {
-            color: #00c8ff;
+            color: #2a5298;
             margin-bottom: 10px;
+            font-size: 1.1em;
         }
 
         .api-section p {
-            color: #8ab4f8;
+            font-size: 0.9em;
+            color: #666;
             margin-bottom: 10px;
             line-height: 1.5;
         }
@@ -473,25 +669,41 @@
         .api-section input {
             width: 100%;
             padding: 12px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(0, 149, 255, 0.3);
+            border: 2px solid #ddd;
             border-radius: 8px;
-            color: #fff;
+            font-size: 1em;
             margin-bottom: 5px;
         }
 
         .api-section input:focus {
             outline: none;
-            border-color: #0095ff;
-            box-shadow: 0 0 10px rgba(0, 149, 255, 0.3);
+            border-color: #2a5298;
+        }
+
+        .api-status {
+            font-size: 0.85em;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .api-status.configured {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .api-status.not-configured {
+            background: #fff3e0;
+            color: #e65100;
         }
 
         .save-settings-btn {
-            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
             border: none;
-            color: #fff;
             padding: 12px 30px;
             border-radius: 8px;
+            font-size: 1em;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
@@ -502,76 +714,21 @@
             opacity: 0.9;
         }
 
-        .error-alert {
-            background: rgba(244, 67, 54, 0.1);
-            border-left: 4px solid #f44336;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            color: #ff6b6b;
-        }
-
-        .back-btn {
-            background: rgba(0, 149, 255, 0.2);
-            border: 1px solid #0095ff;
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-
-        .back-btn:hover {
-            background: rgba(0, 149, 255, 0.4);
-        }
-
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border: 1px solid rgba(0, 149, 255, 0.3);
-        }
-
-        th {
-            background: rgba(0, 149, 255, 0.1);
-            color: #00c8ff;
-            font-weight: 600;
-        }
-
-        td {
-            background: rgba(0, 0, 0, 0.2);
-        }
-
-        tr:hover td {
-            background: rgba(0, 149, 255, 0.05);
-        }
-
-        a {
-            color: #00c8ff;
+        .link-btn {
+            color: #2a5298;
             text-decoration: none;
+            font-size: 0.85em;
         }
 
-        a:hover {
+        .link-btn:hover {
             text-decoration: underline;
-        }
-
-        small {
-            color: #8ab4f8;
         }
     </style>
 </head>
 <body>
-    <div class="grid-background"></div>
-
     <!-- Settings Button -->
     <button class="settings-btn" onclick="openSettings()" title="API Settings">
-        ⚙️
+        G
     </button>
 
     <!-- Settings Modal -->
@@ -583,21 +740,31 @@
             </div>
 
             <div class="api-section">
-                <h3>🔍 Google Custom Search API (Optional)</h3>
+                <h3>Google Custom Search API (Optional)</h3>
                 <p>Enhances web and social media searches. Free tier: 100 queries/day.</p>
                 <input type="text" id="googleApiKey" placeholder="Enter Google API Key">
                 <input type="text" id="googleSearchEngineId" placeholder="Enter Search Engine ID">
-                <small>Get free API key at: <a href="https://developers.google.com/custom-search" target="_blank">developers.google.com/custom-search</a></small>
+                <div class="api-status" id="googleStatus">
+                    <span id="googleStatusText">Not configured - using DuckDuckGo fallback</span>
+                </div>
+                <a href="https://developers.google.com/custom-search" target="_blank" class="link-btn">
+                    📚 Get free API key
+                </a>
             </div>
 
             <div class="api-section">
-                <h3>📱 NumVerify Phone API (Optional)</h3>
+                <h3>NumVerify Phone API (Optional)</h3>
                 <p>Enhances phone validation with carrier info. Free tier: 250 lookups/month.</p>
                 <input type="text" id="numverifyApiKey" placeholder="Enter NumVerify API Key">
-                <small>Get free API key at: <a href="https://numverify.com/product" target="_blank">numverify.com/product</a></small>
+                <div class="api-status" id="numverifyStatus">
+                    <span id="numverifyStatusText">Not configured - using area code lookup only</span>
+                </div>
+                <a href="https://numverify.com/product" target="_blank" class="link-btn">
+                    📚 Get free API key
+                </a>
             </div>
 
-            <p style="color: #8ab4f8; margin-top: 20px;">
+            <p style="font-size: 0.85em; color: #666; margin-top: 20px;">
                 <strong>Note:</strong> API keys are stored locally in your browser. The People Finder works without API keys, but results will be more limited.
             </p>
 
@@ -609,9 +776,11 @@
 
     <div class="container">
         <div class="header">
-            <a href="/" class="back-to-hub">← Back to Hub</a>
             <h1>🔍 People Finder</h1>
             <p>Comprehensive people search using public records, phone lookup, and web search</p>
+            <button class="settings-btn" onclick="openSettings()" title="API Settings">
+                ⚙️ API Settings
+            </button>
         </div>
 
         <!-- Search Form -->
@@ -662,10 +831,10 @@
                 </div>
 
                 <div style="display: flex; gap: 10px;">
-                    <button type="submit" class="search-btn" id="searchBtn">
+                    <button type="submit" class="search-btn" id="searchBtn" style="flex: 2;">
                         🔎 Search
                     </button>
-                    <button type="button" class="example-btn" onclick="fillExampleData()">
+                    <button type="button" class="example-btn" onclick="fillExampleData()" style="flex: 1;">
                         ✨ Try Example
                     </button>
                 </div>
@@ -691,55 +860,14 @@
         <!-- Results -->
         <div class="results-container" id="resultsContainer">
             <button class="back-btn" onclick="resetSearch()">← New Search</button>
-
+            
             <div class="results-summary" id="resultsSummary"></div>
-
+            
             <div id="personsList"></div>
         </div>
     </div>
 
-    <script src="/static/js/people_finder.js"></script>
     <script>
-        // County Data
-        const COUNTY_DATA = {
-            'OH': ['Adams', 'Allen', 'Ashland', 'Ashtabula', 'Athens', 'Auglaize', 'Belmont', 'Brown', 'Butler', 'Carroll', 'Champaign', 'Clark', 'Clermont', 'Clinton', 'Columbiana', 'Coshocton', 'Crawford', 'Cuyahoga', 'Darke', 'Defiance', 'Delaware', 'Erie', 'Fairfield', 'Fayette', 'Franklin', 'Fulton', 'Gallia', 'Geauga', 'Greene', 'Guernsey', 'Hamilton', 'Hancock', 'Hardin', 'Harrison', 'Henry', 'Highland', 'Hocking', 'Holmes', 'Huron', 'Jackson', 'Jefferson', 'Knox', 'Lake', 'Lawrence', 'Licking', 'Logan', 'Lorain', 'Lucas', 'Madison', 'Mahoning', 'Marion', 'Medina', 'Meigs', 'Mercer', 'Miami', 'Monroe', 'Montgomery', 'Morgan', 'Morrow', 'Muskingum', 'Noble', 'Ottawa', 'Paulding', 'Perry', 'Pickaway', 'Pike', 'Portage', 'Preble', 'Putnam', 'Richland', 'Ross', 'Sandusky', 'Scioto', 'Seneca', 'Shelby', 'Stark', 'Summit', 'Trumbull', 'Tuscarawas', 'Union', 'Van Wert', 'Vinton', 'Warren', 'Washington', 'Wayne', 'Williams', 'Wood', 'Wyandot'],
-            'PA': ['Adams', 'Allegheny', 'Armstrong', 'Beaver', 'Bedford', 'Berks', 'Blair', 'Bradford', 'Bucks', 'Butler', 'Cambria', 'Cameron', 'Carbon', 'Centre', 'Chester', 'Clarion', 'Clearfield', 'Clinton', 'Columbia', 'Crawford', 'Cumberland', 'Dauphin', 'Delaware', 'Elk', 'Erie', 'Fayette', 'Forest', 'Franklin', 'Fulton', 'Greene', 'Huntingdon', 'Indiana', 'Jefferson', 'Juniata', 'Lackawanna', 'Lancaster', 'Lawrence', 'Lebanon', 'Lehigh', 'Luzerne', 'Lycoming', 'McKean', 'Mercer', 'Mifflin', 'Monroe', 'Montgomery', 'Montour', 'Northampton', 'Northumberland', 'Perry', 'Philadelphia', 'Pike', 'Potter', 'Schuylkill', 'Snyder', 'Somerset', 'Sullivan', 'Susquehanna', 'Tioga', 'Union', 'Venango', 'Warren', 'Washington', 'Wayne', 'Westmoreland', 'Wyoming', 'York'],
-            'WV': ['Barbour', 'Berkeley', 'Boone', 'Braxton', 'Brooke', 'Cabell', 'Calhoun', 'Clay', 'Doddridge', 'Fayette', 'Gilmer', 'Grant', 'Greenbrier', 'Hampshire', 'Hancock', 'Hardy', 'Harrison', 'Jackson', 'Jefferson', 'Kanawha', 'Lewis', 'Lincoln', 'Logan', 'Marion', 'Marshall', 'Mason', 'McDowell', 'Mercer', 'Mineral', 'Mingo', 'Monongalia', 'Monroe', 'Morgan', 'Nicholas', 'Ohio', 'Pendleton', 'Pleasants', 'Pocahontas', 'Preston', 'Putnam', 'Raleigh', 'Randolph', 'Ritchie', 'Roane', 'Summers', 'Taylor', 'Tucker', 'Tyler', 'Upshur', 'Wayne', 'Webster', 'Wetzel', 'Wirt', 'Wood', 'Wyoming']
-        };
-
-        function updateCountyOptions() {
-            const stateSelect = document.getElementById('state');
-            const countySelect = document.getElementById('county');
-            const selectedState = stateSelect.value;
-
-            countySelect.innerHTML = '';
-
-            if (!selectedState || !COUNTY_DATA[selectedState]) {
-                countySelect.disabled = true;
-                countySelect.innerHTML = '<option value="">Select state first...</option>';
-                return;
-            }
-
-            countySelect.disabled = false;
-            const counties = COUNTY_DATA[selectedState];
-            const allOption = document.createElement('option');
-            allOption.value = '';
-            allOption.textContent = `All ${counties.length} Counties in ${selectedState}`;
-            countySelect.appendChild(allOption);
-
-            counties.forEach(county => {
-                const option = document.createElement('option');
-                option.value = county;
-                option.textContent = county + ' County';
-                countySelect.appendChild(option);
-            });
-        }
-
-        // Continue with existing people_finder.html JavaScript...
-        // (I'll keep the full JS from the original file - just copy lines 870-1782)
-    </script>
-</body>
-</html>
         const API_BASE = '/people/api';
 
         // County Data by State
