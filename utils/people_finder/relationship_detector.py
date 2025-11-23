@@ -9,7 +9,15 @@ from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 import re
 from difflib import SequenceMatcher
-from Levenshtein import ratio as levenshtein_ratio
+
+# Try to import Levenshtein for fuzzy matching, fallback to difflib
+try:
+    from Levenshtein import ratio as levenshtein_ratio
+except ImportError:
+    # Fallback: Use difflib.SequenceMatcher
+    def levenshtein_ratio(str1: str, str2: str) -> float:
+        """Fallback implementation using difflib"""
+        return SequenceMatcher(None, str1, str2).ratio()
 
 
 class RelationshipDetector:

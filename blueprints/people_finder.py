@@ -12,6 +12,8 @@ import json as json_lib
 from utils.people_finder.search_orchestrator import SearchOrchestrator, run_search_with_progress
 from utils.people_finder.public_records import PublicRecordsSearcher
 from utils.people_finder.phone_apis import PhoneValidator
+from utils.people_finder.person_identifier import PersonIdentifier
+from utils.people_finder.temporal_dataset_manager import TemporalDatasetManager
 import os
 from datetime import datetime
 import time
@@ -137,6 +139,12 @@ def search_stream():
     google_search_engine_id = data.get('google_search_engine_id', '').strip() or None
     numverify_api_key = data.get('numverify_api_key', '').strip() or None
 
+    # Get ML preference from frontend
+    ml_enabled = data.get('ml_enabled', True)  # Default to True for backward compatibility
+
+    # Get Dataset Intelligence preference from frontend
+    dataset_intelligence_enabled = data.get('dataset_intelligence_enabled', False)  # Default to False
+
     # Validate
     if not any([name, phone, address, email]):
         return jsonify({"error": "Please provide at least one search parameter"}), 400
@@ -173,6 +181,18 @@ def search_stream():
                     orchestrator.web_scraper.search_engine_id = google_search_engine_id
                 if numverify_api_key:
                     orchestrator.phone_validator.numverify_key = numverify_api_key
+
+                # Enable or disable ML based on frontend toggle
+                orchestrator.organizer.enable_ml = ml_enabled
+
+                # Enable or disable Dataset Intelligence based on frontend toggle
+                orchestrator.enable_dataset_intelligence = dataset_intelligence_enabled
+                if dataset_intelligence_enabled:
+                    # Initialize temporal intelligence components if not already done
+                    if not orchestrator.person_identifier:
+                        orchestrator.person_identifier = PersonIdentifier()
+                    if not orchestrator.temporal_manager:
+                        orchestrator.temporal_manager = TemporalDatasetManager()
 
                 # Run search with progress callback
                 results = loop.run_until_complete(

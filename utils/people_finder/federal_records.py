@@ -153,7 +153,7 @@ class FederalRecordsSearcher:
 
     def __init__(self):
         self.session = None
-        self.rate_limit_delay = 12  # 12 seconds between requests (VERY polite)
+        self.rate_limit_delay = 0.5  # Minimal delay - fluid timing based on data volume
 
     async def _get_session(self):
         """Get or create aiohttp session"""
@@ -173,12 +173,17 @@ class FederalRecordsSearcher:
         self,
         name: Optional[str] = None,
         address: Optional[str] = None,
+        progress_callback: Optional[callable] = None,
         **kwargs
     ) -> Dict:
         """
         Search federal records for a person.
         Returns links to search portals (most require manual search due to CAPTCHAs).
+        Searches each category one at a time with progress updates.
         """
+
+        if progress_callback:
+            progress_callback("Starting federal records scan...", 56)
 
         results = {
             "federal_courts": [],
@@ -191,8 +196,19 @@ class FederalRecordsSearcher:
             "notes": []
         }
 
-        # Federal Courts
+        # Calculate progress increments (federal takes 56-60%, so 4% total)
+        total_categories = 6  # federal_courts, criminal, vital, licenses, property, professional
+        progress_per_category = 4.0 / total_categories
+        current_progress = 56
+
+        # Federal Courts (1/6)
+        if progress_callback:
+            progress_callback("Searching Federal Courts database...", int(current_progress))
+
         for key, portal in self.FEDERAL_COURTS.items():
+            if progress_callback:
+                progress_callback(f"  → {portal['name']}: {portal['url']}", int(current_progress))
+
             results["federal_courts"].append({
                 "source": portal["name"],
                 "url": portal["url"],
@@ -203,8 +219,16 @@ class FederalRecordsSearcher:
                 "requires_manual_search": True
             })
 
-        # Criminal Records
-        for key, portal in self.FEDERAL_CRIMINAL.items():
+        current_progress += progress_per_category
+
+        # Criminal Records (2/6)
+        if progress_callback:
+            progress_callback("Searching Criminal & Background databases...", int(current_progress))
+
+        for idx, (key, portal) in enumerate(self.FEDERAL_CRIMINAL.items(), 1):
+            if progress_callback:
+                progress_callback(f"  → [{idx}/{len(self.FEDERAL_CRIMINAL)}] {portal['name']}: {portal['url']}", int(current_progress))
+
             record = {
                 "source": portal["name"],
                 "url": portal["url"],
@@ -217,14 +241,24 @@ class FederalRecordsSearcher:
 
             # Attempt automated search for BOP Inmate Locator
             if key == "bop_inmate" and name:
+                if progress_callback:
+                    progress_callback(f"    ⚡ Querying BOP API for: {name}", int(current_progress))
                 bop_result = await self._search_bop_inmates(name)
                 if bop_result:
                     record["automated_search"] = bop_result
-                await asyncio.sleep(self.rate_limit_delay)
+                    if progress_callback:
+                        progress_callback(f"    ✓ BOP query complete", int(current_progress))
+                # Dynamic delay based on whether we hit an API
+                await asyncio.sleep(0.3)
 
             results["criminal_records"].append(record)
 
-        # Vital Records
+        current_progress += progress_per_category
+
+        # Vital Records (3/6)
+        if progress_callback:
+            progress_callback("Searching Vital Records database...", int(current_progress))
+
         for key, portal in self.FEDERAL_VITAL_RECORDS.items():
             results["vital_records"].append({
                 "source": portal["name"],
@@ -236,7 +270,12 @@ class FederalRecordsSearcher:
                 "search_name": name if name else "N/A"
             })
 
-        # Licenses (FAA, FCC)
+        current_progress += progress_per_category
+
+        # Licenses (4/6)
+        if progress_callback:
+            progress_callback("Searching Federal Licenses (FAA, FCC)...", int(current_progress))
+
         for key, portal in self.FEDERAL_LICENSES.items():
             results["licenses"].append({
                 "source": portal["name"],
@@ -248,7 +287,12 @@ class FederalRecordsSearcher:
                 "search_name": name if name else "N/A"
             })
 
-        # Property & Financial
+        current_progress += progress_per_category
+
+        # Property & Financial (5/6)
+        if progress_callback:
+            progress_callback("Searching Federal Property & Financial records...", int(current_progress))
+
         for key, portal in self.FEDERAL_PROPERTY.items():
             results["property_records"].append({
                 "source": portal["name"],
@@ -259,7 +303,12 @@ class FederalRecordsSearcher:
                 "notes": portal["notes"]
             })
 
-        # Professional Licenses
+        current_progress += progress_per_category
+
+        # Professional Licenses (6/6)
+        if progress_callback:
+            progress_callback("Searching Professional Licenses database...", int(current_progress))
+
         for key, portal in self.FEDERAL_PROFESSIONAL.items():
             results["professional_licenses"].append({
                 "source": portal["name"],
@@ -281,6 +330,9 @@ class FederalRecordsSearcher:
         results["notes"].append(
             "All sources are legitimate U.S. government websites with public data."
         )
+
+        if progress_callback:
+            progress_callback("Federal records scan complete!", 60)
 
         return results
 

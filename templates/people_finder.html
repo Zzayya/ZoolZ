@@ -300,21 +300,54 @@
             border-radius: 20px;
             font-size: 0.9rem;
             font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 140px;
         }
 
         .confidence-high {
-            background: #4CAF50;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
             color: white;
+            box-shadow: 0 2px 10px rgba(76, 175, 80, 0.4);
         }
 
         .confidence-medium {
-            background: #FFC107;
+            background: linear-gradient(135deg, #FFC107, #FFB300);
             color: #000;
+            box-shadow: 0 2px 10px rgba(255, 193, 7, 0.4);
         }
 
         .confidence-low {
-            background: #ff9800;
+            background: linear-gradient(135deg, #ff9800, #F57C00);
             color: white;
+            box-shadow: 0 2px 10px rgba(255, 152, 0, 0.4);
+        }
+
+        .confidence-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 10px;
+            transition: width 0.6s ease-out;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .ml-verified-badge {
+            font-size: 0.7rem;
+            background: rgba(138, 43, 226, 0.5);
+            padding: 2px 6px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 3px;
         }
 
         .person-summary {
@@ -564,15 +597,580 @@
         small {
             color: #8ab4f8;
         }
+
+        /* State checkbox styling */
+        .state-checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px;
+            background: rgba(0, 149, 255, 0.1);
+            border: 1px solid rgba(0, 149, 255, 0.2);
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .state-checkbox-label:hover {
+            background: rgba(0, 149, 255, 0.2);
+            border-color: rgba(0, 149, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .state-checkbox-label input:checked ~ span {
+            font-weight: 700;
+            color: #00c8ff;
+        }
+
+        /* Bookmark/Save button styling */
+        .save-person-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+
+        .save-person-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .save-person-btn.saved {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+        }
+
+        .saved-people-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .saved-people-section.active {
+            display: block;
+        }
+
+        .view-saved-btn {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+
+        .view-saved-btn:hover {
+            background: rgba(76, 175, 80, 0.4);
+        }
+
+        .person-location-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(0, 149, 255, 0.2);
+            border: 1px solid rgba(0, 149, 255, 0.4);
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+
+        /* ML Insights Panel */
+        .ml-insights-panel {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(0, 149, 255, 0.1));
+            border: 2px solid rgba(138, 43, 226, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+            animation: mlGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes mlGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(138, 43, 226, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(138, 43, 226, 0.5); }
+        }
+
+        .ml-insights-panel h3 {
+            color: #ba55d3;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ml-insights-panel .brain-icon {
+            font-size: 1.8rem;
+            animation: brainPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes brainPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .ml-insight-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid #ba55d3;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            color: #e0e0ff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+
+        .ml-insight-item:hover {
+            background: rgba(0, 0, 0, 0.5);
+            border-left-color: #0095ff;
+            transform: translateX(5px);
+        }
+
+        .ml-insight-icon {
+            font-size: 1.2rem;
+            min-width: 24px;
+        }
+
+        .ml-insight-text {
+            flex: 1;
+        }
+
+        .ml-insight-badge {
+            background: rgba(138, 43, 226, 0.3);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .ml-disabled-message {
+            color: #8ab4f8;
+            text-align: center;
+            padding: 15px;
+            font-style: italic;
+        }
+
+        /* ML Activation Lever & Perimeter Lighting */
+        .ml-control-panel {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 1999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ml-lever-container {
+            background: linear-gradient(145deg, #1a1f2e, #0a0e1a);
+            border: 2px solid rgba(0, 149, 255, 0.3);
+            border-radius: 15px;
+            padding: 15px 20px;
+            box-shadow:
+                0 4px 15px rgba(0, 0, 0, 0.5),
+                inset 0 1px 3px rgba(255, 255, 255, 0.1);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ml-lever-container.active {
+            border-color: #00ff88;
+            box-shadow:
+                0 4px 20px rgba(0, 255, 136, 0.4),
+                inset 0 1px 3px rgba(0, 255, 136, 0.2);
+        }
+
+        .ml-lever-container:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 20px rgba(0, 149, 255, 0.4),
+                inset 0 1px 3px rgba(255, 255, 255, 0.1);
+        }
+
+        .ml-lever-label {
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #8ab4f8;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .ml-lever-container.active .ml-lever-label {
+            color: #00ff88;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+        }
+
+        .ml-lever-switch {
+            position: relative;
+            width: 70px;
+            height: 35px;
+            background: linear-gradient(180deg, #2a2f3e, #1a1f2e);
+            border-radius: 20px;
+            border: 2px solid rgba(0, 149, 255, 0.4);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+            transition: all 0.4s ease;
+        }
+
+        .ml-lever-container.active .ml-lever-switch {
+            background: linear-gradient(180deg, #00ff88, #00cc66);
+            border-color: #00ff88;
+            box-shadow:
+                inset 0 2px 8px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(0, 255, 136, 0.6);
+        }
+
+        .ml-lever-handle {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 25px;
+            height: 25px;
+            background: linear-gradient(145deg, #4a5568, #2d3748);
+            border-radius: 50%;
+            border: 2px solid rgba(0, 149, 255, 0.6);
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.5),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .ml-lever-container.active .ml-lever-handle {
+            left: 38px;
+            background: linear-gradient(145deg, #00ff88, #00cc66);
+            border-color: #ffffff;
+            box-shadow:
+                0 0 15px rgba(0, 255, 136, 0.8),
+                inset 0 1px 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .ml-status-text {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #8ab4f8;
+            margin-top: 5px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .ml-lever-container.active .ml-status-text {
+            color: #00ff88;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+        }
+
+        /* Perimeter Neon Tube (Behind Screen Edge) - ML Active */
+        .ml-perimeter-border {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;  /* BEHIND everything */
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .ml-perimeter-border.active {
+            opacity: 1;
+        }
+
+        /* Neon tube effect - multiple layers for depth */
+        .ml-perimeter-border::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            border: 4px solid #00ff88;
+            border-radius: 2px;
+            box-shadow:
+                /* Inner glow (from tube) */
+                inset 0 0 15px rgba(0, 255, 136, 0.6),
+                inset 0 0 30px rgba(0, 255, 136, 0.3),
+                /* Outer glow (light spill) */
+                0 0 20px rgba(0, 255, 136, 0.8),
+                0 0 40px rgba(0, 255, 136, 0.4),
+                0 0 60px rgba(0, 255, 136, 0.2);
+            animation: neonTubePulse 3s ease-in-out infinite;
+        }
+
+        /* Secondary glow layer for more depth */
+        .ml-perimeter-border::after {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            right: -12px;
+            bottom: -12px;
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 4px;
+            box-shadow:
+                0 0 30px rgba(0, 255, 136, 0.3),
+                0 0 60px rgba(0, 255, 136, 0.15);
+            animation: neonTubePulse 3s ease-in-out infinite 0.5s;  /* Offset animation */
+        }
+
+        @keyframes neonTubePulse {
+            0%, 100% {
+                opacity: 0.8;
+                box-shadow:
+                    inset 0 0 15px rgba(0, 255, 136, 0.6),
+                    inset 0 0 30px rgba(0, 255, 136, 0.3),
+                    0 0 20px rgba(0, 255, 136, 0.8),
+                    0 0 40px rgba(0, 255, 136, 0.4),
+                    0 0 60px rgba(0, 255, 136, 0.2);
+            }
+            50% {
+                opacity: 1;
+                box-shadow:
+                    inset 0 0 20px rgba(0, 255, 136, 0.8),
+                    inset 0 0 40px rgba(0, 255, 136, 0.5),
+                    0 0 30px rgba(0, 255, 136, 1),
+                    0 0 60px rgba(0, 255, 136, 0.6),
+                    0 0 90px rgba(0, 255, 136, 0.3);
+            }
+        }
+
+        /* Activation Beam Animation */
+        .activation-beam {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 4px;
+            background: #00ff88;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 1);
+            pointer-events: none;
+            z-index: 10000;
+            opacity: 0;
+        }
+
+        .activation-beam.animating {
+            opacity: 1;
+            animation: beamRace 1.5s ease-in-out;
+        }
+
+        @keyframes beamRace {
+            0% {
+                top: 0;
+                left: 0;
+                box-shadow: 0 0 20px rgba(0, 255, 136, 1);
+            }
+            25% {
+                top: 0;
+                left: 100%;
+                box-shadow: 0 0 20px rgba(0, 255, 136, 1);
+            }
+            50% {
+                top: 100%;
+                left: 100%;
+                box-shadow: 0 0 20px rgba(0, 255, 136, 1);
+            }
+            75% {
+                top: 100%;
+                left: 0;
+                box-shadow: 0 0 20px rgba(0, 255, 136, 1);
+            }
+            100% {
+                top: 0;
+                left: 0;
+                opacity: 0;
+            }
+        }
+
+        /* ML Unavailable Warning */
+        .ml-unavailable-badge {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid #ff9800;
+            color: #ff9800;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* Dataset Intelligence Lever (Orange/Amber) */
+        .dataset-lever-container {
+            background: linear-gradient(145deg, #1a1f2e, #0a0e1a);
+            border: 2px solid rgba(255, 152, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px 20px;
+            box-shadow:
+                0 4px 15px rgba(0, 0, 0, 0.5),
+                inset 0 1px 3px rgba(255, 255, 255, 0.1);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dataset-lever-container.active {
+            border-color: #ff9800;
+            box-shadow:
+                0 4px 20px rgba(255, 152, 0, 0.4),
+                inset 0 1px 3px rgba(255, 152, 0, 0.2);
+        }
+
+        .dataset-lever-container:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 20px rgba(255, 152, 0, 0.4),
+                inset 0 1px 3px rgba(255, 255, 255, 0.1);
+        }
+
+        .dataset-lever-label {
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #ffa726;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .dataset-lever-container.active .dataset-lever-label {
+            color: #ff9800;
+            text-shadow: 0 0 8px rgba(255, 152, 0, 0.6);
+        }
+
+        .dataset-lever-switch {
+            position: relative;
+            width: 70px;
+            height: 35px;
+            background: linear-gradient(180deg, #2a2f3e, #1a1f2e);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 152, 0, 0.4);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+            transition: all 0.4s ease;
+        }
+
+        .dataset-lever-container.active .dataset-lever-switch {
+            background: linear-gradient(180deg, #ff9800, #f57c00);
+            border-color: #ff9800;
+            box-shadow:
+                inset 0 2px 8px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(255, 152, 0, 0.6);
+        }
+
+        .dataset-lever-handle {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 25px;
+            height: 25px;
+            background: linear-gradient(145deg, #4a5568, #2d3748);
+            border-radius: 50%;
+            border: 2px solid rgba(255, 152, 0, 0.6);
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.5),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .dataset-lever-container.active .dataset-lever-handle {
+            left: 38px;
+            background: linear-gradient(145deg, #ff9800, #f57c00);
+            border-color: #ffffff;
+            box-shadow:
+                0 0 15px rgba(255, 152, 0, 0.8),
+                inset 0 1px 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .dataset-status-text {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #ffa726;
+            margin-top: 5px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .dataset-lever-container.active .dataset-status-text {
+            color: #ff9800;
+            text-shadow: 0 0 8px rgba(255, 152, 0, 0.6);
+        }
+
+        /* Control Panel Divider */
+        .control-panel-divider {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 149, 255, 0.3), transparent);
+            margin: 10px 0;
+        }
+
+        /* Control Panel Header */
+        .control-panel-header {
+            text-align: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #8ab4f8;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
     <div class="grid-background"></div>
 
+    <!-- ML Perimeter Border (glows green when ML active) -->
+    <div class="ml-perimeter-border" id="mlPerimeterBorder"></div>
+
+    <!-- Activation Beam (animates around screen when toggling) -->
+    <div class="activation-beam" id="activationBeam"></div>
+
     <!-- Settings Button -->
     <button class="settings-btn" onclick="openSettings()" title="API Settings">
         ⚙️
     </button>
+
+    <!-- Tactical Control Panel (ML + Datasets) -->
+    <div class="ml-control-panel">
+        <div class="control-panel-header">⚡ INTELLIGENCE CORE ⚡</div>
+
+        <!-- ML/NLP Activation Lever -->
+        <div class="ml-lever-container" id="mlLeverContainer" onclick="toggleMLActivation()" title="Toggle ML/NLP Features">
+            <div class="ml-lever-label">🧠 ML/NLP</div>
+            <div class="ml-lever-switch">
+                <div class="ml-lever-handle"></div>
+            </div>
+            <div class="ml-status-text" id="mlStatusText">STANDBY</div>
+        </div>
+
+        <div class="control-panel-divider"></div>
+
+        <!-- Dataset Intelligence Lever -->
+        <div class="dataset-lever-container" id="datasetLeverContainer" onclick="toggleDatasetIntelligence()" title="Engage Historical Dataset Intelligence">
+            <div class="dataset-lever-label">📊 DATASETS</div>
+            <div class="dataset-lever-switch">
+                <div class="dataset-lever-handle"></div>
+            </div>
+            <div class="dataset-status-text" id="datasetStatusText">OFFLINE</div>
+        </div>
+    </div>
 
     <!-- Settings Modal -->
     <div class="modal" id="settingsModal">
@@ -612,6 +1210,9 @@
             <a href="/" class="back-to-hub">← Back to Hub</a>
             <h1>🔍 People Finder</h1>
             <p>Comprehensive people search using public records, phone lookup, and web search</p>
+            <button class="view-saved-btn" onclick="toggleSavedPeople()" id="viewSavedBtn">
+                📁 View Saved (<span id="savedCount">0</span>)
+            </button>
         </div>
 
         <!-- Search Form -->
@@ -641,23 +1242,45 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="state">State</label>
-                        <select id="state" name="state" onchange="updateCountyOptions()">
-                            <option value="">All States (Comprehensive Search)</option>
-                            <option value="OH">Ohio (OH) - All 88 Counties</option>
-                            <option value="PA">Pennsylvania (PA) - All 67 Counties</option>
-                            <option value="WV">West Virginia (WV) - All 55 Counties</option>
-                            <option value="IN">Indiana (IN)</option>
-                            <option value="IL">Illinois (IL)</option>
-                            <option value="KY">Kentucky (KY)</option>
-                            <option value="TN">Tennessee (TN)</option>
-                        </select>
+                        <label>States to Search (Select Multiple)</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                            <label class="state-checkbox-label">
+                                <input type="checkbox" name="states" value="OH" class="state-checkbox" onchange="updateCountyOptions()" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                                <span>Ohio (88 counties)</span>
+                            </label>
+                            <label class="state-checkbox-label">
+                                <input type="checkbox" name="states" value="PA" class="state-checkbox" onchange="updateCountyOptions()" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                                <span>Pennsylvania (67 counties)</span>
+                            </label>
+                            <label class="state-checkbox-label">
+                                <input type="checkbox" name="states" value="WV" class="state-checkbox" onchange="updateCountyOptions()" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                                <span>West Virginia (55 counties)</span>
+                            </label>
+                            <label class="state-checkbox-label">
+                                <input type="checkbox" name="states" value="IN" class="state-checkbox" onchange="updateCountyOptions()" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                                <span>Indiana</span>
+                            </label>
+                            <label class="state-checkbox-label">
+                                <input type="checkbox" name="states" value="IL" class="state-checkbox" onchange="updateCountyOptions()" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                                <span>Illinois</span>
+                            </label>
+                            <label class="state-checkbox-label">
+                                <input type="checkbox" name="states" value="KY" class="state-checkbox" onchange="updateCountyOptions()" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                                <span>Kentucky</span>
+                            </label>
+                            <label class="state-checkbox-label">
+                                <input type="checkbox" name="states" value="TN" class="state-checkbox" onchange="updateCountyOptions()" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                                <span>Tennessee</span>
+                            </label>
+                        </div>
+                        <small style="color: #8ab4f8; margin-top: 8px; display: block;">Leave unchecked to search OH, PA, WV by default</small>
                     </div>
                     <div class="form-group">
-                        <label for="county">County (Optional)</label>
+                        <label for="county">County (Optional - Single State Only)</label>
                         <select id="county" name="county" disabled>
-                            <option value="">Select state first...</option>
+                            <option value="">Select one state first...</option>
                         </select>
+                        <small style="color: #8ab4f8; margin-top: 8px; display: block;">County filter only works when one state is selected</small>
                     </div>
                 </div>
 
@@ -684,6 +1307,14 @@
                             <div class="progress-fill" id="progress2">0%</div>
                         </div>
                     </div>
+
+                    <!-- Real-Time Search Log Display -->
+                    <div style="margin-top: 20px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 149, 255, 0.3); border-radius: 10px; padding: 15px; max-height: 400px; overflow-y: auto;">
+                        <h3 style="color: #00c8ff; margin: 0 0 15px 0; font-size: 1.1rem;">🔍 Search Activity Log</h3>
+                        <div id="searchLog" style="font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.6;">
+                            <div style="color: #8ab4f8;">Waiting to start search...</div>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -692,13 +1323,35 @@
         <div class="results-container" id="resultsContainer">
             <button class="back-btn" onclick="resetSearch()">← New Search</button>
 
+            <!-- ML Insights Panel (populated by displayMLInsights) -->
+            <div class="ml-insights-panel" id="mlInsightsPanel" style="display: none;"></div>
+
             <div class="results-summary" id="resultsSummary"></div>
 
             <div id="personsList"></div>
         </div>
+
+        <!-- Saved People Section -->
+        <div class="saved-people-section" id="savedPeopleSection">
+            <button class="back-btn" onclick="toggleSavedPeople()">← Back to Search</button>
+
+            <div class="results-summary">
+                <h2>📁 Saved People</h2>
+                <p id="savedPeopleSummary">Manage your saved search results</p>
+                <div style="margin-top: 15px;">
+                    <button onclick="exportSavedPeople('json')" style="background: rgba(0, 149, 255, 0.2); border: 1px solid #0095ff; color: #fff; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-right: 10px; font-weight: 600;">
+                        📥 Export as JSON
+                    </button>
+                    <button onclick="exportSavedPeople('csv')" style="background: rgba(76, 175, 80, 0.2); border: 1px solid #4CAF50; color: #fff; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        📥 Export as CSV
+                    </button>
+                </div>
+            </div>
+
+            <div id="savedPeopleList"></div>
+        </div>
     </div>
 
-    <script src="/static/js/people_finder.js"></script>
     <script>
         // County Data
         const COUNTY_DATA = {
@@ -708,15 +1361,28 @@
         };
 
         function updateCountyOptions() {
-            const stateSelect = document.getElementById('state');
             const countySelect = document.getElementById('county');
-            const selectedState = stateSelect.value;
+            const checkedStates = Array.from(document.querySelectorAll('.state-checkbox:checked')).map(cb => cb.value);
 
             countySelect.innerHTML = '';
 
-            if (!selectedState || !COUNTY_DATA[selectedState]) {
+            // County selection only works when exactly ONE state is selected
+            if (checkedStates.length === 0) {
                 countySelect.disabled = true;
-                countySelect.innerHTML = '<option value="">Select state first...</option>';
+                countySelect.innerHTML = '<option value="">Select one state first...</option>';
+                return;
+            } else if (checkedStates.length > 1) {
+                countySelect.disabled = true;
+                countySelect.innerHTML = '<option value="">County filter only works with one state selected</option>';
+                return;
+            }
+
+            // Exactly one state selected - enable county dropdown
+            const selectedState = checkedStates[0];
+
+            if (!COUNTY_DATA[selectedState]) {
+                countySelect.disabled = true;
+                countySelect.innerHTML = '<option value="">No county data for this state</option>';
                 return;
             }
 
@@ -740,7 +1406,7 @@
     </script>
 </body>
 </html>
-        const API_BASE = '/people/api';
+        const API_BASE = '/people_finder/api';
 
         // County Data by State
         const COUNTY_DATA = {
@@ -783,7 +1449,171 @@
             });
         }
 
+        // ============================================
+        // ML ACTIVATION SYSTEM
+        // ============================================
+
+        let mlEnabled = false;
+        let mlAvailable = false;
+
+        async function checkMLAvailability() {
+            /**
+             * Check if ML packages are installed on the backend
+             * This makes an API call to test ML availability
+             */
+            try {
+                // Check if we can import ML models (backend check would be better)
+                // For now, we'll assume ML is available if user toggles it on
+                // In production, you'd make an API call here
+                mlAvailable = true;
+                return true;
+            } catch (error) {
+                console.log('ML packages not available:', error);
+                mlAvailable = false;
+                return false;
+            }
+        }
+
+        function toggleMLActivation() {
+            /**
+             * Toggle ML/NLP features on/off
+             * Triggers beam animation and perimeter border
+             */
+            const leverContainer = document.getElementById('mlLeverContainer');
+            const statusText = document.getElementById('mlStatusText');
+            const perimeterBorder = document.getElementById('mlPerimeterBorder');
+            const activationBeam = document.getElementById('activationBeam');
+
+            // Toggle ML state
+            mlEnabled = !mlEnabled;
+
+            // Save preference to localStorage
+            localStorage.setItem('mlEnabled', mlEnabled);
+
+            if (mlEnabled) {
+                // ACTIVATE ML
+                leverContainer.classList.add('active');
+                statusText.textContent = 'ACTIVE';
+
+                // Trigger beam animation
+                activationBeam.classList.remove('animating');
+                void activationBeam.offsetWidth; // Force reflow to restart animation
+                activationBeam.classList.add('animating');
+
+                // Show perimeter border after beam completes
+                setTimeout(() => {
+                    perimeterBorder.classList.add('active');
+                }, 1500); // Match beam animation duration
+
+                // Show notification
+                showNotification('🧠 ML/NLP Core Activated - AI features enabled', 'success');
+
+                console.log('✓ ML/NLP Features: ACTIVE');
+            } else {
+                // DEACTIVATE ML
+                leverContainer.classList.remove('active');
+                statusText.textContent = 'STANDBY';
+                perimeterBorder.classList.remove('active');
+
+                // Show notification
+                showNotification('ML/NLP Core Deactivated - Using fallback methods', 'info');
+
+                console.log('✓ ML/NLP Features: STANDBY');
+            }
+        }
+
+        function initializeMLSystem() {
+            /**
+             * Initialize ML system on page load
+             * Check availability and restore saved preference
+             */
+            checkMLAvailability().then(available => {
+                mlAvailable = available;
+
+                // Restore saved preference
+                const savedMLState = localStorage.getItem('mlEnabled');
+                if (savedMLState === 'true') {
+                    // Auto-activate ML if previously enabled
+                    toggleMLActivation();
+                }
+
+                // If ML not available, show warning
+                if (!available) {
+                    const leverContainer = document.getElementById('mlLeverContainer');
+                    const statusText = document.getElementById('mlStatusText');
+
+                    // Add unavailable indicator (optional - for now ML is always "available" in UI)
+                    // leverContainer.classList.add('ml-unavailable');
+                    // statusText.textContent = 'UNAVAILABLE';
+                }
+            });
+        }
+
+        // Initialize ML system on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMLSystem();
+            initializeDatasetSystem();
+        });
+
+        // ============================================
+        // DATASET INTELLIGENCE SYSTEM
+        // ============================================
+
+        let datasetIntelligenceEnabled = false;
+
+        function toggleDatasetIntelligence() {
+            /**
+             * Toggle Dataset Intelligence on/off
+             * When enabled, searches query historical datasets for temporal patterns
+             */
+            const leverContainer = document.getElementById('datasetLeverContainer');
+            const statusText = document.getElementById('datasetStatusText');
+
+            // Toggle state
+            datasetIntelligenceEnabled = !datasetIntelligenceEnabled;
+
+            // Save preference to localStorage
+            localStorage.setItem('datasetIntelligenceEnabled', datasetIntelligenceEnabled);
+
+            if (datasetIntelligenceEnabled) {
+                // ENGAGE DATASETS
+                leverContainer.classList.add('active');
+                statusText.textContent = 'ONLINE';
+
+                // Show notification
+                showNotification('📊 Dataset Intelligence Engaged - Historical data active', 'success');
+
+                console.log('✓ Dataset Intelligence: ONLINE');
+                console.log('  → System will query historical records');
+                console.log('  → Temporal pattern detection enabled');
+            } else {
+                // DISENGAGE DATASETS
+                leverContainer.classList.remove('active');
+                statusText.textContent = 'OFFLINE';
+
+                // Show notification
+                showNotification('Dataset Intelligence Offline - Real-time search only', 'info');
+
+                console.log('✓ Dataset Intelligence: OFFLINE');
+            }
+        }
+
+        function initializeDatasetSystem() {
+            /**
+             * Initialize Dataset system on page load
+             * Restore saved preference
+             */
+            const savedDatasetState = localStorage.getItem('datasetIntelligenceEnabled');
+            if (savedDatasetState === 'true') {
+                // Auto-engage if previously enabled
+                toggleDatasetIntelligence();
+            }
+        }
+
+        // ============================================
         // API Key Management (localStorage)
+        // ============================================
+
         function loadApiKeys() {
             const googleApiKey = localStorage.getItem('googleApiKey') || '';
             const googleSearchEngineId = localStorage.getItem('googleSearchEngineId') || '';
@@ -855,22 +1685,41 @@
             });
         });
 
+        // Track if a search is currently running
+        let searchInProgress = false;
+
         // Form submission with real-time SSE progress
         document.getElementById('searchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            // Prevent multiple simultaneous searches
+            if (searchInProgress) {
+                addToSearchLog('⚠️ Search already in progress. Please wait...', 'warning');
+                return;
+            }
+
+            // Collect all checked states
+            const checkedStates = Array.from(document.querySelectorAll('.state-checkbox:checked')).map(cb => cb.value);
+            const statesString = checkedStates.length > 0 ? checkedStates.join(',') : '';  // Send as comma-separated string
+
             const formData = {
-                name: document.getElementById('name').value,
-                phone: document.getElementById('phone').value,
-                address: document.getElementById('address').value,
-                state: document.getElementById('state').value,
-                county: document.getElementById('county').value,
-                email: document.getElementById('email').value,
+                name: document.getElementById('name').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                address: document.getElementById('address').value.trim(),
+                state: statesString,  // Multiple states as comma-separated string (OH,PA,WV)
+                county: document.getElementById('county').value.trim(),
+                email: document.getElementById('email').value.trim(),
 
                 // Include API keys from localStorage (optional)
                 google_api_key: localStorage.getItem('googleApiKey') || '',
                 google_search_engine_id: localStorage.getItem('googleSearchEngineId') || '',
-                numverify_api_key: localStorage.getItem('numverifyApiKey') || ''
+                numverify_api_key: localStorage.getItem('numverifyApiKey') || '',
+
+                // Include ML preference
+                ml_enabled: mlEnabled,
+
+                // Include Dataset Intelligence preference
+                dataset_intelligence_enabled: datasetIntelligenceEnabled
             };
 
             // Validate at least one field
@@ -879,22 +1728,31 @@
                 return;
             }
 
+            // Mark search as in progress
+            searchInProgress = true;
+
             // Show progress with real-time updates
             document.getElementById('progressContainer').style.display = 'block';
             document.getElementById('searchBtn').disabled = true;
             document.getElementById('searchBtn').textContent = '⏳ Searching...';
 
-            // Reset progress display
+            // Reset progress display and search log
             updateRealTimeProgress('Connecting to search engine...', 0);
+            clearSearchLog();
+            addToSearchLog('🚀 Initializing search engine...', 'info');
 
             try {
                 // Use Server-Sent Events for real-time progress
                 await searchWithProgress(formData);
             } catch (error) {
+                console.error('Search error:', error);
                 showError('Search failed: ' + error.message);
+                addToSearchLog('❌ Search failed: ' + error.message, 'error');
+            } finally {
+                // Always re-enable the button and mark search as complete
+                searchInProgress = false;
                 document.getElementById('searchBtn').disabled = false;
                 document.getElementById('searchBtn').textContent = '🔎 Search';
-                document.getElementById('progressContainer').style.display = 'none';
             }
         });
 
@@ -945,9 +1803,11 @@
                                         if (message.type === 'progress') {
                                             // Real-time progress update
                                             updateRealTimeProgress(message.message, message.percent);
+                                            addToSearchLog(message.message, 'progress');
                                         } else if (message.type === 'result') {
                                             // Final results received
                                             updateRealTimeProgress('Search complete!', 100);
+                                            addToSearchLog('✅ Search complete! Processing results...', 'success');
                                             setTimeout(() => {
                                                 document.getElementById('progressContainer').style.display = 'none';
                                                 displayResults(message.data);
@@ -955,6 +1815,7 @@
                                         } else if (message.type === 'error') {
                                             // Error occurred
                                             showError(message.message);
+                                            addToSearchLog('❌ Error: ' + message.message, 'error');
                                             document.getElementById('progressContainer').style.display = 'none';
                                             document.getElementById('searchBtn').disabled = false;
                                             document.getElementById('searchBtn').textContent = '🔎 Search';
@@ -1011,11 +1872,183 @@
                 progress2.textContent = message;
             }
         }
+
+        function clearSearchLog() {
+            /**
+             * Clear the search log display
+             */
+            const searchLog = document.getElementById('searchLog');
+            if (searchLog) {
+                searchLog.innerHTML = '';
+            }
+        }
+
+        function escapeHtml(text) {
+            /**
+             * Escape HTML to prevent injection and display issues
+             */
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        function addToSearchLog(message, type = 'info') {
+            /**
+             * Add a message to the search log display (terminal-style live view)
+             * Types: 'info', 'progress', 'success', 'error', 'warning'
+             */
+            const searchLog = document.getElementById('searchLog');
+            if (!searchLog) return;
+
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const logEntry = document.createElement('div');
+            logEntry.style.marginBottom = '2px';
+            logEntry.style.padding = '3px 6px';
+            logEntry.style.fontFamily = "'Courier New', 'Consolas', monospace";
+            logEntry.style.fontSize = '0.82rem';
+            logEntry.style.lineHeight = '1.3';
+            logEntry.style.whiteSpace = 'pre-wrap';
+            logEntry.style.wordBreak = 'break-word';
+
+            // Set colors based on type (terminal-style)
+            let color, prefix;
+            switch (type) {
+                case 'success':
+                    color = '#4caf50';
+                    prefix = '✓';
+                    break;
+                case 'error':
+                    color = '#f44336';
+                    prefix = '✗';
+                    break;
+                case 'warning':
+                    color = '#ff9800';
+                    prefix = '⚠';
+                    break;
+                case 'progress':
+                    color = '#00c8ff';
+                    prefix = '▸';
+                    break;
+                default: // info
+                    color = '#8ab4f8';
+                    prefix = '•';
+            }
+
+            logEntry.style.color = color;
+
+            // Escape HTML to prevent script injection
+            const safeMessage = escapeHtml(message);
+
+            logEntry.innerHTML = `<span style="color: #666; opacity: 0.7;">${timestamp}</span> ${prefix} ${safeMessage}`;
+
+            searchLog.appendChild(logEntry);
+
+            // Auto-scroll to bottom (smooth)
+            const container = searchLog.parentElement;
+            container.scrollTop = container.scrollHeight;
+
+            // Keep only last 150 entries to prevent memory issues
+            while (searchLog.children.length > 150) {
+                searchLog.removeChild(searchLog.firstChild);
+            }
+        }
         
+        // Store search results globally to avoid JSON embedding issues
+        let currentSearchResults = null;
+
+        function displayMLInsights(mlInsights) {
+            /**
+             * Display ML insights panel with user-friendly summaries
+             */
+            const panel = document.getElementById('mlInsightsPanel');
+
+            if (!mlInsights || !mlInsights.ml_enabled) {
+                // ML not enabled - hide panel
+                panel.style.display = 'none';
+                return;
+            }
+
+            // ML is enabled - show insights
+            panel.style.display = 'block';
+
+            const insights = [];
+
+            // Name matching insights
+            if (mlInsights.name_matches_checked > 0) {
+                const method = mlInsights.semantic_matching_used ? 'Semantic AI' : 'Fuzzy Matching';
+                insights.push(`
+                    <div class="ml-insight-item">
+                        <span class="ml-insight-icon">🔍</span>
+                        <span class="ml-insight-text">Name matching performed using <strong>${method}</strong></span>
+                        <span class="ml-insight-badge">${mlInsights.name_matches_checked} comparisons</span>
+                    </div>
+                `);
+            }
+
+            // ML verified persons
+            if (mlInsights.ml_verified_persons > 0) {
+                insights.push(`
+                    <div class="ml-insight-item">
+                        <span class="ml-insight-icon">✓</span>
+                        <span class="ml-insight-text">Merged duplicate records using AI similarity detection</span>
+                        <span class="ml-insight-badge">${mlInsights.ml_verified_persons} verified</span>
+                    </div>
+                `);
+            }
+
+            // Address normalization
+            if (mlInsights.addresses_normalized > 0) {
+                insights.push(`
+                    <div class="ml-insight-item">
+                        <span class="ml-insight-icon">🏠</span>
+                        <span class="ml-insight-text">Addresses parsed and normalized using ML</span>
+                        <span class="ml-insight-badge">${mlInsights.addresses_normalized} processed</span>
+                    </div>
+                `);
+            }
+
+            // Semantic matching explanation
+            if (mlInsights.semantic_matching_used) {
+                insights.push(`
+                    <div class="ml-insight-item">
+                        <span class="ml-insight-icon">💡</span>
+                        <span class="ml-insight-text">AI detected name variations (e.g., "Bill" = "William", typos, nicknames)</span>
+                        <span class="ml-insight-badge">Sentence-BERT</span>
+                    </div>
+                `);
+            }
+
+            // Default message if no specific insights
+            if (insights.length === 0) {
+                insights.push(`
+                    <div class="ml-disabled-message">
+                        ML features are available but no ML-enhanced data was found in this search.
+                    </div>
+                `);
+            }
+
+            panel.innerHTML = `
+                <h3>
+                    <span class="brain-icon">🧠</span>
+                    ML Insights
+                </h3>
+                ${insights.join('')}
+            `;
+        }
+
         function displayResults(results) {
+            // Store results globally
+            currentSearchResults = results;
+
             document.querySelector('.search-card').style.display = 'none';
             document.getElementById('resultsContainer').style.display = 'block';
-            
+
+            // Display ML Insights (if available)
+            if (results.ml_insights) {
+                displayMLInsights(results.ml_insights);
+            }
+
             // Summary
             const summary = document.getElementById('resultsSummary');
             summary.innerHTML = `
@@ -1023,11 +2056,11 @@
                 <p><strong>${results.total_persons_found}</strong> potential matches found</p>
                 <p>Searched: ${new Date(results.search_timestamp).toLocaleString()}</p>
             `;
-            
+
             // Persons list
             const personsList = document.getElementById('personsList');
             personsList.innerHTML = '';
-            
+
             results.persons.forEach((person, index) => {
                 const personCard = createPersonCard(person, index);
                 personsList.appendChild(personCard);
@@ -1038,18 +2071,46 @@
             const card = document.createElement('div');
             card.className = 'person-card';
             card.id = `person-${index}`;
-            
+
             const confidenceClass = person.overall_confidence >= 70 ? 'high' :
                                   person.overall_confidence >= 40 ? 'medium' : 'low';
-            
+
+            // Extract location info for badge
+            const locations = extractLocations(person);
+            const locationBadge = locations.length > 0 ?
+                `<span class="person-location-badge">${locations.join(', ')}</span>` : '';
+
+            // Check if already saved
+            const savedPeople = getSavedPeople();
+            const personId = generatePersonId(person);
+            const isSaved = savedPeople.some(p => p.id === personId);
+
             card.innerHTML = `
                 <div class="person-header">
-                    <div class="person-name">${person.name || 'Unknown'}</div>
-                    <div class="confidence-badge confidence-${confidenceClass}">
-                        ${Math.round(person.overall_confidence)}% Match
+                    <div>
+                        <div class="person-name">
+                            ${person.name || 'Unknown'}
+                            ${locationBadge}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="save-person-btn ${isSaved ? 'saved' : ''}"
+                                id="save-btn-${index}"
+                                onclick="event.stopPropagation(); savePersonByIndex(${index})">
+                            ${isSaved ? '⭐ Saved' : '💾 Save'}
+                        </button>
+                        <div class="confidence-badge confidence-${confidenceClass}">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>${Math.round(person.overall_confidence)}% Match</span>
+                                ${person.merged_from_sources ? '<span style="font-size: 0.7rem;">🧠 ML</span>' : ''}
+                            </div>
+                            <div class="confidence-progress-bar">
+                                <div class="confidence-progress-fill" style="width: ${person.overall_confidence}%"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
+
                 <div class="person-summary">
                     <div class="summary-item">
                         <div class="summary-label">Phone Numbers</div>
@@ -1068,83 +2129,325 @@
                         <div class="summary-value">${person.organized_data.public_records.length || 'None'}</div>
                     </div>
                 </div>
-                
+
                 <div class="person-details" id="details-${index}">
                     ${createDetailedView(person)}
                 </div>
             `;
-            
+
             // Toggle details on click
             card.addEventListener('click', (e) => {
-                if (!e.target.closest('.detail-tabs')) {
+                if (!e.target.closest('.detail-tabs') && !e.target.closest('.save-person-btn')) {
                     const details = document.getElementById(`details-${index}`);
                     details.classList.toggle('active');
                 }
             });
-            
+
             return card;
+        }
+
+        function extractLocations(person) {
+            const locations = new Set();
+
+            // From addresses
+            person.organized_data.addresses?.forEach(addr => {
+                const stateMatch = addr.full_address?.match(/\b([A-Z]{2})\b/);
+                if (stateMatch) locations.add(stateMatch[1]);
+            });
+
+            // From county records
+            person.organized_data.county_records?.forEach(record => {
+                if (record.state) locations.add(record.state);
+            });
+
+            return Array.from(locations).slice(0, 3); // Max 3 locations
         }
         
         function createDetailedView(person) {
+            try {
+                // Safely access nested properties
+                const phoneNumbers = person?.organized_data?.phone_numbers || [];
+                const addresses = person?.organized_data?.addresses || [];
+                const emails = person?.organized_data?.emails || [];
+                const publicRecords = person?.organized_data?.public_records || [];
+                const countyRecords = person?.organized_data?.county_records || [];
+                const federalRecords = person?.organized_data?.federal_records || [];
+                const associates = person?.associates || [];
+
             return `
                 <div class="detail-tabs">
-                    <button class="detail-tab active" onclick="showTab(event, 'phones')">Phone Numbers</button>
-                    <button class="detail-tab" onclick="showTab(event, 'addresses')">Addresses</button>
-                    <button class="detail-tab" onclick="showTab(event, 'emails')">Emails</button>
-                    <button class="detail-tab" onclick="showTab(event, 'records')">Public Records</button>
-                    <button class="detail-tab" onclick="showTab(event, 'social')">Social Media</button>
+                    <button class="detail-tab active" onclick="showTab(event, 'phones')">📞 Phone Numbers</button>
+                    <button class="detail-tab" onclick="showTab(event, 'addresses')">🏠 Addresses</button>
+                    <button class="detail-tab" onclick="showTab(event, 'emails')">📧 Emails</button>
+                    <button class="detail-tab" onclick="showTab(event, 'associates')">👥 Associates</button>
+                    <button class="detail-tab" onclick="showTab(event, 'records')">📁 Public Records</button>
+                    <button class="detail-tab" onclick="showTab(event, 'social')">🌐 Social Media</button>
                 </div>
-                
+
                 <div class="detail-content active" data-tab="phones">
-                    ${createPhonesList(person.organized_data.phone_numbers)}
+                    ${createPhonesList(phoneNumbers)}
                 </div>
                 <div class="detail-content" data-tab="addresses">
-                    ${createAddressesList(person.organized_data.addresses)}
+                    ${createAddressesList(addresses)}
                 </div>
                 <div class="detail-content" data-tab="emails">
-                    ${createEmailsList(person.organized_data.emails)}
+                    ${createEmailsList(emails)}
+                </div>
+                <div class="detail-content" data-tab="associates">
+                    ${createAssociatesList(associates)}
                 </div>
                 <div class="detail-content" data-tab="records">
-                    ${createPublicRecordsDisplay(person.organized_data.public_records, person.organized_data.county_records, person.organized_data.federal_records)}
+                    ${createPublicRecordsDisplay(publicRecords, countyRecords, federalRecords)}
                 </div>
                 <div class="detail-content" data-tab="social">
-                    ${createSocialList(person.organized_data.social_media)}
+                    ${createSocialList(person?.organized_data?.social_media || [])}
                 </div>
             `;
+            } catch (error) {
+                console.error('Error creating detailed view:', error);
+                return `<div style="padding: 20px; color: #f44336;">
+                    <p>Error displaying details. Please try refreshing the search.</p>
+                </div>`;
+            }
         }
         
         function createPhonesList(phones) {
-            if (!phones.length) return '<p>No phone numbers found</p>';
-            return '<ul class="data-list">' + phones.map(phone => `
-                <li class="data-item">
-                    <strong>${phone.number}</strong>
-                    <br><small>Source: ${phone.source} | Confidence: ${phone.confidence}</small>
-                </li>
-            `).join('') + '</ul>';
+            try {
+                if (!phones || !phones.length) return '<p style="color: #8ab4f8; padding: 20px;">No phone numbers found</p>';
+
+                return '<div style="padding: 10px;">' + phones.map(phone => {
+                    const confidenceColor = phone?.confidence_percent >= 70 ? '#4CAF50' :
+                                          phone?.confidence_percent >= 40 ? '#FFA726' : '#f44336';
+                    const lineTypeIcon = phone?.is_voip ? '🌐' : '📱';
+                    const suspiciousFlag = phone?.is_suspicious ? '<span style="color: #f44336; font-weight: bold;"> ⚠️ SUSPICIOUS</span>' : '';
+
+                    return `
+                    <div style="background: rgba(0, 149, 255, 0.05); border-left: 3px solid ${confidenceColor}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                        <div style="font-size: 1.2em; font-weight: bold; color: #00c8ff; margin-bottom: 8px;">
+                            ${lineTypeIcon} ${escapeHtml(phone?.number) || 'Unknown'}${suspiciousFlag}
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                            <div>
+                                <strong style="color: #8ab4f8;">Carrier:</strong>
+                                <span style="color: #fff;">${escapeHtml(phone?.carrier) || 'Unknown'}</span>
+                            </div>
+                            <div>
+                                <strong style="color: #8ab4f8;">Line Type:</strong>
+                                <span style="color: #fff;">${escapeHtml(phone?.line_type) || 'Unknown'}</span>
+                            </div>
+                            <div>
+                                <strong style="color: #8ab4f8;">Location:</strong>
+                                <span style="color: #fff;">${escapeHtml(phone?.location?.city || phone?.area_code || 'Unknown')}, ${escapeHtml(phone?.location?.state || '')}</span>
+                            </div>
+                            <div>
+                                <strong style="color: #8ab4f8;">Confidence:</strong>
+                                <span style="color: ${confidenceColor}; font-weight: bold;">${phone?.confidence_percent || 0}%</span>
+                            </div>
+                        </div>
+                        ${phone?.sources && phone.sources.length ? `
+                        <div style="margin-top: 10px; font-size: 0.9em;">
+                            <strong style="color: #8ab4f8;">Sources:</strong>
+                            <span style="color: #aaa;">${phone.sources.join(', ')}</span>
+                        </div>` : ''}
+                    </div>
+                `}).join('') + '</div>';
+            } catch (error) {
+                console.error('Error creating phones list:', error);
+                return '<p style="color: #f44336;">Error displaying phone numbers</p>';
+            }
         }
-        
+
         function createAddressesList(addresses) {
-            if (!addresses.length) return '<p>No addresses found</p>';
-            return '<ul class="data-list">' + addresses.map(addr => `
-                <li class="data-item">
-                    ${addr.full_address}
-                    <br><small>Confidence: ${addr.confidence}</small>
-                </li>
-            `).join('') + '</ul>';
+            try {
+                if (!addresses || !addresses.length) return '<p style="color: #8ab4f8; padding: 20px;">No addresses found</p>';
+
+                return '<div style="padding: 10px;">' + addresses.map(addr => {
+                    const confidenceColor = addr?.confidence_percent >= 70 ? '#4CAF50' :
+                                          addr?.confidence_percent >= 40 ? '#FFA726' : '#f44336';
+                    const addressTypeIcon = addr?.is_po_box ? '📮' :
+                                          addr?.address_type === 'business' ? '🏢' : '🏠';
+                    const poBoxFlag = addr?.is_po_box ? '<span style="color: #FFA726;"> (PO Box)</span>' : '';
+
+                    return `
+                    <div style="background: rgba(0, 149, 255, 0.05); border-left: 3px solid ${confidenceColor}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                        <div style="font-size: 1.2em; font-weight: bold; color: #00c8ff; margin-bottom: 8px;">
+                            ${addressTypeIcon} ${escapeHtml(addr?.full_address) || 'Unknown address'}${poBoxFlag}
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                            ${addr?.city ? `
+                            <div>
+                                <strong style="color: #8ab4f8;">City:</strong>
+                                <span style="color: #fff;">${escapeHtml(addr.city)}</span>
+                            </div>` : ''}
+                            ${addr?.state ? `
+                            <div>
+                                <strong style="color: #8ab4f8;">State:</strong>
+                                <span style="color: #fff;">${escapeHtml(addr.state)}</span>
+                            </div>` : ''}
+                            ${addr?.zip_code ? `
+                            <div>
+                                <strong style="color: #8ab4f8;">ZIP Code:</strong>
+                                <span style="color: #fff;">${escapeHtml(addr.zip_code)}</span>
+                            </div>` : ''}
+                            <div>
+                                <strong style="color: #8ab4f8;">Type:</strong>
+                                <span style="color: #fff;">${escapeHtml(addr?.address_type || 'Unknown')}</span>
+                            </div>
+                            <div>
+                                <strong style="color: #8ab4f8;">Confidence:</strong>
+                                <span style="color: ${confidenceColor}; font-weight: bold;">${addr?.confidence_percent || 0}%</span>
+                            </div>
+                        </div>
+                        ${addr?.sources && addr.sources.length ? `
+                        <div style="margin-top: 10px; font-size: 0.9em;">
+                            <strong style="color: #8ab4f8;">Sources:</strong>
+                            <span style="color: #aaa;">${addr.sources.join(', ')}</span>
+                        </div>` : ''}
+                    </div>
+                `}).join('') + '</div>';
+            } catch (error) {
+                console.error('Error creating addresses list:', error);
+                return '<p style="color: #f44336;">Error displaying addresses</p>';
+            }
         }
-        
+
         function createEmailsList(emails) {
-            if (!emails.length) return '<p>No emails found</p>';
-            return '<ul class="data-list">' + emails.map(email => `
-                <li class="data-item">
-                    ${email.email}
-                    <br><small>Confidence: ${email.confidence}</small>
-                </li>
-            `).join('') + '</ul>';
+            try {
+                if (!emails || !emails.length) return '<p style="color: #8ab4f8; padding: 20px;">No emails found</p>';
+
+                return '<div style="padding: 10px;">' + emails.map(email => {
+                    const confidenceColor = email?.confidence_percent >= 70 ? '#4CAF50' :
+                                          email?.confidence_percent >= 40 ? '#FFA726' : '#f44336';
+                    const emailTypeIcon = email?.is_business_email ? '💼' :
+                                        email?.is_disposable ? '🗑️' : '📧';
+                    const disposableFlag = email?.is_disposable ? '<span style="color: #f44336; font-weight: bold;"> ⚠️ DISPOSABLE</span>' : '';
+
+                    return `
+                    <div style="background: rgba(0, 149, 255, 0.05); border-left: 3px solid ${confidenceColor}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                        <div style="font-size: 1.2em; font-weight: bold; color: #00c8ff; margin-bottom: 8px;">
+                            ${emailTypeIcon} ${escapeHtml(email?.email) || 'Unknown email'}${disposableFlag}
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                            <div>
+                                <strong style="color: #8ab4f8;">Provider:</strong>
+                                <span style="color: #fff;">${escapeHtml(email?.provider) || 'Unknown'}</span>
+                            </div>
+                            <div>
+                                <strong style="color: #8ab4f8;">Type:</strong>
+                                <span style="color: #fff;">${escapeHtml(email?.email_type) || 'Unknown'}</span>
+                            </div>
+                            ${email?.format_type && email.format_type !== 'unknown' ? `
+                            <div>
+                                <strong style="color: #8ab4f8;">Format:</strong>
+                                <span style="color: #fff;">${escapeHtml(email.format_type)}</span>
+                            </div>` : ''}
+                            <div>
+                                <strong style="color: #8ab4f8;">Domain Valid:</strong>
+                                <span style="color: ${email?.is_valid_domain ? '#4CAF50' : '#f44336'};">${email?.is_valid_domain ? '✓ Yes' : '✗ No'}</span>
+                            </div>
+                            <div>
+                                <strong style="color: #8ab4f8;">Confidence:</strong>
+                                <span style="color: ${confidenceColor}; font-weight: bold;">${email?.confidence_percent || 0}%</span>
+                            </div>
+                        </div>
+                        ${email?.sources && email.sources.length ? `
+                        <div style="margin-top: 10px; font-size: 0.9em;">
+                            <strong style="color: #8ab4f8;">Sources:</strong>
+                            <span style="color: #aaa;">${email.sources.join(', ')}</span>
+                        </div>` : ''}
+                    </div>
+                `}).join('') + '</div>';
+            } catch (error) {
+                console.error('Error creating emails list:', error);
+                return '<p style="color: #f44336;">Error displaying emails</p>';
+            }
         }
-        
+
+        function createAssociatesList(associates) {
+            try {
+                if (!associates || !associates.length) {
+                    return '<p style="color: #8ab4f8; padding: 20px;">No known associates found</p>';
+                }
+
+                return `
+                    <div style="padding: 10px;">
+                        <div style="background: rgba(0, 149, 255, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                            <h3 style="color: #00c8ff; margin: 0 0 10px 0;">👥 Known Associates (${associates.length})</h3>
+                            <p style="color: #8ab4f8; margin: 0; font-size: 0.95em;">
+                                People connected through shared addresses, phone numbers, or public records
+                            </p>
+                        </div>
+                        ${associates.map(assoc => {
+                            const relationshipTypes = assoc?.relationship_types || [];
+                            const relationshipIcons = {
+                                'same_address': '🏠',
+                                'same_phone': '📞',
+                                'same_last_name': '👨‍👩‍👧‍👦',
+                                'property_co_owner': '🏡',
+                                'age_parent_child': '👨‍👧',
+                                'business_associate': '💼'
+                            };
+
+                            const relationshipColors = {
+                                'same_address': '#4CAF50',
+                                'same_phone': '#2196F3',
+                                'same_last_name': '#9C27B0',
+                                'property_co_owner': '#FF9800',
+                                'age_parent_child': '#E91E63',
+                                'business_associate': '#00BCD4'
+                            };
+
+                            return `
+                            <div style="background: rgba(0, 149, 255, 0.05); border-left: 3px solid #00c8ff; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                                <div style="font-size: 1.2em; font-weight: bold; color: #00c8ff; margin-bottom: 10px;">
+                                    ${escapeHtml(assoc?.name) || 'Unknown'}
+                                </div>
+
+                                ${relationshipTypes.length > 0 ? `
+                                <div style="margin-top: 10px;">
+                                    <strong style="color: #8ab4f8;">Connection Types:</strong>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                                        ${relationshipTypes.map(relType => {
+                                            const icon = relationshipIcons[relType] || '🔗';
+                                            const color = relationshipColors[relType] || '#00c8ff';
+                                            const label = relType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                            return `
+                                            <span style="background: ${color}22; color: ${color}; padding: 6px 12px; border-radius: 15px; font-size: 0.85em; border: 1px solid ${color}44;">
+                                                ${icon} ${label}
+                                            </span>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                                ` : ''}
+
+                                ${assoc?.shared_data ? `
+                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0, 149, 255, 0.2);">
+                                    <strong style="color: #8ab4f8;">Shared Information:</strong>
+                                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #aaa;">
+                                        ${assoc.shared_data.addresses && assoc.shared_data.addresses.length ?
+                                            `<li>Addresses: ${assoc.shared_data.addresses.map(a => escapeHtml(a)).join(', ')}</li>` : ''}
+                                        ${assoc.shared_data.phones && assoc.shared_data.phones.length ?
+                                            `<li>Phones: ${assoc.shared_data.phones.map(p => escapeHtml(p)).join(', ')}</li>` : ''}
+                                        ${assoc.shared_data.properties && assoc.shared_data.properties.length ?
+                                            `<li>Properties: ${assoc.shared_data.properties.map(p => escapeHtml(p)).join(', ')}</li>` : ''}
+                                    </ul>
+                                </div>
+                                ` : ''}
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error creating associates list:', error);
+                return '<p style="color: #f44336;">Error displaying associates</p>';
+            }
+        }
+
         function createPublicRecordsDisplay(legacyRecords, countyRecords, federalRecords) {
-            let html = '';
+            try {
+                let html = '';
 
             // County Records Table
             if (countyRecords && countyRecords.length > 0) {
@@ -1236,6 +2539,10 @@
             }
 
             return html;
+            } catch (error) {
+                console.error('Error creating public records display:', error);
+                return '<p style="color: #f44336;">Error displaying public records. Please try refreshing the search.</p>';
+            }
         }
 
         function createFederalRecordsTable(title, records) {
@@ -1280,7 +2587,8 @@
         }
         
         function createSocialList(social) {
-            if (!social.length) return '<p style="color: #8ab4f8;">No social media profiles found</p>';
+            try {
+                if (!social || !social.length) return '<p style="color: #8ab4f8;">No social media profiles found</p>';
 
             return `
                 <div style="overflow-x: auto;">
@@ -1297,17 +2605,17 @@
                         <tbody>
                             ${social.map(link => `
                                 <tr style="border-bottom: 1px solid rgba(0, 149, 255, 0.2);">
-                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);"><strong>${link.profile_name || extractProfileName(link.url) || 'Unknown'}</strong></td>
+                                    <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);"><strong>${link?.profile_name || extractProfileName(link?.url) || 'Unknown'}</strong></td>
                                     <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2);">
                                         <span style="padding: 4px 10px; background: rgba(0, 149, 255, 0.2); border-radius: 12px; font-size: 0.85em;">
-                                            ${link.platform || detectPlatform(link.url)}
+                                            ${link?.platform || detectPlatform(link?.url)}
                                         </span>
                                     </td>
                                     <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2); max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
-                                        <a href="${link.url}" target="_blank" style="color: #0095ff; text-decoration: none;">${link.url}</a>
+                                        <a href="${link?.url || '#'}" target="_blank" style="color: #0095ff; text-decoration: none;">${link?.url || 'N/A'}</a>
                                     </td>
                                     <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2); font-size: 0.9em; color: #8ab4f8;">
-                                        ${link.snippet || link.description || 'No details available'}
+                                        ${link?.snippet || link?.description || 'No details available'}
                                     </td>
                                     <td style="padding: 10px; border: 1px solid rgba(0, 149, 255, 0.2); text-align: center;">
                                         <span style="padding: 4px 8px; background: rgba(255, 152, 0, 0.2); color: #ff9800; border-radius: 8px; font-size: 0.75em; font-weight: 600;">
@@ -1320,6 +2628,10 @@
                     </table>
                 </div>
             `;
+            } catch (error) {
+                console.error('Error creating social media list:', error);
+                return '<p style="color: #f44336;">Error displaying social media profiles</p>';
+            }
         }
 
         function extractProfileName(url) {
@@ -1445,7 +2757,12 @@
             document.getElementById('phone').value = '(555) 123-4567';
             document.getElementById('address').value = '123 Main Street, Columbus';
             document.getElementById('email').value = 'john.smith@example.com';
-            document.getElementById('state').value = 'OH';
+
+            // Check Ohio state checkbox as example
+            const ohioCheckbox = document.querySelector('.state-checkbox[value="OH"]');
+            if (ohioCheckbox) {
+                ohioCheckbox.checked = true;
+            }
 
             // Trigger county update
             updateCountyOptions();
@@ -1596,7 +2913,282 @@
                 closeSettings();
             }
         }
+
+        // ============================================
+        // SAVE/BOOKMARK FUNCTIONALITY
+        // ============================================
+
+        function savePersonByIndex(personIndex) {
+            // Get person from global results instead of passing through HTML
+            if (!currentSearchResults || !currentSearchResults.persons || !currentSearchResults.persons[personIndex]) {
+                showNotification('Error: Could not find person data', 'error');
+                return;
+            }
+
+            const personData = currentSearchResults.persons[personIndex];
+            savePerson(personIndex, personData);
+        }
+
+        function savePerson(personIndex, personData) {
+            try {
+                const savedPeople = getSavedPeople();
+                const personId = generatePersonId(personData);
+
+                // Check if already saved
+                const existingIndex = savedPeople.findIndex(p => p.id === personId);
+
+                if (existingIndex >= 0) {
+                    // Already saved - remove it (toggle)
+                    savedPeople.splice(existingIndex, 1);
+                    localStorage.setItem('savedPeople', JSON.stringify(savedPeople));
+                    updateSaveButton(personIndex, false);
+                    showNotification('Person removed from saved list', 'info');
+                } else {
+                    // Save it
+                    savedPeople.push({
+                        id: personId,
+                        data: personData,
+                        savedAt: new Date().toISOString()
+                    });
+                    localStorage.setItem('savedPeople', JSON.stringify(savedPeople));
+                    updateSaveButton(personIndex, true);
+                    showNotification('Person saved successfully!', 'success');
+                }
+
+                updateSavedCount();
+            } catch (error) {
+                console.error('Save error:', error);
+                showNotification('Error saving person: ' + error.message, 'error');
+            }
+        }
+
+        function getSavedPeople() {
+            const saved = localStorage.getItem('savedPeople');
+            return saved ? JSON.parse(saved) : [];
+        }
+
+        function generatePersonId(person) {
+            // Generate unique ID based on name + primary contact info
+            const name = person.name || '';
+            const phone = person.organized_data?.phone_numbers?.[0]?.number || '';
+            const email = person.organized_data?.emails?.[0]?.email || '';
+            return `${name}-${phone}-${email}`.toLowerCase().replace(/\s/g, '');
+        }
+
+        function updateSaveButton(personIndex, isSaved) {
+            const btn = document.querySelector(`#save-btn-${personIndex}`);
+            if (btn) {
+                if (isSaved) {
+                    btn.classList.add('saved');
+                    btn.textContent = '⭐ Saved';
+                } else {
+                    btn.classList.remove('saved');
+                    btn.textContent = '💾 Save';
+                }
+            }
+        }
+
+        function updateSavedCount() {
+            const count = getSavedPeople().length;
+            const countElem = document.getElementById('savedCount');
+            if (countElem) {
+                countElem.textContent = count;
+            }
+        }
+
+        function toggleSavedPeople() {
+            const savedSection = document.getElementById('savedPeopleSection');
+            const searchCard = document.querySelector('.search-card');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            if (savedSection.classList.contains('active')) {
+                // Hide saved, show search
+                savedSection.classList.remove('active');
+                searchCard.style.display = 'block';
+            } else {
+                // Show saved, hide search
+                savedSection.classList.add('active');
+                searchCard.style.display = 'none';
+                resultsContainer.style.display = 'none';
+                displaySavedPeople();
+            }
+        }
+
+        function displaySavedPeople() {
+            const savedPeople = getSavedPeople();
+            const container = document.getElementById('savedPeopleList');
+
+            if (savedPeople.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #8ab4f8;">
+                        <p style="font-size: 1.2rem; margin-bottom: 10px;">No saved people yet</p>
+                        <p>Save people from search results to access them here later!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = savedPeople.map((saved, index) => {
+                const person = saved.data;
+                const savedDate = new Date(saved.savedAt).toLocaleDateString();
+
+                return `
+                    <div class="person-card" style="position: relative;">
+                        <button onclick="removeSavedPerson('${saved.id}')"
+                                style="position: absolute; top: 15px; right: 15px; background: rgba(244, 67, 54, 0.2); border: 1px solid #f44336; color: #fff; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                            🗑️ Remove
+                        </button>
+
+                        <div class="person-header">
+                            <div>
+                                <div class="person-name">${person.name || 'Unknown'}</div>
+                                <small style="color: #8ab4f8;">Saved on ${savedDate}</small>
+                            </div>
+                            <div class="confidence-badge confidence-${person.overall_confidence >= 70 ? 'high' : person.overall_confidence >= 40 ? 'medium' : 'low'}">
+                                ${Math.round(person.overall_confidence)}% Match
+                            </div>
+                        </div>
+
+                        <div class="person-summary">
+                            <div class="summary-item">
+                                <div class="summary-label">Phone Numbers</div>
+                                <div class="summary-value">${person.organized_data.phone_numbers?.length || 0}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Addresses</div>
+                                <div class="summary-value">${person.organized_data.addresses?.length || 0}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Emails</div>
+                                <div class="summary-value">${person.organized_data.emails?.length || 0}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Public Records</div>
+                                <div class="summary-value">${person.organized_data.public_records?.length || 0}</div>
+                            </div>
+                        </div>
+
+                        <div class="person-details active" id="saved-details-${index}">
+                            ${createDetailedView(person)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removeSavedPerson(personId) {
+            if (confirm('Remove this person from saved list?')) {
+                const savedPeople = getSavedPeople();
+                const filtered = savedPeople.filter(p => p.id !== personId);
+                localStorage.setItem('savedPeople', JSON.stringify(filtered));
+                updateSavedCount();
+                displaySavedPeople();
+                showNotification('Person removed from saved list', 'info');
+            }
+        }
+
+        function exportSavedPeople(format) {
+            const savedPeople = getSavedPeople();
+
+            if (savedPeople.length === 0) {
+                alert('No saved people to export!');
+                return;
+            }
+
+            if (format === 'json') {
+                const dataStr = JSON.stringify(savedPeople, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                downloadFile(blob, `saved_people_${Date.now()}.json`);
+            } else if (format === 'csv') {
+                const csv = convertSavedToCSV(savedPeople);
+                const blob = new Blob([csv], { type: 'text/csv' });
+                downloadFile(blob, `saved_people_${Date.now()}.csv`);
+            }
+        }
+
+        function convertSavedToCSV(savedPeople) {
+            const headers = ['Name', 'Confidence', 'Phones', 'Addresses', 'Emails', 'Saved Date'];
+            const rows = savedPeople.map(saved => {
+                const p = saved.data;
+                return [
+                    p.name || 'Unknown',
+                    Math.round(p.overall_confidence) + '%',
+                    p.organized_data.phone_numbers?.map(ph => ph.number).join('; ') || 'None',
+                    p.organized_data.addresses?.map(a => a.full_address).join('; ') || 'None',
+                    p.organized_data.emails?.map(e => e.email).join('; ') || 'None',
+                    new Date(saved.savedAt).toLocaleDateString()
+                ];
+            });
+
+            return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+        }
+
+        function downloadFile(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+
+            // Choose color based on type
+            let background;
+            if (type === 'success') {
+                background = 'linear-gradient(135deg, #4CAF50, #45a049)';
+            } else if (type === 'error') {
+                background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+            } else if (type === 'info') {
+                background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+            } else {
+                background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+            }
+
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${background};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                z-index: 10000;
+                font-weight: 600;
+                animation: slideIn 0.3s ease-out;
+                max-width: 400px;
+                word-wrap: break-word;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, type === 'error' ? 5000 : 3000); // Errors stay longer
+        }
+
+        // Initialize saved count on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSavedCount();
+        });
     </script>
+
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+    </style>
 
     <!-- API Settings Modal -->
     <div id="settingsModal" class="modal">

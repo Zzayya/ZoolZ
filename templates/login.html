@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoolZ - Enter the Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cinzel', serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* EPIC ANIMATED BACKGROUND */
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        /* Gradient layers */
+        .bg-gradient {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg,
+                #0a0e1a 0%,
+                #1a0a2e 25%,
+                #16213e 50%,
+                #0f3460 75%,
+                #1a0a2e 100%);
+            animation: gradientShift 20s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(30deg); }
+        }
+
+        /* Animated mountains */
+        .mountains {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(to bottom, transparent, #0a0e1a);
+        }
+
+        .mountain {
+            position: absolute;
+            bottom: 0;
+            width: 0;
+            height: 0;
+            border-left: 300px solid transparent;
+            border-right: 300px solid transparent;
+            border-bottom: 400px solid rgba(10, 14, 26, 0.9);
+            filter: drop-shadow(0 0 20px rgba(100, 50, 200, 0.3));
+        }
+
+        .mountain-1 {
+            left: -100px;
+            animation: mountainFloat1 15s ease-in-out infinite;
+        }
+
+        .mountain-2 {
+            left: 30%;
+            border-bottom-color: rgba(15, 20, 40, 0.8);
+            transform: scale(0.8);
+            animation: mountainFloat2 18s ease-in-out infinite;
+        }
+
+        .mountain-3 {
+            right: -50px;
+            border-bottom-color: rgba(20, 25, 50, 0.85);
+            transform: scale(1.2);
+            animation: mountainFloat3 20s ease-in-out infinite;
+        }
+
+        @keyframes mountainFloat1 {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes mountainFloat2 {
+            0%, 100% { transform: scale(0.8) translateY(0px); }
+            50% { transform: scale(0.8) translateY(-15px); }
+        }
+
+        @keyframes mountainFloat3 {
+            0%, 100% { transform: scale(1.2) translateY(0px); }
+            50% { transform: scale(1.2) translateY(-10px); }
+        }
+
+        /* Lightning strikes */
+        .lightning {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom,
+                rgba(255, 255, 255, 0),
+                rgba(255, 255, 255, 1),
+                rgba(150, 150, 255, 1),
+                rgba(255, 255, 255, 0));
+            box-shadow:
+                0 0 20px rgba(255, 255, 255, 0.8),
+                0 0 40px rgba(150, 150, 255, 0.6),
+                0 0 60px rgba(100, 100, 255, 0.4);
+            opacity: 0;
+            animation: lightning 8s ease-in-out infinite;
+        }
+
+        .lightning-1 {
+            left: 20%;
+            animation-delay: 0s;
+        }
+
+        .lightning-2 {
+            left: 50%;
+            animation-delay: 3s;
+        }
+
+        .lightning-3 {
+            right: 25%;
+            animation-delay: 6s;
+        }
+
+        @keyframes lightning {
+            0%, 90%, 100% { opacity: 0; }
+            91%, 92% { opacity: 1; }
+            93%, 94% { opacity: 0.3; }
+            95% { opacity: 1; }
+        }
+
+        /* Floating particles (magic dust) */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 215, 0, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+            animation: particleFloat 10s ease-in-out infinite;
+        }
+
+        @keyframes particleFloat {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            50% {
+                transform: translateY(-100vh) translateX(50px);
+                opacity: 1;
+            }
+            90% { opacity: 0; }
+        }
+
+        /* Wizard silhouettes */
+        .wizards {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .wizard {
+            position: absolute;
+            font-size: 80px;
+            opacity: 0.15;
+            filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.5));
+            animation: wizardFloat 25s ease-in-out infinite;
+        }
+
+        .wizard-1 {
+            left: 10%;
+            bottom: 15%;
+            animation-delay: 0s;
+        }
+
+        .wizard-2 {
+            right: 15%;
+            bottom: 20%;
+            font-size: 100px;
+            animation-delay: 8s;
+        }
+
+        .wizard-3 {
+            left: 50%;
+            bottom: 10%;
+            font-size: 60px;
+            animation-delay: 15s;
+        }
+
+        @keyframes wizardFloat {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                opacity: 0.15;
+            }
+            50% {
+                transform: translateY(-30px) scale(1.1);
+                opacity: 0.25;
+            }
+        }
+
+        /* Stars */
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+            animation: starTwinkle 3s ease-in-out infinite;
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        /* LOGIN CONTAINER */
+        .login-container {
+            position: relative;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .login-box {
+            background: rgba(30, 30, 40, 0.85);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            padding: 60px 80px;
+            box-shadow:
+                0 0 60px rgba(255, 215, 0, 0.2),
+                0 0 100px rgba(138, 43, 226, 0.15),
+                inset 0 0 60px rgba(0, 0, 0, 0.3);
+            animation: boxGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes boxGlow {
+            0%, 100% {
+                box-shadow:
+                    0 0 60px rgba(255, 215, 0, 0.2),
+                    0 0 100px rgba(138, 43, 226, 0.15),
+                    inset 0 0 60px rgba(0, 0, 0, 0.3);
+            }
+            50% {
+                box-shadow:
+                    0 0 80px rgba(255, 215, 0, 0.4),
+                    0 0 120px rgba(138, 43, 226, 0.25),
+                    inset 0 0 60px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        .title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #FFD700;
+            text-align: center;
+            margin-bottom: 40px;
+            text-shadow:
+                0 0 20px rgba(255, 215, 0, 0.8),
+                0 0 40px rgba(255, 215, 0, 0.4),
+                0 0 60px rgba(138, 43, 226, 0.3);
+            letter-spacing: 3px;
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% {
+                text-shadow:
+                    0 0 20px rgba(255, 215, 0, 0.8),
+                    0 0 40px rgba(255, 215, 0, 0.4),
+                    0 0 60px rgba(138, 43, 226, 0.3);
+            }
+            50% {
+                text-shadow:
+                    0 0 30px rgba(255, 215, 0, 1),
+                    0 0 60px rgba(255, 215, 0, 0.6),
+                    0 0 80px rgba(138, 43, 226, 0.5);
+            }
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: rgba(255, 215, 0, 0.7);
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .passkey-input {
+            width: 300px;
+            padding: 18px 24px;
+            font-size: 1.5rem;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 8px;
+            text-align: center;
+            background: rgba(50, 50, 60, 0.9);
+            border: 2px solid rgba(255, 215, 0, 0.4);
+            border-radius: 12px;
+            color: #FFD700;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow:
+                inset 0 4px 10px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(255, 215, 0, 0.1);
+        }
+
+        .passkey-input:focus {
+            border-color: #FFD700;
+            box-shadow:
+                inset 0 4px 10px rgba(0, 0, 0, 0.5),
+                0 0 30px rgba(255, 215, 0, 0.4),
+                0 0 60px rgba(138, 43, 226, 0.2);
+            transform: scale(1.02);
+        }
+
+        .passkey-input::placeholder {
+            color: rgba(255, 215, 0, 0.3);
+            letter-spacing: 3px;
+        }
+
+        .enter-btn {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(138, 43, 226, 0.2));
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            border-radius: 12px;
+            color: #FFD700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .enter-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(138, 43, 226, 0.3));
+            border-color: #FFD700;
+            box-shadow:
+                0 0 30px rgba(255, 215, 0, 0.4),
+                0 0 60px rgba(138, 43, 226, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .enter-btn:active {
+            transform: translateY(0px);
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .error-message.show {
+            opacity: 1;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Success animation */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle,
+                rgba(255, 215, 0, 0.3),
+                rgba(138, 43, 226, 0.3),
+                transparent);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .success-overlay.active {
+            opacity: 1;
+            animation: successPulse 1s ease;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { transform: scale(1); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .welcome-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 4rem;
+            color: #FFD700;
+            text-shadow:
+                0 0 40px rgba(255, 215, 0, 1),
+                0 0 80px rgba(255, 215, 0, 0.6);
+            z-index: 1001;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .welcome-text.show {
+            animation: welcomeFade 2s ease;
+        }
+
+        @keyframes welcomeFade {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <!-- EPIC BACKGROUND -->
+    <div class="background-container">
+        <div class="bg-gradient"></div>
+
+        <!-- Mountains -->
+        <div class="mountains">
+            <div class="mountain mountain-1"></div>
+            <div class="mountain mountain-2"></div>
+            <div class="mountain mountain-3"></div>
+        </div>
+
+        <!-- Lightning -->
+        <div class="lightning lightning-1"></div>
+        <div class="lightning lightning-2"></div>
+        <div class="lightning lightning-3"></div>
+
+        <!-- Wizards -->
+        <div class="wizards">
+            <div class="wizard wizard-1">🧙‍♂️</div>
+            <div class="wizard wizard-2">🧙‍♂️</div>
+            <div class="wizard wizard-3">🧙‍♀️</div>
+        </div>
+
+        <!-- Stars -->
+        <div class="stars" id="starsContainer"></div>
+
+        <!-- Particles -->
+        <div class="particles" id="particlesContainer"></div>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="login-container">
+        <div class="login-box">
+            <h1 class="title">ENTER PASSWORD TO PROCEED</h1>
+            <p class="subtitle">ZoolZ Hub</p>
+
+            <div class="input-wrapper">
+                <input
+                    type="password"
+                    id="passkeyInput"
+                    class="passkey-input"
+                    placeholder="••••••"
+                    maxlength="6"
+                    autocomplete="off"
+                    autofocus
+                >
+            </div>
+
+            <button class="enter-btn" onclick="checkPasskey()">Enter the Studio</button>
+
+            <div class="error-message" id="errorMessage">Invalid passkey. Try again.</div>
+        </div>
+    </div>
+
+    <!-- Success animation -->
+    <div class="success-overlay" id="successOverlay"></div>
+    <div class="welcome-text" id="welcomeText">Welcome, Zay</div>
+
+    <script>
+        // User database (passkey → user)
+        const USERS = {
+            '442767': {
+                name: 'Zay',
+                fullName: 'Isaiah',
+                role: 'Creator'
+            }
+        };
+
+        // Generate stars
+        function generateStars() {
+            const container = document.getElementById('starsContainer');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                container.appendChild(star);
+            }
+        }
+
+        // Generate floating particles
+        function generateParticles() {
+            const container = document.getElementById('particlesContainer');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.bottom = '0px';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (8 + Math.random() * 4) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // Check passkey
+        function checkPasskey() {
+            const input = document.getElementById('passkeyInput');
+            const passkey = input.value.trim();
+            const errorMsg = document.getElementById('errorMessage');
+            const successOverlay = document.getElementById('successOverlay');
+            const welcomeText = document.getElementById('welcomeText');
+
+            if (USERS[passkey]) {
+                const user = USERS[passkey];
+
+                // Hide error
+                errorMsg.classList.remove('show');
+
+                // Show success animation
+                successOverlay.classList.add('active');
+                welcomeText.textContent = `Welcome, ${user.name}`;
+                welcomeText.classList.add('show');
+
+                // Store user session
+                sessionStorage.setItem('zoolz_user', JSON.stringify(user));
+                sessionStorage.setItem('zoolz_authenticated', 'true');
+
+                // Redirect after animation
+                setTimeout(() => {
+                    window.location.href = '/hub';
+                }, 2000);
+            } else {
+                // Show error
+                errorMsg.classList.add('show');
+                input.value = '';
+                input.focus();
+
+                // Shake the box
+                document.querySelector('.login-box').style.animation = 'shake 0.5s ease';
+                setTimeout(() => {
+                    document.querySelector('.login-box').style.animation = '';
+                }, 500);
+
+                setTimeout(() => {
+                    errorMsg.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // Enter key to submit
+        document.getElementById('passkeyInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkPasskey();
+            }
+        });
+
+        // Initialize
+        generateStars();
+        generateParticles();
+
+        // Check if already authenticated
+        if (sessionStorage.getItem('zoolz_authenticated') === 'true') {
+            window.location.href = '/hub';
+        }
+    </script>
+</body>
+</html>
