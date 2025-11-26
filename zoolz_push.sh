@@ -65,25 +65,39 @@ Package.resolved
 GITIGNORE
 fi
 
-git add -A
-msg="${1:-Update project}" # Default commit message if none provided
-git commit -m "$msg" || true
-git branch -M main
+# Function to push changes
+push_changes() {
+  git add -A
+  msg="${1:-Update project}" # Default commit message if none provided
+  git commit -m "$msg" || true
+  git branch -M main
 
-# --- ensure a REAL repo named "ZoolZ" exists, then push to it (SSH) ---
-# Try to create it every time; if it already exists, ignore the error.
-if ! gh repo view "${repo_name}" >/dev/null 2>&1; then
-  echo "📦 Creating repository '${repo_name}' on GitHub..."
-  gh repo create "${repo_name}" --private
-fi
+  # Ensure a REAL repo named "ZoolZ" exists, then push to it (SSH)
+  if ! gh repo view "${repo_name}" >/dev/null 2>&1; then
+    echo "📦 Creating repository '${repo_name}' on GitHub..."
+    gh repo create "${repo_name}" --private
+  fi
 
-git remote remove origin 2>/dev/null || true
-git remote add origin "git@github.com:${repo}.git"
+  git remote remove origin 2>/dev/null || true
+  git remote add origin "git@github.com:${repo}.git"
 
-# Attempt to push and log errors for problematic files
-echo "🚀 Pushing to GitHub..."
-if ! git push -u origin main --force 2>push_errors.log; then
-  echo "❌ Some files could not be pushed. Check 'push_errors.log' for details."
+  # Attempt to push and log errors for problematic files
+  echo "🚀 Pushing to GitHub..."
+  if ! git push -u origin main --force 2>push_errors.log; then
+    echo "❌ Some files could not be pushed. Check 'push_errors.log' for details."
+  else
+    echo "✅ Done. Remote: https://github.com/${repo}"
+  fi
+}
+
+# --- Main Script ---
+if [[ "${1:-}" == "--loop" ]]; then
+  interval="${2:-180}" # Default to 180 seconds (3 minutes) if no interval is provided
+  echo "🔄 Running in loop mode. Interval: ${interval} seconds."
+  while true; do
+    push_changes "Auto-update"
+    sleep "$interval"
+  done
 else
-  echo "✅ Done. Remote: https://github.com/${repo}"
+  push_changes "${1:-Update project}"
 fi

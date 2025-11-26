@@ -557,7 +557,7 @@
         }
 
         // Check passkey
-        function checkPasskey() {
+        async function checkPasskey() {
             const input = document.getElementById('passkeyInput');
             const passkey = input.value.trim();
             const errorMsg = document.getElementById('errorMessage');
@@ -575,16 +575,41 @@
                 welcomeText.textContent = `Welcome, ${user.name}`;
                 welcomeText.classList.add('show');
 
-                // Store user session
-                sessionStorage.setItem('zoolz_user', JSON.stringify(user));
-                sessionStorage.setItem('zoolz_authenticated', 'true');
+                // Call backend API to set Flask session
+                try {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            passkey: passkey,
+                            user: user
+                        })
+                    });
 
-                // Redirect after animation
-                setTimeout(() => {
-                    window.location.href = '/hub';
-                }, 2000);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Store in sessionStorage for quick checks
+                        sessionStorage.setItem('zoolz_user', JSON.stringify(user));
+                        sessionStorage.setItem('zoolz_authenticated', 'true');
+
+                        // Redirect after animation
+                        setTimeout(() => {
+                            window.location.href = '/hub';
+                        }, 2000);
+                    } else {
+                        throw new Error(data.message || 'Login failed');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    errorMsg.textContent = 'Connection error. Please try again.';
+                    errorMsg.classList.add('show');
+                }
             } else {
                 // Show error
+                errorMsg.textContent = 'Invalid passkey. Try again.';
                 errorMsg.classList.add('show');
                 input.value = '';
                 input.focus();
@@ -612,10 +637,8 @@
         generateStars();
         generateParticles();
 
-        // Check if already authenticated
-        if (sessionStorage.getItem('zoolz_authenticated') === 'true') {
-            window.location.href = '/hub';
-        }
+        // Note: Backend handles authentication check and redirect
+        // No client-side auto-redirect to prevent loops
     </script>
 </body>
 </html>

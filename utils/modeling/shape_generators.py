@@ -353,6 +353,173 @@ class ShapeGenerator:
         handle_mesh = trimesh.util.concatenate([handle_mesh, end1, end2])
         return handle_mesh
 
+    @staticmethod
+    def drainage_tray(
+        diameter: float = 100.0,
+        base_thickness: float = 3.0,
+        rim_height: float = 5.0,
+        rim_thickness: float = 2.0,
+        num_channels: int = 8,
+        channel_width: float = 2.0,
+        channel_depth: float = 1.0,
+        spout_width: float = 15.0,
+        spout_length: float = 20.0,
+        spout_angle: float = 15.0,  # degrees downward
+        center_drain_diameter: float = 10.0
+    ) -> trimesh.Trimesh:
+        """
+        Generate a circular drainage tray with radial channels and a spout
+        Perfect for sponge holders, soap dishes, etc.
+
+        Args:
+            diameter: Overall diameter of tray (mm)
+            base_thickness: Thickness of the base plate (mm)
+            rim_height: Height of the outer rim (mm)
+            rim_thickness: Thickness of the rim wall (mm)
+            num_channels: Number of radial drainage channels
+            channel_width: Width of each channel (mm)
+            channel_depth: Depth of each channel (mm)
+            spout_width: Width of drainage spout (mm)
+            spout_length: Length of drainage spout extending outward (mm)
+            spout_angle: Downward angle of spout for drainage (degrees)
+            center_drain_diameter: Diameter of central drain hole (mm)
+
+        Returns:
+            Drainage tray mesh
+        """
+        logger.info(f"Generating drainage tray: {diameter}mm diameter, {num_channels} channels")
+
+        radius = diameter / 2.0
+
+        # 1. Create base plate (flat cylinder)
+        base = trimesh.creation.cylinder(
+            radius=radius,
+            height=base_thickness,
+            sections=64
+        )
+        # Position so top surface is at z=0
+        base.apply_translation([0, 0, -base_thickness/2])
+
+        # 2. Create outer rim
+        outer_rim = trimesh.creation.cylinder(
+            radius=radius,
+            height=rim_height,
+            sections=64
+        )
+        outer_rim.apply_translation([0, 0, rim_height/2])
+
+        inner_rim = trimesh.creation.cylinder(
+            radius=radius - rim_thickness,
+            height=rim_height + 1,
+            sections=64
+        )
+        inner_rim.apply_translation([0, 0, rim_height/2])
+
+        try:
+            rim = outer_rim.difference(inner_rim)
+        except:
+            rim = outer_rim
+
+        # 3. Combine base and rim
+        try:
+            tray = trimesh.util.concatenate([base, rim])
+        except:
+            tray = base
+
+        # 4. Add central drain hole
+        if center_drain_diameter > 0:
+            drain_hole = trimesh.creation.cylinder(
+                radius=center_drain_diameter/2,
+                height=base_thickness + 2,
+                sections=32
+            )
+            drain_hole.apply_translation([0, 0, -base_thickness/2 - 1])
+
+            try:
+                tray = tray.difference(drain_hole)
+            except Exception as e:
+                logger.warning(f"Could not add center drain: {e}")
+
+        # 5. Carve radial channels from center to rim
+        angle_step = 360.0 / num_channels
+
+        for i in range(num_channels):
+            angle_rad = np.deg2rad(i * angle_step)
+
+            # Channel runs from center to rim
+            channel_start_radius = center_drain_diameter / 2 + 2
+            channel_end_radius = radius - rim_thickness - 1
+
+            start_x = channel_start_radius * np.cos(angle_rad)
+            start_y = channel_start_radius * np.sin(angle_rad)
+
+            end_x = channel_end_radius * np.cos(angle_rad)
+            end_y = channel_end_radius * np.sin(angle_rad)
+
+            # Create channel as a thin box
+            channel_length = channel_end_radius - channel_start_radius
+            channel = trimesh.creation.box(
+                extents=[channel_width, channel_length, channel_depth]
+            )
+
+            # Rotate to align with radial direction
+            rotation = trimesh.transformations.rotation_matrix(
+                angle_rad - np.pi/2, [0, 0, 1]
+            )
+            channel.apply_transform(rotation)
+
+            # Position channel
+            channel_center_radius = (channel_start_radius + channel_end_radius) / 2
+            channel_x = channel_center_radius * np.cos(angle_rad)
+            channel_y = channel_center_radius * np.sin(angle_rad)
+            channel.apply_translation([channel_x, channel_y, -channel_depth/2])
+
+            try:
+                tray = tray.difference(channel)
+            except Exception as e:
+                logger.warning(f"Could not carve channel {i}: {e}")
+
+        # 6. Add drainage spout
+        if spout_length > 0 and spout_width > 0:
+            # Create spout as extruded trapezoid
+            # Spout is cut into the rim at one side
+            spout_angle_rad = np.deg2rad(spout_angle)
+
+            # Spout starts at rim edge
+            spout_start_radius = radius - rim_thickness/2
+            spout_end_radius = radius + spout_length
+
+            # Create spout shape (tapered channel)
+            spout_base_width = spout_width
+            spout_tip_width = spout_width * 0.7  # Taper slightly
+
+            # Spout positioned at angle 0 (pointing in +X direction)
+            spout_center_x = (spout_start_radius + spout_end_radius) / 2
+            spout_length_actual = spout_end_radius - spout_start_radius
+
+            spout = trimesh.creation.box(
+                extents=[spout_length_actual, spout_base_width, base_thickness + rim_height/2]
+            )
+
+            # Angle downward for drainage
+            if spout_angle != 0:
+                spout_rot = trimesh.transformations.rotation_matrix(
+                    spout_angle_rad, [0, 1, 0]
+                )
+                spout.apply_transform(spout_rot)
+
+            # Position spout
+            spout.apply_translation([spout_center_x, 0, 0])
+
+            try:
+                # Boolean union to add spout
+                tray = trimesh.util.concatenate([tray, spout])
+            except Exception as e:
+                logger.warning(f"Could not add spout: {e}")
+
+        logger.info(f"Drainage tray created: {len(tray.vertices)} vertices")
+        return tray
+
 
 def generate_shape(shape_type: str, params: Dict) -> Dict:
     """
@@ -450,6 +617,20 @@ def generate_shape(shape_type: str, params: Dict) -> Dict:
                 width=params.get('width', 30.0),
                 thickness=params.get('thickness', 5.0),
                 length=params.get('length', 50.0)
+            )
+        elif shape_type == 'drainage_tray':
+            mesh = generator.drainage_tray(
+                diameter=params.get('diameter', 100.0),
+                base_thickness=params.get('base_thickness', 3.0),
+                rim_height=params.get('rim_height', 5.0),
+                rim_thickness=params.get('rim_thickness', 2.0),
+                num_channels=params.get('num_channels', 8),
+                channel_width=params.get('channel_width', 2.0),
+                channel_depth=params.get('channel_depth', 1.0),
+                spout_width=params.get('spout_width', 15.0),
+                spout_length=params.get('spout_length', 20.0),
+                spout_angle=params.get('spout_angle', 15.0),
+                center_drain_diameter=params.get('center_drain_diameter', 10.0)
             )
         else:
             raise ValueError(f"Unknown shape type: {shape_type}")

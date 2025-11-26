@@ -11,6 +11,54 @@ let isSTLMode = false; // Track if we're in STL editing mode
 let gridVisible = true; // Track grid visibility
 let statsVisible = false; // Track stats overlay visibility
 
+// ============================================================================
+// UNDO/REDO SYSTEM - Professional History Management
+// ============================================================================
+let historyStack = []; // Stack of previous states
+let historyIndex = -1; // Current position in history (-1 = no history)
+let maxHistorySize = 20; // Maximum number of undo steps
+let isRestoringHistory = false; // Flag to prevent adding history during undo/redo
+
+// History state structure:
+// {
+//   downloadUrl: string,
+//   operation: string (e.g., "Thicken 5mm", "Scale 150%"),
+//   timestamp: Date,
+//   mesh: {position, rotation, scale} - visual state
+// }
+
+// ============================================================================
+// AUTO-SAVE & PROJECT RECOVERY SYSTEM
+// ============================================================================
+let autoSaveInterval = null;
+let currentProjectName = 'Untitled Project';
+let lastAutoSave = null;
+
+// Project state structure saved to localStorage:
+// {
+//   projectName: string,
+//   downloadUrl: string,
+//   currentFile: {name, type, size},
+//   historyStack: array,
+//   historyIndex: number,
+//   timestamp: Date,
+//   meshState: {position, rotation, scale}
+// }
+
+// ============================================================================
+// LOADING & PROGRESS INDICATORS
+// ============================================================================
+let currentOperation = null;
+let operationStartTime = null;
+
+// Operation tracking for workflow progress
+const workflowSteps = {
+    'upload': { label: 'Upload Image', icon: '📁', completed: false },
+    'extract': { label: 'Extract Outline', icon: '✂️', completed: false },
+    'generate': { label: 'Generate 3D', icon: '🎨', completed: false },
+    'export': { label: 'Export STL', icon: '💾', completed: false }
+};
+
 // Initialize Three.js scene
 function initViewer() {
     const container = document.getElementById('viewer');
@@ -162,12 +210,32 @@ function handleFile(file) {
 
     currentFile = file;
 
-    // Update status bar
-    document.getElementById('statusFile').textContent = file.name;
-
     if (isImage) {
         // Handle image upload for cookie cutter
         isSTLMode = false;
+
+        // Show image preview in sidebar
+        const previewSection = document.getElementById('imagePreviewSection');
+        const previewThumbnail = document.getElementById('previewThumbnail');
+        const previewName = document.getElementById('previewName');
+        const previewSize = document.getElementById('previewSize');
+
+        if (previewSection && previewThumbnail && previewName && previewSize) {
+            // Create thumbnail from file
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewThumbnail.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            // Set file info
+            previewName.textContent = file.name;
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            previewSize.textContent = `${sizeMB} MB`;
+
+            // Show the preview section
+            previewSection.style.display = 'block';
+        }
 
         // Enable generate button for cookie cutter
         const generateBtn = document.getElementById('generateBtn');
@@ -198,16 +266,22 @@ function handleFile(file) {
         // Handle STL upload - load directly into viewer
         isSTLMode = true;
 
+        // Hide image preview section if visible
+        const previewSection = document.getElementById('imagePreviewSection');
+        if (previewSection) {
+            previewSection.style.display = 'none';
+        }
+
         // Create URL for STL file and load it
         const url = URL.createObjectURL(file);
         loadSTL(url);
 
         showNotification(`STL loaded: ${file.name}`, 'success');
 
-        // Show download button in toolbar
+        // Show download button
         const downloadBtn = document.getElementById('downloadBtn');
         if (downloadBtn) {
-            downloadBtn.style.display = 'inline-flex';
+            downloadBtn.style.display = 'block';
             downloadUrl = url; // Set initial download URL to the uploaded file
         }
     }
@@ -257,6 +331,9 @@ async function generateCookieCutter() {
 
             // Load STL into viewer
             loadSTL(downloadUrl);
+
+            // Save to history
+            saveToHistory('Cookie Cutter Generated');
         } else {
             showStatus(`Error: ${data.error}`, 'error');
         }
@@ -398,6 +475,13 @@ function switchTool(tool) {
     const paramSection = document.getElementById(tool + 'Params');
     if (paramSection) {
         paramSection.style.display = 'block';
+    }
+
+    // Open floating windows for new tools
+    if (tool === 'scale') {
+        openScaleTool();
+    } else if (tool === 'split') {
+        openCutTool();
     }
 
     console.log(`Switched to tool: ${tool}`);
@@ -629,6 +713,9 @@ async function applyThickening() {
             // Load thickened model
             loadSTL(downloadUrl);
             clearFaceSelection();
+
+            // Save to history
+            saveToHistory(`Thicken ${thickness}mm`);
         } else {
             showStatus(`Error: ${data.error}`, 'error');
         }
@@ -669,6 +756,9 @@ async function applyHollow() {
             showStats(data.stats);
             downloadBtn.style.display = 'block';
             loadSTL(downloadUrl);
+
+            // Save to history
+            saveToHistory(`Hollow ${wallThickness}mm`);
         } else {
             showStatus(`Error: ${data.error}`, 'error');
         }
@@ -711,6 +801,9 @@ async function applyRepair() {
             showStats(data.after);
             downloadBtn.style.display = 'block';
             loadSTL(downloadUrl);
+
+            // Save to history
+            saveToHistory('Repair Mesh');
         } else {
             showStatus(`Error: ${data.error}`, 'error');
         }
@@ -748,6 +841,9 @@ async function applySimplify() {
             showStats(data.stats);
             downloadBtn.style.display = 'block';
             loadSTL(downloadUrl);
+
+            // Save to history
+            saveToHistory(`Simplify ${reductionPercent * 100}%`);
         } else {
             showStatus(`Error: ${data.error}`, 'error');
         }
@@ -786,6 +882,9 @@ async function applyMirror() {
             showStats(data.stats);
             downloadBtn.style.display = 'block';
             loadSTL(downloadUrl);
+
+            // Save to history
+            saveToHistory(`Mirror ${axis.toUpperCase()}-axis`);
         } else {
             showStatus(`Error: ${data.error}`, 'error');
         }
@@ -928,9 +1027,42 @@ function setupFileHandling() {
     });
 
     // Global drag and drop (anywhere on viewport)
+    const viewportDropIndicator = document.getElementById('viewportDropIndicator');
+    let dragCounter = 0;
+
+    document.body.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dragCounter++;
+        if (viewportDropIndicator && dragCounter === 1) {
+            viewportDropIndicator.style.display = 'block';
+        }
+    });
+
+    document.body.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragCounter--;
+        if (viewportDropIndicator && dragCounter === 0) {
+            viewportDropIndicator.style.display = 'none';
+        }
+    });
+
     document.body.addEventListener('dragover', (e) => {
         e.preventDefault();
-        openFileOverlay();
+    });
+
+    document.body.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter = 0;
+
+        if (viewportDropIndicator) {
+            viewportDropIndicator.style.display = 'none';
+        }
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
     });
 }
 
@@ -1192,5 +1324,607 @@ function extractDetailsFromImage() {
     });
 }
 
+// ============================================================================
+// UNDO/REDO HISTORY FUNCTIONS
+// ============================================================================
+
+function saveToHistory(operation) {
+    if (isRestoringHistory) return; // Don't save during undo/redo
+
+    if (!downloadUrl) return; // Nothing to save
+
+    // Remove any "future" history if we're not at the end
+    if (historyIndex < historyStack.length - 1) {
+        historyStack = historyStack.slice(0, historyIndex + 1);
+    }
+
+    // Create history entry
+    const historyEntry = {
+        downloadUrl: downloadUrl,
+        operation: operation,
+        timestamp: new Date(),
+        meshState: mesh ? {
+            position: mesh.position.clone(),
+            rotation: mesh.rotation.clone(),
+            scale: mesh.scale.clone()
+        } : null
+    };
+
+    // Add to stack
+    historyStack.push(historyEntry);
+    historyIndex++;
+
+    // Limit history size
+    if (historyStack.length > maxHistorySize) {
+        historyStack.shift();
+        historyIndex--;
+    }
+
+    updateHistoryUI();
+    console.log(`💾 Saved to history: ${operation} (${historyIndex + 1}/${historyStack.length})`);
+}
+
+function undo() {
+    if (historyIndex <= 0) {
+        showNotification('Nothing to undo', 'info');
+        return;
+    }
+
+    historyIndex--;
+    restoreFromHistory();
+    showNotification(`Undo: ${historyStack[historyIndex].operation}`, 'success');
+}
+
+function redo() {
+    if (historyIndex >= historyStack.length - 1) {
+        showNotification('Nothing to redo', 'info');
+        return;
+    }
+
+    historyIndex++;
+    restoreFromHistory();
+    showNotification(`Redo: ${historyStack[historyIndex].operation}`, 'success');
+}
+
+function restoreFromHistory() {
+    if (historyIndex < 0 || historyIndex >= historyStack.length) return;
+
+    isRestoringHistory = true;
+    const entry = historyStack[historyIndex];
+
+    // Restore the model
+    downloadUrl = entry.downloadUrl;
+    loadSTL(entry.downloadUrl);
+
+    // Restore mesh state after load completes
+    if (entry.meshState && mesh) {
+        setTimeout(() => {
+            if (mesh) {
+                mesh.position.copy(entry.meshState.position);
+                mesh.rotation.copy(entry.meshState.rotation);
+                mesh.scale.copy(entry.meshState.scale);
+            }
+            isRestoringHistory = false;
+        }, 100);
+    } else {
+        isRestoringHistory = false;
+    }
+
+    updateHistoryUI();
+}
+
+function updateHistoryUI() {
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+    const historyDisplay = document.getElementById('historyDisplay');
+
+    if (undoBtn) {
+        undoBtn.disabled = historyIndex <= 0;
+        undoBtn.title = historyIndex > 0 ? `Undo: ${historyStack[historyIndex - 1].operation}` : 'Nothing to undo';
+    }
+
+    if (redoBtn) {
+        redoBtn.disabled = historyIndex >= historyStack.length - 1;
+        redoBtn.title = historyIndex < historyStack.length - 1 ? `Redo: ${historyStack[historyIndex + 1].operation}` : 'Nothing to redo';
+    }
+
+    if (historyDisplay) {
+        if (historyStack.length > 0) {
+            historyDisplay.textContent = `${historyIndex + 1}/${historyStack.length}`;
+            historyDisplay.style.display = 'inline';
+        } else {
+            historyDisplay.style.display = 'none';
+        }
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // Ctrl+Z / Cmd+Z for Undo
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+    }
+
+    // Ctrl+Shift+Z / Cmd+Shift+Z OR Ctrl+Y for Redo
+    if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') ||
+        ((e.ctrlKey || e.metaKey) && e.key === 'y')) {
+        e.preventDefault();
+        redo();
+    }
+
+    // Delete key - remove selected object
+    if (e.key === 'Delete' && mesh) {
+        scene.remove(mesh);
+        mesh = null;
+        showNotification('Model removed', 'success');
+    }
+
+    // Spacebar - reset camera view
+    if (e.key === ' ' && e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        resetCamera();
+    }
+
+    // G - toggle grid
+    if (e.key === 'g' && e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        toggleGrid();
+    }
+
+    // Number keys 1-9 for tool switching
+    if (e.key >= '1' && e.key <= '9' && e.target.tagName !== 'INPUT') {
+        const toolMap = {
+            '1': 'cookie',
+            '2': 'outline',
+            '3': 'thiccer',
+            '4': 'hollow',
+            '5': 'repair',
+            '6': 'simplify',
+            '7': 'mirror',
+            '8': 'scale',
+            '9': 'split'
+        };
+        if (toolMap[e.key]) {
+            switchTool(toolMap[e.key]);
+        }
+    }
+
+    // Ctrl+S - Save project
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveProject();
+    }
+});
+
+// ============================================================================
+// AUTO-SAVE & PROJECT RECOVERY FUNCTIONS
+// ============================================================================
+
+function startAutoSave() {
+    // Auto-save every 30 seconds
+    if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+    }
+
+    autoSaveInterval = setInterval(() => {
+        autoSaveProject();
+    }, 30000); // 30 seconds
+
+    console.log('📁 Auto-save enabled (every 30 seconds)');
+}
+
+function autoSaveProject() {
+    if (!downloadUrl && !currentFile) return; // Nothing to save
+
+    try {
+        const projectState = {
+            projectName: currentProjectName,
+            downloadUrl: downloadUrl,
+            currentFile: currentFile ? {
+                name: currentFile.name,
+                type: currentFile.type,
+                size: currentFile.size
+            } : null,
+            historyStack: historyStack.map(h => ({
+                downloadUrl: h.downloadUrl,
+                operation: h.operation,
+                timestamp: h.timestamp
+            })),
+            historyIndex: historyIndex,
+            timestamp: new Date().toISOString(),
+            meshState: mesh ? {
+                position: {x: mesh.position.x, y: mesh.position.y, z: mesh.position.z},
+                rotation: {x: mesh.rotation.x, y: mesh.rotation.y, z: mesh.rotation.z},
+                scale: {x: mesh.scale.x, y: mesh.scale.y, z: mesh.scale.z}
+            } : null
+        };
+
+        localStorage.setItem('zoolz_autosave', JSON.stringify(projectState));
+        lastAutoSave = new Date();
+
+        // Update status indicator
+        const autoSaveIndicator = document.getElementById('autoSaveIndicator');
+        if (autoSaveIndicator) {
+            autoSaveIndicator.textContent = '💾 Auto-saved';
+            autoSaveIndicator.style.color = '#4caf50';
+            setTimeout(() => {
+                autoSaveIndicator.textContent = '';
+            }, 2000);
+        }
+
+        console.log('💾 Auto-saved project:', currentProjectName);
+    } catch (error) {
+        console.error('Auto-save failed:', error);
+    }
+}
+
+function saveProject() {
+    // Manual save with optional custom name
+    const projectName = prompt('Save project as:', currentProjectName);
+    if (projectName) {
+        currentProjectName = projectName;
+        autoSaveProject();
+        showNotification(`Project "${projectName}" saved!`, 'success');
+    }
+}
+
+function checkForRecovery() {
+    try {
+        const savedState = localStorage.getItem('zoolz_autosave');
+        if (!savedState) return;
+
+        const projectState = JSON.parse(savedState);
+        const savedTime = new Date(projectState.timestamp);
+        const minutesAgo = Math.floor((new Date() - savedTime) / 60000);
+
+        if (minutesAgo < 60) { // Only offer recovery if less than 1 hour old
+            if (confirm(`Recover unsaved project "${projectState.projectName}" from ${minutesAgo} minutes ago?`)) {
+                recoverProject(projectState);
+            } else {
+                localStorage.removeItem('zoolz_autosave');
+            }
+        } else {
+            // Too old, clear it
+            localStorage.removeItem('zoolz_autosave');
+        }
+    } catch (error) {
+        console.error('Recovery check failed:', error);
+    }
+}
+
+function recoverProject(projectState) {
+    try {
+        currentProjectName = projectState.projectName;
+        downloadUrl = projectState.downloadUrl;
+
+        // Restore history
+        historyStack = projectState.historyStack;
+        historyIndex = projectState.historyIndex;
+
+        // Load the model
+        if (downloadUrl) {
+            loadSTL(downloadUrl);
+        }
+
+        // Restore mesh state after load
+        if (projectState.meshState && mesh) {
+            setTimeout(() => {
+                if (mesh) {
+                    mesh.position.set(
+                        projectState.meshState.position.x,
+                        projectState.meshState.position.y,
+                        projectState.meshState.position.z
+                    );
+                    mesh.rotation.set(
+                        projectState.meshState.rotation.x,
+                        projectState.meshState.rotation.y,
+                        projectState.meshState.rotation.z
+                    );
+                    mesh.scale.set(
+                        projectState.meshState.scale.x,
+                        projectState.meshState.scale.y,
+                        projectState.meshState.scale.z
+                    );
+                }
+            }, 500);
+        }
+
+        updateHistoryUI();
+        showNotification(`Project "${currentProjectName}" recovered!`, 'success');
+
+        // Clear the auto-save after successful recovery
+        localStorage.removeItem('zoolz_autosave');
+    } catch (error) {
+        console.error('Recovery failed:', error);
+        showNotification('Recovery failed', 'error');
+    }
+}
+
+// ============================================================================
+// LOADING & PROGRESS FUNCTIONS
+// ============================================================================
+
+function showLoading(operationName, message) {
+    currentOperation = operationName;
+    operationStartTime = Date.now();
+
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+    const loadingProgress = document.getElementById('loadingProgress');
+
+    if (loadingText) loadingText.textContent = message || `${operationName}...`;
+    if (loadingProgress) loadingProgress.style.display = 'none';
+    if (loadingOverlay) loadingOverlay.classList.add('active');
+
+    console.log(`⏳ Started: ${operationName}`);
+}
+
+function updateLoadingProgress(progress, message) {
+    const loadingText = document.getElementById('loadingText');
+    const loadingProgress = document.getElementById('loadingProgress');
+    const progressBar = document.getElementById('progressBar');
+
+    if (loadingText && message) {
+        loadingText.textContent = message;
+    }
+
+    if (loadingProgress && progressBar) {
+        loadingProgress.style.display = 'block';
+        progressBar.style.width = `${progress}%`;
+    }
+}
+
+function hideLoading(success = true) {
+    if (currentOperation && operationStartTime) {
+        const duration = ((Date.now() - operationStartTime) / 1000).toFixed(1);
+        console.log(`${success ? '✅' : '❌'} ${currentOperation} completed in ${duration}s`);
+    }
+
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+        loadingOverlay.classList.remove('active');
+    }
+
+    currentOperation = null;
+    operationStartTime = null;
+}
+
+function updateWorkflowStep(step, completed = true) {
+    if (workflowSteps[step]) {
+        workflowSteps[step].completed = completed;
+        renderWorkflowProgress();
+    }
+}
+
+function renderWorkflowProgress() {
+    const workflowContainer = document.getElementById('workflowProgress');
+    if (!workflowContainer) return;
+
+    const steps = Object.keys(workflowSteps);
+    const html = steps.map((key, index) => {
+        const step = workflowSteps[key];
+        const isCompleted = step.completed;
+        const isActive = !isCompleted && (index === 0 || workflowSteps[steps[index - 1]].completed);
+
+        return `
+            <div class="workflow-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}">
+                <div class="step-icon">${step.icon}</div>
+                <div class="step-label">${step.label}</div>
+                ${isCompleted ? '<div class="step-check">✓</div>' : ''}
+            </div>
+        `;
+    }).join('<div class="workflow-arrow">→</div>');
+
+    workflowContainer.innerHTML = html;
+}
+
+function showBetterError(error, operation, suggestions = []) {
+    const errorMessage = typeof error === 'string' ? error : error.message;
+
+    let suggestionHTML = '';
+    if (suggestions.length > 0) {
+        suggestionHTML = '<div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">';
+        suggestionHTML += '<div style="font-weight:600; margin-bottom:5px;">Try this:</div>';
+        suggestions.forEach(s => {
+            suggestionHTML += `<div style="margin-left:15px;">• ${s}</div>`;
+        });
+        suggestionHTML += '</div>';
+    }
+
+    const fullMessage = `
+        <div>
+            <div style="font-weight:600; margin-bottom:5px;">❌ ${operation} Failed</div>
+            <div style="margin-bottom:5px;">${errorMessage}</div>
+            ${suggestionHTML}
+        </div>
+    `;
+
+    showNotification(fullMessage, 'error');
+    hideLoading(false);
+}
+
+// ============================================================================
+// QUICK START TEMPLATES
+// ============================================================================
+
+function quickStartCookieCutter() {
+    showNotification('Upload an image to create a cookie cutter', 'info');
+    openFileOverlay();
+    switchTool('cookie');
+}
+
+function quickStartDrainageTray() {
+    // Open the drainage tray generator from new_tools.js
+    if (typeof openDrainageTrayGenerator === 'function') {
+        openDrainageTrayGenerator();
+    } else {
+        showNotification('Drainage Tray generator not loaded', 'error');
+    }
+}
+
+function quickStartBasicShape() {
+    // Open the shape picker
+    if (typeof openShapePicker === 'function') {
+        openShapePicker();
+    } else {
+        showNotification('Shape picker not loaded', 'error');
+    }
+}
+
+// ============================================================================
+// EXPORT & GENERATION PRESETS
+// ============================================================================
+
+function applyPreset(presetType) {
+    const presets = {
+        'cookie': {
+            name: 'Cookie Cutter',
+            detailLevel: 50,
+            bladeThick: 2.0,
+            bladeHeight: 20.0,
+            baseThick: 3.0,
+            baseExtra: 5.0,
+            noBase: false
+        },
+        'stamp': {
+            name: 'Detail Stamp',
+            detailLevel: 70,
+            bladeThick: 0,  // No blade
+            bladeHeight: 0,  // No blade
+            baseThick: 3.0,
+            baseExtra: 10.0,
+            noBase: false,
+            isStamp: true  // Flag for raised relief
+        },
+        'leather': {
+            name: 'Leather Stamp',
+            detailLevel: 60,
+            bladeThick: 0,
+            bladeHeight: 0,
+            baseThick: 5.0,  // Thicker base
+            baseExtra: 15.0,  // Larger border
+            noBase: false,
+            isStamp: true,
+            stampDepth: 3.0  // Deeper impression
+        },
+        'solid': {
+            name: 'Solid Object',
+            detailLevel: 50,
+            bladeThick: 0,
+            bladeHeight: 0,
+            baseThick: 5.0,
+            baseExtra: 0,
+            noBase: true  // No base at all
+        }
+    };
+
+    const preset = presets[presetType];
+    if (!preset) return;
+
+    // Apply values to sliders
+    const detailSlider = document.getElementById('detailLevel');
+    const bladeThickSlider = document.getElementById('bladeThick');
+    const bladeHeightSlider = document.getElementById('bladeHeight');
+    const baseThickSlider = document.getElementById('baseThick');
+    const baseExtraSlider = document.getElementById('baseExtra');
+    const noBaseCheckbox = document.getElementById('noBase');
+
+    if (detailSlider) {
+        detailSlider.value = preset.detailLevel;
+        document.getElementById('detailValue').textContent = (preset.detailLevel / 100).toFixed(2);
+    }
+
+    if (bladeThickSlider) {
+        bladeThickSlider.value = preset.bladeThick;
+        document.getElementById('bladeThickValue').textContent = preset.bladeThick.toFixed(1);
+    }
+
+    if (bladeHeightSlider) {
+        bladeHeightSlider.value = preset.bladeHeight;
+        document.getElementById('bladeHeightValue').textContent = preset.bladeHeight.toFixed(1);
+    }
+
+    if (baseThickSlider) {
+        baseThickSlider.value = preset.baseThick;
+        document.getElementById('baseThickValue').textContent = preset.baseThick.toFixed(1);
+    }
+
+    if (baseExtraSlider) {
+        baseExtraSlider.value = preset.baseExtra;
+        document.getElementById('baseExtraValue').textContent = preset.baseExtra.toFixed(1);
+    }
+
+    if (noBaseCheckbox) {
+        noBaseCheckbox.checked = preset.noBase;
+    }
+
+    showNotification(`✅ Applied ${preset.name} preset`, 'success');
+}
+
+// ============================================================================
+// CAMERA PRESETS
+// ============================================================================
+
+function setCameraPreset(preset) {
+    if (!mesh) {
+        // No mesh, just reset to default view
+        camera.position.set(0, 50, 100);
+        controls.target.set(0, 0, 0);
+        controls.update();
+        return;
+    }
+
+    mesh.geometry.computeBoundingBox();
+    const bbox = mesh.geometry.boundingBox;
+    const size = bbox.getSize(new THREE.Vector3());
+    const center = bbox.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const distance = maxDim * 2;
+
+    const modelHeight = size.y;
+    const targetY = modelHeight / 2;
+
+    switch(preset) {
+        case 'top':
+            camera.position.set(0, distance, 0);
+            controls.target.set(0, 0, 0);
+            break;
+        case 'front':
+            camera.position.set(0, targetY, distance);
+            controls.target.set(0, targetY, 0);
+            break;
+        case 'side':
+            camera.position.set(distance, targetY, 0);
+            controls.target.set(0, targetY, 0);
+            break;
+        case 'iso':
+            camera.position.set(distance, distance, distance);
+            controls.target.set(0, targetY, 0);
+            break;
+        case 'fit':
+            // Fit view to model
+            camera.position.set(maxDim, maxDim, maxDim);
+            controls.target.set(0, targetY, 0);
+            break;
+    }
+
+    controls.update();
+    showNotification(`Camera: ${preset} view`, 'success');
+}
+
 // Initialize on load
-window.addEventListener('load', initViewer);
+window.addEventListener('load', () => {
+    initViewer();
+
+    // Render initial workflow state
+    renderWorkflowProgress();
+
+    // Check for recoverable project
+    setTimeout(() => {
+        checkForRecovery();
+    }, 1000);
+
+    // Start auto-save
+    startAutoSave();
+});

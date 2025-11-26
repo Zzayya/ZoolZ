@@ -26,7 +26,10 @@ from utils.modeling import (
     repair,
     simplify,
     mirror,
-    shape_generators
+    shape_generators,
+    scale,
+    cut,
+    channels
 )
 
 modeling_bp = Blueprint('modeling', __name__)
@@ -1266,12 +1269,269 @@ def delete_my_model(filename):
     try:
         my_models_dir = os.path.join(os.path.dirname(current_app.config['UPLOAD_FOLDER']), 'my_models')
         filepath = os.path.join(my_models_dir, secure_filename(filename))
-        
+
         if not os.path.exists(filepath):
             return jsonify({'success': False, 'error': 'File not found'}), 404
-            
+
         os.remove(filepath)
-        
+
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# SCALE/RESIZE TOOL
+# ============================================================================
+
+@modeling_bp.route('/api/stl/scale', methods=['POST'])
+def scale_stl():
+    """
+    Scale/resize STL model
+
+    Expects:
+    - stl file
+    - scale_mode: 'uniform', 'dimensions', 'non_uniform', 'fit', 'volume'
+    - Mode-specific parameters
+
+    Returns:
+    - Download URL for scaled STL
+    """
+    try:
+        if 'stl' not in request.files:
+            return jsonify({'error': 'No STL file provided'}), 400
+
+        file = request.files['stl']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        # Save uploaded STL
+        filename = secure_filename(file.filename)
+        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(upload_path)
+
+        # Load mesh
+        mesh = mesh_utils.load_stl(upload_path)
+
+        # Get parameters
+        scale_mode = request.form.get('scale_mode', 'uniform')
+
+        # Build kwargs for scale operation
+        kwargs = {}
+
+        if scale_mode == 'uniform':
+            kwargs['scale_factor'] = float(request.form.get('scale_factor', 1.0))
+        elif scale_mode == 'dimensions':
+            if 'target_width' in request.form:
+                kwargs['target_width'] = float(request.form.get('target_width'))
+            if 'target_height' in request.form:
+                kwargs['target_height'] = float(request.form.get('target_height'))
+            if 'target_depth' in request.form:
+                kwargs['target_depth'] = float(request.form.get('target_depth'))
+            kwargs['maintain_aspect'] = request.form.get('maintain_aspect', 'true').lower() == 'true'
+        elif scale_mode == 'non_uniform':
+            kwargs['scale_x'] = float(request.form.get('scale_x', 1.0))
+            kwargs['scale_y'] = float(request.form.get('scale_y', 1.0))
+            kwargs['scale_z'] = float(request.form.get('scale_z', 1.0))
+        elif scale_mode == 'fit':
+            kwargs['max_dimension'] = float(request.form.get('max_dimension', 100.0))
+            kwargs['maintain_aspect'] = request.form.get('maintain_aspect', 'true').lower() == 'true'
+        elif scale_mode == 'volume':
+            kwargs['target_volume'] = float(request.form.get('target_volume', 1000.0))
+
+        # Perform scaling
+        result = scale.scale_mesh(mesh, scale_mode=scale_mode, **kwargs)
+
+        # Save result
+        output_filename = f"scaled_{os.path.splitext(filename)[0]}.stl"
+        output_path = os.path.join(current_app.config['OUTPUT_FOLDER'], output_filename)
+        mesh_utils.save_stl(result['mesh'], output_path)
+
+        response_data = {
+            'success': True,
+            'download_url': f'/modeling/download/{output_filename}',
+            'stats': result['stats']
+        }
+
+        return jsonify(convert_numpy_types(response_data))
+
+    except Exception as e:
+        logger.error(f"Error scaling mesh: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# CUT/PLANE CUT TOOL
+# ============================================================================
+
+@modeling_bp.route('/api/stl/cut', methods=['POST'])
+def cut_stl():
+    """
+    Cut STL model with a plane
+
+    Expects:
+    - stl file
+    - cut_mode: 'plane', 'height', 'remove_top', 'remove_bottom', 'split'
+    - Mode-specific parameters
+
+    Returns:
+    - Download URL(s) for cut STL
+    """
+    try:
+        if 'stl' not in request.files:
+            return jsonify({'error': 'No STL file provided'}), 400
+
+        file = request.files['stl']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        # Save uploaded STL
+        filename = secure_filename(file.filename)
+        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(upload_path)
+
+        # Load mesh
+        mesh = mesh_utils.load_stl(upload_path)
+
+        # Get parameters
+        cut_mode = request.form.get('cut_mode', 'plane')
+
+        # Build kwargs for cut operation
+        kwargs = {}
+
+        if cut_mode == 'plane':
+            kwargs['plane_axis'] = request.form.get('plane_axis', 'z')
+            kwargs['plane_position'] = float(request.form.get('plane_position', 50.0))
+            kwargs['position_mode'] = request.form.get('position_mode', 'percentage')
+            kwargs['keep_part'] = request.form.get('keep_part', 'bottom')
+            kwargs['cap_cut'] = request.form.get('cap_cut', 'true').lower() == 'true'
+        elif cut_mode == 'height':
+            kwargs['height_mm'] = float(request.form.get('height_mm', 10.0))
+            kwargs['from_bottom'] = request.form.get('from_bottom', 'true').lower() == 'true'
+            kwargs['keep_part'] = request.form.get('keep_part', 'bottom')
+        elif cut_mode == 'remove_top':
+            kwargs['amount_mm'] = float(request.form.get('amount_mm', 5.0))
+        elif cut_mode == 'remove_bottom':
+            kwargs['amount_mm'] = float(request.form.get('amount_mm', 5.0))
+        elif cut_mode == 'split':
+            kwargs['axis'] = request.form.get('axis', 'z')
+            kwargs['offset'] = float(request.form.get('offset', 0.0))
+
+        # Perform cut
+        result = cut.cut_mesh(mesh, cut_mode=cut_mode, **kwargs)
+
+        # Handle result
+        if isinstance(result['mesh'], list):
+            # Multiple parts (split mode)
+            download_urls = []
+            for part_name, part_mesh in result['mesh']:
+                output_filename = f"cut_{part_name}_{os.path.splitext(filename)[0]}.stl"
+                output_path = os.path.join(current_app.config['OUTPUT_FOLDER'], output_filename)
+                mesh_utils.save_stl(part_mesh, output_path)
+                download_urls.append(f'/modeling/download/{output_filename}')
+
+            response_data = {
+                'success': True,
+                'download_urls': download_urls,
+                'stats': result['stats']
+            }
+        else:
+            # Single part
+            output_filename = f"cut_{os.path.splitext(filename)[0]}.stl"
+            output_path = os.path.join(current_app.config['OUTPUT_FOLDER'], output_filename)
+            mesh_utils.save_stl(result['mesh'], output_path)
+
+            response_data = {
+                'success': True,
+                'download_url': f'/modeling/download/{output_filename}',
+                'stats': result['stats']
+            }
+
+        return jsonify(convert_numpy_types(response_data))
+
+    except Exception as e:
+        logger.error(f"Error cutting mesh: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# CHANNEL/GROOVE CARVING TOOL
+# ============================================================================
+
+@modeling_bp.route('/api/stl/channels', methods=['POST'])
+def add_channels_stl():
+    """
+    Add channels/grooves to STL model
+
+    Expects:
+    - stl file
+    - channel_type: 'linear', 'radial', 'spiral', 'grid', 'path'
+    - Channel-specific parameters
+
+    Returns:
+    - Download URL for mesh with channels
+    """
+    try:
+        if 'stl' not in request.files:
+            return jsonify({'error': 'No STL file provided'}), 400
+
+        file = request.files['stl']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        # Save uploaded STL
+        filename = secure_filename(file.filename)
+        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(upload_path)
+
+        # Load mesh
+        mesh = mesh_utils.load_stl(upload_path)
+
+        # Get parameters
+        channel_type = request.form.get('channel_type', 'radial')
+
+        # Build kwargs based on channel type
+        import json
+        kwargs = {
+            'width': float(request.form.get('width', 2.0)),
+            'depth': float(request.form.get('depth', 1.0))
+        }
+
+        if channel_type == 'radial':
+            kwargs['center_point'] = json.loads(request.form.get('center_point', '[0, 0, 0]'))
+            kwargs['radius'] = float(request.form.get('radius', 20.0))
+            kwargs['num_channels'] = int(request.form.get('num_channels', 8))
+        elif channel_type == 'linear':
+            kwargs['start_point'] = json.loads(request.form.get('start_point', '[0, 0, 0]'))
+            kwargs['end_point'] = json.loads(request.form.get('end_point', '[10, 0, 0]'))
+            kwargs['profile'] = request.form.get('profile', 'v')
+        elif channel_type == 'spiral':
+            kwargs['center_point'] = json.loads(request.form.get('center_point', '[0, 0, 0]'))
+            kwargs['start_radius'] = float(request.form.get('start_radius', 5.0))
+            kwargs['end_radius'] = float(request.form.get('end_radius', 20.0))
+            kwargs['rotations'] = float(request.form.get('rotations', 2.0))
+        elif channel_type == 'grid':
+            kwargs['bounds'] = json.loads(request.form.get('bounds', '[-20, 20, -20, 20]'))
+            kwargs['z_height'] = float(request.form.get('z_height', 0.0))
+            kwargs['spacing_x'] = float(request.form.get('spacing_x', 10.0))
+            kwargs['spacing_y'] = float(request.form.get('spacing_y', 10.0))
+
+        # Perform channel carving
+        result = channels.add_channels(mesh, channel_type=channel_type, **kwargs)
+
+        # Save result
+        output_filename = f"channels_{os.path.splitext(filename)[0]}.stl"
+        output_path = os.path.join(current_app.config['OUTPUT_FOLDER'], output_filename)
+        mesh_utils.save_stl(result['mesh'], output_path)
+
+        response_data = {
+            'success': True,
+            'download_url': f'/modeling/download/{output_filename}',
+            'stats': result['stats']
+        }
+
+        return jsonify(convert_numpy_types(response_data))
+
+    except Exception as e:
+        logger.error(f"Error adding channels: {e}")
+        return jsonify({'error': str(e)}), 500
