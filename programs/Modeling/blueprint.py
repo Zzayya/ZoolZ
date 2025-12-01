@@ -29,7 +29,8 @@ from programs.Modeling.utils import (
     shape_generators,
     scale,
     cut,
-    channels
+    channels,
+    bore_hole
 )
 
 # Import Celery tasks for background processing
@@ -1830,9 +1831,7 @@ def widen_hole_route():
             height_range = (height_min, height_max)
 
         # Widen hole
-        from programs.Modeling.utils.bore_hole import widen_hole
-
-        result = widen_hole(
+        result = bore_hole.widen_hole(
             mesh=mesh,
             new_radius=new_radius,
             auto_detect=auto_detect,
@@ -1899,9 +1898,7 @@ def detect_holes_route():
         max_radius = float(request.form.get('max_radius', 50.0))
 
         # Detect holes
-        from programs.Modeling.utils.bore_hole import get_hole_info
-
-        hole_info = get_hole_info(mesh)
+        hole_info = bore_hole.get_hole_info(mesh)
 
         # Convert numpy types for JSON
         hole_info = convert_numpy_types(hole_info)

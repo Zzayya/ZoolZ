@@ -1494,7 +1494,7 @@
     </style>
 
     <!-- CRITICAL UI FIXES -->
-    <link rel="stylesheet" href="/static/css/modeling_fixes.css">
+    <link rel="stylesheet" href="/modeling/static/css/modeling_fixes.css">
 </head>
 <body>
     <!-- FULL SCREEN 3D VIEWER -->
@@ -2714,27 +2714,35 @@
     </div>
 
     <!-- Core systems (load first) -->
-    <script src="/static/js/floating_windows.js"></script>
-    <script src="/static/js/selection_manager.js"></script>
+    <script src="/modeling/static/js/floating_windows.js"></script>
+    <script src="/modeling/static/js/selection_manager.js"></script>
 
     <!-- Main functionality -->
-    <script src="/static/js/modeling_controller.js"></script>
-    <script src="/static/js/advanced_tools.js"></script>
-    <script src="/static/js/new_tools.js"></script>
-    <script src="/static/js/shape_picker.js"></script>
-    <script src="/static/js/scene_manager.js"></script>
-    <script src="/static/js/transform_gizmo.js"></script>
-    <script src="/static/js/undo_redo.js"></script>
-    <script src="/static/js/my_models.js"></script>
-    <script src="/static/js/outline_editor.js"></script>
+    <script src="/modeling/static/js/modeling_controller.js"></script>
+    <script src="/modeling/static/js/advanced_tools.js"></script>
+    <script src="/modeling/static/js/new_tools.js"></script>
+    <script src="/modeling/static/js/shape_picker.js"></script>
+    <script src="/modeling/static/js/scene_manager.js"></script>
+    <script src="/modeling/static/js/transform_gizmo.js"></script>
+    <script src="/modeling/static/js/undo_redo.js"></script>
+    <script src="/modeling/static/js/my_models.js"></script>
+    <script src="/modeling/static/js/outline_editor.js"></script>
 
     <!-- UI Modernizer (load last to transform UI) -->
-    <script src="/static/js/ui_modernizer.js"></script>
+    <script src="/modeling/static/js/ui_modernizer.js"></script>
 
     <!-- NEW ENHANCEMENTS - Background Tasks, Shortcuts, Measurements -->
     <script src="/modeling/static/js/background_tasks.js"></script>
     <script src="/modeling/static/js/keyboard_shortcuts.js"></script>
     <script src="/modeling/static/js/measurement_overlay.js"></script>
     <script src="/modeling/static/js/task_integration.js"></script>
+
+    <!-- Initialize 3D Viewer -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Initializing 3D viewer...');
+            initViewer();
+        });
+    </script>
 </body>
 </html>
