@@ -9,16 +9,22 @@ import asyncio
 import queue
 import threading
 import json as json_lib
-from utils.people_finder.search_orchestrator import SearchOrchestrator, run_search_with_progress
-from utils.people_finder.public_records import PublicRecordsSearcher
-from utils.people_finder.phone_apis import PhoneValidator
-from utils.people_finder.person_identifier import PersonIdentifier
-from utils.people_finder.temporal_dataset_manager import TemporalDatasetManager
+from .utils.search_orchestrator import SearchOrchestrator, run_search_with_progress
+from .utils.public_records import PublicRecordsSearcher
+from .utils.phone_apis import PhoneValidator
+from .utils.person_identifier import PersonIdentifier
+from .utils.temporal_dataset_manager import TemporalDatasetManager
 import os
 from datetime import datetime
 import time
 
-people_finder_bp = Blueprint('people_finder', __name__)
+people_finder_bp = Blueprint(
+    'people_finder',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+    static_url_path='/people_finder/static'
+)
 
 # Orchestrator will be initialized lazily using Flask config
 _orchestrator = None
@@ -288,7 +294,7 @@ def search_trail_follow():
 
     # Import trail follower
     try:
-        from utils.people_finder.trail_follower import TrailFollower
+        from .utils.trail_follower import TrailFollower
     except ImportError:
         return jsonify({"error": "Trail following feature not available"}), 500
 

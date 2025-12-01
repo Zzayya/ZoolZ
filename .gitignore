@@ -11,16 +11,18 @@ venv/
 env/
 ENV/
 .venv
+.pytest_cache/
 
 # Flask
 instance/
 .webassets-cache
 
 # User uploads and outputs
-uploads/*
-!uploads/.gitkeep
 outputs/*
 !outputs/.gitkeep
+programs/*/outputs/*
+programs/*/ModelingSaves/uploads/*
+!programs/*/.gitkeep
 
 # Database files (People Finder cache)
 database/*.db
@@ -44,6 +46,9 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.bak
+.tmp.*
+*.tmp.driveupload
+*.tmp.drivedownload
 
 # Test files
 test_*.py

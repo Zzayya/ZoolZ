@@ -5,10 +5,10 @@ Multi-Purpose 3D Design Tool - Main entry point with HUB navigation
 """
 
 from flask import Flask, render_template, jsonify, session, redirect, url_for
-from blueprints.parametric_cad import parametric_bp
+from programs.ParametricCAD.blueprint import parametric_bp
 from programs.Modeling.blueprint import modeling_bp
-from blueprints.people_finder import people_finder_bp
-from blueprints.digital_footprint import digital_footprint_bp
+from programs.PeopleFinder.blueprint import people_finder_bp
+from programs.DigitalFootprint.blueprint import digital_footprint_bp
 from config import config
 import os
 

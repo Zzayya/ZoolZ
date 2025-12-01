@@ -6,7 +6,7 @@ OpenSCAD-like programmatic 3D modeling
 
 from flask import Blueprint, render_template, request, jsonify, send_file, current_app
 import os
-from utils.parametric_cad.cad_operations import (
+from .utils.cad_operations import (
     create_shape,
     combine_shapes,
     generate_openscad_code,
@@ -15,7 +15,13 @@ from utils.parametric_cad.cad_operations import (
     SHAPE_REGISTRY
 )
 
-parametric_bp = Blueprint('parametric', __name__)
+parametric_bp = Blueprint(
+    'parametric',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+    static_url_path='/parametric/static'
+)
 
 
 @parametric_bp.route('/')

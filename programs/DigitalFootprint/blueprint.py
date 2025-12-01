@@ -14,13 +14,17 @@ import threading
 import json as json_lib
 import time
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from .utils.footprint_finder import DigitalFootprintFinder
+from .utils.exposure_analyzer import ExposureAnalyzer
 
-from utils.digital_footprint.footprint_finder import DigitalFootprintFinder
-from utils.digital_footprint.exposure_analyzer import ExposureAnalyzer
-
-digital_footprint_bp = Blueprint('digital_footprint', __name__, url_prefix='/footprint')
+digital_footprint_bp = Blueprint(
+    'digital_footprint',
+    __name__,
+    url_prefix='/footprint',
+    template_folder='templates',
+    static_folder='static',
+    static_url_path='/footprint/static'
+)
 
 
 @digital_footprint_bp.route('/')
