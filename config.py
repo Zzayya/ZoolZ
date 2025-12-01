@@ -5,24 +5,29 @@ Centralized settings for 3D Modulator Flask app
 """
 
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class Config:
     """Base configuration"""
 
     # Flask settings
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    DEBUG = True
+    SECRET_KEY = os.getenv('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
     # File upload settings
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max upload
+    MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 104857600))  # Default 100MB
     ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
 
     # Directory settings
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-    OUTPUT_FOLDER = os.path.join(BASE_DIR, 'outputs')
-    DATABASE_FOLDER = os.path.join(BASE_DIR, 'database')
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(BASE_DIR, 'programs/Modeling/ModelingSaves/uploads'))
+    OUTPUT_FOLDER = os.getenv('OUTPUT_FOLDER', os.path.join(BASE_DIR, 'programs/Modeling/outputs'))
+    DATABASE_FOLDER = os.getenv('DATABASE_FOLDER', os.path.join(BASE_DIR, 'database'))
+    MY_MODELS_FOLDER = os.getenv('MY_MODELS_FOLDER', os.path.join(BASE_DIR, 'programs/Modeling/ModelingSaves'))
 
     # Cookie cutter defaults
     COOKIE_CUTTER_DEFAULTS = {
@@ -93,12 +98,25 @@ class Config:
 
     # People Finder settings
     PEOPLE_FINDER_DB = os.path.join(BASE_DIR, 'database', 'search_cache.db')
-    PEOPLE_FINDER_CACHE_HOURS = 24  # Cache search results for 24 hours
+    PEOPLE_FINDER_CACHE_HOURS = int(os.getenv('PEOPLE_FINDER_CACHE_HOURS', 24))
 
     # People Finder API keys (optional - set via environment variables)
-    GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')  # Google Custom Search (100 free queries/day)
-    GOOGLE_SEARCH_ENGINE_ID = os.environ.get('GOOGLE_SEARCH_ENGINE_ID')
-    NUMVERIFY_API_KEY = os.environ.get('NUMVERIFY_API_KEY')  # NumVerify phone validation (250 free/month)
+    GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')  # Google Custom Search (100 free queries/day)
+    GOOGLE_SEARCH_ENGINE_ID = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
+    NUMVERIFY_API_KEY = os.getenv('NUMVERIFY_API_KEY')  # NumVerify phone validation (250 free/month)
+
+    # Database URL (for future SQLAlchemy support)
+    DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///zoolz.db')
+
+    # Redis/Celery settings (for background tasks)
+    REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+
+    # Mesh processing constraints
+    MAX_MESH_VERTICES = int(os.getenv('MAX_MESH_VERTICES', 10000000))
+    MAX_MESH_FACES = int(os.getenv('MAX_MESH_FACES', 20000000))
+    MAX_BOOLEAN_OPERATIONS = int(os.getenv('MAX_BOOLEAN_OPERATIONS', 10))
 
 
 class DevelopmentConfig(Config):

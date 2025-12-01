@@ -6,7 +6,7 @@ Multi-Purpose 3D Design Tool - Main entry point with HUB navigation
 
 from flask import Flask, render_template, jsonify, session, redirect, url_for
 from blueprints.parametric_cad import parametric_bp
-from blueprints.modeling import modeling_bp
+from programs.Modeling.blueprint import modeling_bp
 from blueprints.people_finder import people_finder_bp
 from blueprints.digital_footprint import digital_footprint_bp
 from config import config
@@ -15,11 +15,8 @@ import os
 app = Flask(__name__)
 
 # Load configuration
-config_name = os.environ.get('FLASK_ENV', 'development')
+config_name = os.getenv('FLASK_ENV', 'development')
 app.config.from_object(config[config_name])
-
-# Secret key for sessions (change this to a random string in production)
-app.secret_key = 'zoolz-3d-studio-secret-key-442767'
 
 # Ensure folders exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

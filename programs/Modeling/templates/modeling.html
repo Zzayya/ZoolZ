@@ -1,0 +1,2740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoolZ 3D Studio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* FULL SCREEN 3D VIEWPORT WITH GALAXY BACKGROUND */
+        #viewer {
+            position: fixed;
+            top: 0;
+            left: 300px;
+            right: 0;
+            width: calc(100vw - 300px);
+            height: 100vh;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            z-index: 0;
+        }
+
+        /* Animated stars background */
+        #viewer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 60px 70px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 50px 50px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 130px 80px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90px 10px, #fff, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: starsMove 120s linear infinite;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @keyframes starsMove {
+            from { background-position: 0 0; }
+            to { background-position: 1000px 1000px; }
+        }
+
+        /* FIXED LEFT SIDEBAR */
+        .left-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: rgba(15, 15, 20, 0.98);
+            backdrop-filter: blur(10px);
+            border-right: 2px solid rgba(0, 149, 255, 0.3);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* SIDEBAR HEADER */
+        .sidebar-header {
+            padding: 20px 15px;
+            border-bottom: 2px solid rgba(0, 149, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #0095ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .home-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: #8ab4f8;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .home-btn:hover {
+            background: rgba(0, 149, 255, 0.2);
+            border-color: rgba(0, 149, 255, 0.4);
+            color: #0095ff;
+        }
+
+        /* SIDEBAR SECTIONS */
+        .sidebar-section {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #0095ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        /* SIDEBAR BUTTONS */
+        .sidebar-btn {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0, 149, 255, 0.1);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 6px;
+            color: #0095ff;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            text-align: left;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-btn:hover {
+            background: rgba(0, 149, 255, 0.25);
+            border-color: #0095ff;
+            box-shadow: 0 0 10px rgba(0, 149, 255, 0.3);
+        }
+
+        .sidebar-btn-primary {
+            background: rgba(0, 149, 255, 0.3);
+            border-color: #0095ff;
+            font-weight: 600;
+        }
+
+        .sidebar-btn-primary:hover {
+            background: rgba(0, 149, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 149, 255, 0.5);
+        }
+
+        .scene-actions-top {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-btn-small {
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            color: #8ab4f8;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .sidebar-btn-small:hover:not(:disabled) {
+            background: rgba(0, 149, 255, 0.2);
+            border-color: rgba(0, 149, 255, 0.4);
+            color: #0095ff;
+        }
+
+        .sidebar-btn-small:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* IMAGE PREVIEW IN SIDEBAR */
+        .image-preview-container {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 149, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        #previewThumbnail {
+            width: 100%;
+            height: auto;
+            max-height: 150px;
+            object-fit: contain;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 10px;
+        }
+
+        .image-info {
+            font-size: 0.85rem;
+        }
+
+        .image-name {
+            color: #00c8ff;
+            font-weight: 600;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+
+        .image-size {
+            color: #8ab4f8;
+            font-size: 0.8rem;
+        }
+
+        /* TOOL GRID IN SIDEBAR */
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .tool-icon-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            background: rgba(0, 0, 0, 0.5);  /* PLAIN BLACK */
+            border: 2px solid rgba(0, 200, 255, 0.4);  /* NEON BORDER */
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            font-size: 1.5rem;
+            color: #00c8ff;  /* NEON ICON COLOR */
+            position: relative;
+        }
+
+        .tool-icon-btn:hover {
+            background: rgba(0, 200, 255, 0.05);  /* SUBTLE GLOW */
+            border-color: #00ffff;  /* BRIGHT NEON */
+            box-shadow:
+                0 0 10px rgba(0, 200, 255, 0.5),
+                0 0 20px rgba(0, 200, 255, 0.3),
+                inset 0 0 10px rgba(0, 200, 255, 0.1);  /* NEON GLOW */
+            transform: scale(1.05);
+        }
+
+        .tool-icon-btn.active {
+            background: rgba(0, 200, 255, 0.15);  /* ACTIVE GLOW */
+            border-color: #00ffff;
+            box-shadow:
+                0 0 15px rgba(0, 200, 255, 0.8),
+                0 0 30px rgba(0, 200, 255, 0.4),
+                inset 0 0 15px rgba(0, 200, 255, 0.2);
+        }
+
+        .tool-label {
+            font-size: 0.7rem;
+            color: #8ab4f8;
+            display: block;
+        }
+
+        /* PROPERTIES PANEL - Right side */
+        .properties-panel {
+            right: 15px;
+            top: 70px;
+            width: 320px;
+            max-height: calc(100vh - 90px);
+            overflow-y: auto;
+        }
+
+        .properties-panel.minimized {
+            width: 50px;
+            height: 50px;
+            overflow: hidden;
+        }
+
+        .properties-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .properties-panel::-webkit-scrollbar-thumb {
+            background: rgba(0, 149, 255, 0.5);
+            border-radius: 3px;
+        }
+
+        .prop-section {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .prop-section h3 {
+            font-size: 0.85rem;
+            color: #00c8ff;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .param-group {
+            margin-bottom: 15px;
+        }
+
+        .param-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #8ab4f8;
+            margin-bottom: 6px;
+        }
+
+        .param-group input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 149, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .param-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #0095ff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .param-group input[type="number"],
+        .param-group input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            background: rgba(0, 149, 255, 0.1);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 5px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .param-value {
+            display: flex;
+            justify-content: space-between;
+            color: #00c8ff;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 149, 255, 0.5);
+            border-radius: 6px;
+            color: rgba(0, 149, 255, 0.95);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 8px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: rgba(0, 149, 255, 0.15);
+            border-color: rgba(0, 149, 255, 0.8);
+            box-shadow: 0 0 20px rgba(0, 149, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(0, 149, 255, 0.4);
+        }
+
+        /* FILE DROP OVERLAY */
+        .file-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .file-overlay.active {
+            display: flex;
+        }
+
+        .overlay-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2001;
+        }
+
+        .overlay-close-btn:hover {
+            background: rgba(255, 50, 50, 0.3);
+            border-color: rgba(255, 50, 50, 0.6);
+            transform: rotate(90deg);
+        }
+
+        .viewport-drop-indicator {
+            position: fixed;
+            top: 0;
+            left: 300px;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 149, 255, 0.15);
+            border: 4px dashed #0095ff;
+            z-index: 1500;
+            pointer-events: none;
+            animation: dropPulse 2s ease-in-out infinite;
+        }
+
+        .drop-indicator-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #0095ff;
+        }
+
+        .drop-indicator-content h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .drop-indicator-content p {
+            font-size: 1.2rem;
+            color: #8ab4f8;
+        }
+
+        @keyframes dropPulse {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+
+        .file-drop-zone {
+            width: 500px;
+            padding: 60px;
+            background: rgba(25, 25, 35, 0.95);
+            border: 3px dashed #0095ff;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .file-drop-zone:hover,
+        .file-drop-zone.dragover {
+            border-color: #00c8ff;
+            background: rgba(0, 149, 255, 0.1);
+            box-shadow: 0 0 40px rgba(0, 149, 255, 0.4);
+        }
+
+        .file-drop-zone .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .file-drop-zone h2 {
+            color: #0095ff;
+            margin-bottom: 10px;
+        }
+
+        .file-drop-zone p {
+            color: #8ab4f8;
+            margin-bottom: 20px;
+        }
+
+        /* STATUS BAR - Bottom */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 35px;
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 149, 255, 0.3);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 20px;
+            z-index: 1000;
+            font-size: 0.8rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #8ab4f8;
+        }
+
+        .status-value {
+            color: #00c8ff;
+            font-weight: 600;
+        }
+
+        /* STATS OVERLAY */
+        .stats-overlay {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(25, 25, 35, 0.95);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px 25px;
+            display: none;
+            gap: 20px;
+            z-index: 500;
+        }
+
+        .stats-overlay.active {
+            display: flex;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #8ab4f8;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            color: #00c8ff;
+            font-weight: 600;
+        }
+
+        /* LOADING SPINNER */
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #0095ff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* NOTIFICATION TOAST */
+        .notification {
+            position: fixed;
+            bottom: 50px;
+            right: 20px;
+            padding: 15px 20px;
+            background: rgba(25, 25, 35, 0.98);
+            border: 1px solid;
+            border-radius: 8px;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+            min-width: 250px;
+        }
+
+        .notification.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success {
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .notification.error {
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .notification.processing {
+            border-color: #ffc800;
+            color: #ffc800;
+        }
+
+        /* CONTEXT MENU */
+        .context-menu {
+            position: fixed;
+            background: rgba(25, 25, 35, 0.98);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 8px;
+            padding: 5px 0;
+            display: none;
+            z-index: 5000;
+            min-width: 180px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .context-menu-item:hover {
+            background: rgba(0, 149, 255, 0.2);
+            color: #0095ff;
+        }
+
+        .context-menu-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+        }
+
+        /* DRAGGABLE PANELS */
+        .draggable {
+            cursor: move;
+        }
+
+        /* Hide scrollbars for cleaner look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 149, 255, 0.5);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 149, 255, 0.7);
+        }
+
+        /* SHAPE PICKER OVERLAY */
+        .shape-picker-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .shape-picker-overlay.visible {
+            display: flex;
+        }
+
+        .shape-picker-container {
+            background: linear-gradient(145deg, #1e1e2e 0%, #2a2a3e 100%);
+            border-radius: 20px;
+            border: 2px solid rgba(0, 149, 255, 0.3);
+            max-width: 900px;
+            max-height: 80vh;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .shape-picker-header {
+            background: rgba(15, 15, 20, 0.95);
+            border-bottom: 2px solid rgba(0, 149, 255, 0.3);
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .shape-picker-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .shape-picker-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 32px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .shape-picker-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .shape-picker-body {
+            padding: 30px;
+            max-height: calc(80vh - 120px);
+            overflow-y: auto;
+        }
+
+        .shape-picker-subtitle {
+            color: #aaa;
+            margin: 0 0 25px 0;
+            font-size: 14px;
+        }
+
+        .shape-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .shape-category {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .shape-category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 3px solid #0095ff;
+            padding-left: 12px;
+        }
+
+        .category-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #0095ff;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: white;
+            font-size: 15px;
+        }
+
+        .shape-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+        }
+
+        .shape-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .shape-card:hover {
+            background: rgba(0, 149, 255, 0.15);
+            border-color: rgba(0, 149, 255, 0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 149, 255, 0.3);
+        }
+
+        .shape-icon {
+            font-size: 36px;
+            line-height: 1;
+        }
+
+        .shape-name {
+            font-size: 12px;
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        /* SHAPE PARAMETER PANEL */
+        .shape-params-panel {
+            position: fixed;
+            right: 20px;
+            top: 80px;
+            width: 320px;
+            background: rgba(25, 25, 35, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 12px;
+            border: 2px solid rgba(0, 149, 255, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 200;
+            max-height: calc(100vh - 100px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .shape-params-panel .panel-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .shape-params-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .param-select {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .shape-params-actions {
+            display: flex;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary {
+            flex: 1;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: rgba(0, 149, 255, 0.15);
+            border-color: rgba(0, 149, 255, 0.5);
+        }
+
+        .btn-secondary {
+            flex: 1;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* SCENE MANAGER PANEL */
+        .scene-panel {
+            left: 20px;
+            top: 500px;
+            width: 300px;
+            max-height: calc(100vh - 520px);
+            flex-direction: column;
+        }
+
+        .scene-panel .panel-body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .scene-actions {
+            display: flex;
+            gap: 8px;
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scene-action-btn-full {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .scene-action-btn-full:hover {
+            background: rgba(0, 149, 255, 0.2);
+            border-color: rgba(0, 149, 255, 0.4);
+        }
+
+        /* Tool mode indicator */
+        .tool-mode-indicator {
+            padding: 10px 15px;
+            background: rgba(0, 149, 255, 0.1);
+            border-bottom: 1px solid rgba(0, 149, 255, 0.2);
+            font-size: 12px;
+            color: #00c8ff;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .scene-objects-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .scene-empty {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            padding: 30px 10px;
+        }
+
+        .scene-object-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .scene-object-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(0, 149, 255, 0.3);
+        }
+
+        .scene-object-item.selected {
+            background: rgba(0, 149, 255, 0.15);
+            border-color: rgba(0, 149, 255, 0.5);
+            box-shadow: 0 0 10px rgba(0, 149, 255, 0.2);
+        }
+
+        .scene-object-item.hidden {
+            opacity: 0.5;
+        }
+
+        .scene-object-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .scene-object-icon {
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .scene-object-name {
+            font-size: 13px;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .scene-object-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .scene-action-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scene-action-btn:hover {
+            background: rgba(0, 149, 255, 0.2);
+            border-color: rgba(0, 149, 255, 0.4);
+        }
+
+        .scene-delete-btn:hover {
+            background: rgba(255, 50, 50, 0.2);
+            border-color: rgba(255, 50, 50, 0.4);
+        }
+
+        /* TRANSFORM CONTROLS */
+        .transform-controls {
+            padding: 15px;
+            border-top: 2px solid rgba(0, 149, 255, 0.3);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .transform-section {
+            margin-bottom: 15px;
+        }
+
+        .transform-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .transform-section h4 {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .transform-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .transform-input {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .transform-input label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .transform-input input {
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .transform-input input:focus {
+            outline: none;
+            border-color: rgba(0, 149, 255, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .transform-modes {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .transform-mode-btn {
+            padding: 10px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .transform-mode-btn:hover {
+            background: rgba(0, 149, 255, 0.2);
+            border-color: rgba(0, 149, 255, 0.4);
+        }
+
+        .transform-mode-btn.active {
+            background: rgba(0, 149, 255, 0.3);
+            border-color: rgba(0, 149, 255, 0.6);
+            box-shadow: 0 0 10px rgba(0, 149, 255, 0.3);
+        }
+
+        .transform-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .transform-action-btn {
+            padding: 8px 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: white;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .transform-action-btn:hover {
+            background: rgba(0, 149, 255, 0.15);
+            border-color: rgba(0, 149, 255, 0.3);
+        }
+
+        .transform-action-btn.active {
+            background: rgba(0, 149, 255, 0.2);
+            border-color: rgba(0, 149, 255, 0.5);
+        }
+
+        /* MY MODELS STYLES */
+        .my-models-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .my-models-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .my-model-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .my-model-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(0, 149, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .my-model-preview {
+            font-size: 48px;
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 149, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .my-model-info {
+            margin-bottom: 12px;
+        }
+
+        .my-model-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .my-model-details {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .my-model-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .my-model-action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .my-model-action-btn:hover {
+            background: rgba(0, 149, 255, 0.2);
+            border-color: rgba(0, 149, 255, 0.4);
+        }
+
+        .my-model-action-btn.delete:hover {
+            background: rgba(255, 50, 50, 0.2);
+            border-color: rgba(255, 50, 50, 0.4);
+        }
+
+        .my-models-actions {
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* OUTLINE EDITOR */
+        .outline-editor-container {
+            max-width: 800px;
+            width: 90%;
+        }
+
+        .outline-editor-container.enlarged {
+            max-width: 95vw;
+            width: 95vw;
+            max-height: 95vh;
+        }
+
+        .outline-editor-body {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .outline-canvas-container {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 149, 255, 0.3);
+            border-radius: 10px;
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .outline-editor-container.enlarged .outline-canvas-container {
+            height: 70vh;
+        }
+
+        #outlineCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: default;
+        }
+
+        .outline-editor-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .outline-editor-actions .btn-primary {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .outline-editor-info {
+            background: rgba(0, 149, 255, 0.05);
+            border: 1px solid rgba(0, 149, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .outline-editor-info p {
+            margin: 0;
+        }
+
+        /* LOADING OVERLAY */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            padding: 40px;
+            background: rgba(15, 15, 20, 0.95);
+            border: 2px solid rgba(0, 149, 255, 0.3);
+            border-radius: 15px;
+            min-width: 300px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 149, 255, 0.2);
+            border-top-color: #0095ff;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #0095ff;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .loading-progress {
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #0095ff, #00c8ff);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 149, 255, 0.5);
+        }
+
+        /* WORKFLOW PROGRESS BAR */
+        .workflow-progress-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            background: rgba(15, 15, 20, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 149, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .workflow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            opacity: 0.4;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .workflow-step.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .workflow-step.completed {
+            opacity: 0.7;
+        }
+
+        .workflow-step.completed .step-icon {
+            filter: brightness(0.7);
+        }
+
+        .step-icon {
+            font-size: 2rem;
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            color: #8ab4f8;
+            text-align: center;
+        }
+
+        .step-check {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #4caf50;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .workflow-arrow {
+            color: rgba(0, 149, 255, 0.5);
+            font-size: 1.5rem;
+        }
+    </style>
+
+    <!-- CRITICAL UI FIXES -->
+    <link rel="stylesheet" href="/static/css/modeling_fixes.css">
+</head>
+<body>
+    <!-- FULL SCREEN 3D VIEWER -->
+    <div id="viewer"></div>
+
+    <!-- FIXED LEFT SIDEBAR -->
+    <div class="left-sidebar" id="leftSidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <div class="app-title">
+                <span>🔧</span>
+                <span>ZoolZ Studio</span>
+            </div>
+            <a href="/" class="home-btn" title="Back to Hub">← Hub</a>
+        </div>
+
+        <!-- FILE ACTIONS -->
+        <div class="sidebar-section">
+            <h3 class="section-title">File</h3>
+            <button class="sidebar-btn" onclick="openFileOverlay()">
+                📁 Open File
+            </button>
+            <button class="sidebar-btn" onclick="openMyModels()">
+                📂 My Models
+            </button>
+            <button class="sidebar-btn" id="downloadBtn" style="display:none;" onclick="downloadModel()">
+                💾 Download STL
+            </button>
+            <button class="sidebar-btn" id="openInCuraBtn" style="display:none;" onclick="openInCura()">
+                🖨️ Open in Cura
+            </button>
+        </div>
+
+        <!-- UNDO/REDO HISTORY -->
+        <div class="sidebar-section">
+            <h3 class="section-title">History <span id="historyDisplay" style="display:none; color:#8ab4f8; font-weight:normal; float:right;"></span></h3>
+            <div class="scene-actions-top">
+                <button class="sidebar-btn-small" id="undoBtn" onclick="undo()" disabled title="Nothing to undo">
+                    ⏪ Undo
+                </button>
+                <button class="sidebar-btn-small" id="redoBtn" onclick="redo()" disabled title="Nothing to redo">
+                    ⏩ Redo
+                </button>
+            </div>
+            <div style="font-size:0.7rem; color:#666; text-align:center; margin-top:5px;">
+                Ctrl+Z / Ctrl+Y | Ctrl+S to Save
+            </div>
+            <div id="autoSaveIndicator" style="font-size:0.7rem; text-align:center; margin-top:5px; min-height:16px;"></div>
+        </div>
+
+        <!-- QUICK START TEMPLATES -->
+        <div class="sidebar-section">
+            <h3 class="section-title">Quick Start</h3>
+            <button class="sidebar-btn" onclick="quickStartCookieCutter()">
+                🍪 Cookie Cutter
+            </button>
+            <button class="sidebar-btn" onclick="quickStartDrainageTray()">
+                🫕 Drainage Tray
+            </button>
+            <button class="sidebar-btn" onclick="quickStartBasicShape()">
+                📐 Basic Shape
+            </button>
+            <div style="font-size:0.7rem; color:#666; margin-top:10px; text-align:center;">
+                Start with a template or upload your own
+            </div>
+        </div>
+
+        <!-- IMAGE PREVIEW PANEL -->
+        <div class="sidebar-section" id="imagePreviewSection" style="display:none;">
+            <h3 class="section-title">Image Preview</h3>
+            <div class="image-preview-container">
+                <img id="previewThumbnail" src="" alt="Preview">
+                <div class="image-info">
+                    <div class="image-name" id="previewName">-</div>
+                    <div class="image-size" id="previewSize">-</div>
+                </div>
+            </div>
+            <button class="sidebar-btn sidebar-btn-primary" onclick="extractOutlineFromImage()">
+                📐 Extract Outline
+            </button>
+        </div>
+
+        <!-- TOOLS -->
+        <div class="sidebar-section">
+            <h3 class="section-title">Tools</h3>
+            <div class="tool-grid">
+            <!-- Generation Tools -->
+            <button class="tool-icon-btn active" id="cookieBtn" onclick="switchTool('cookie')" title="Cookie Cutter">
+                <span>🍪</span>
+                <span class="tool-label">Cookie</span>
+            </button>
+            <button class="tool-icon-btn" id="outlineBtn" onclick="switchTool('outline')" title="Outline">
+                <span>📐</span>
+                <span class="tool-label">Outline</span>
+            </button>
+
+            <!-- STL Editing Tools -->
+            <button class="tool-icon-btn" id="thiccerBtn" onclick="switchTool('thiccer')" title="Thicken Walls">
+                <span>📏</span>
+                <span class="tool-label">Thicken</span>
+            </button>
+            <button class="tool-icon-btn" id="hollowBtn" onclick="switchTool('hollow')" title="Hollow Out">
+                <span>⭕</span>
+                <span class="tool-label">Hollow</span>
+            </button>
+            <button class="tool-icon-btn" id="repairBtn" onclick="switchTool('repair')" title="Repair">
+                <span>🔧</span>
+                <span class="tool-label">Repair</span>
+            </button>
+            <button class="tool-icon-btn" id="simplifyBtn" onclick="switchTool('simplify')" title="Simplify">
+                <span>◇</span>
+                <span class="tool-label">Simplify</span>
+            </button>
+            <button class="tool-icon-btn" id="mirrorBtn" onclick="switchTool('mirror')" title="Mirror">
+                <span>↔️</span>
+                <span class="tool-label">Mirror</span>
+            </button>
+            <button class="tool-icon-btn" id="scaleBtn" onclick="switchTool('scale')" title="Scale">
+                <span>↗️</span>
+                <span class="tool-label">Scale</span>
+            </button>
+            <button class="tool-icon-btn" id="booleanBtn" onclick="switchTool('boolean')" title="Boolean Ops">
+                <span>⊕</span>
+                <span class="tool-label">Boolean</span>
+            </button>
+            <button class="tool-icon-btn" id="splitBtn" onclick="switchTool('split')" title="Split/Cut">
+                <span>✂️</span>
+                <span class="tool-label">Split</span>
+            </button>
+            <button class="tool-icon-btn" id="measureBtn" onclick="switchTool('measure')" title="Measure">
+                <span>📏</span>
+                <span class="tool-label">Measure</span>
+            </button>
+            <button class="tool-icon-btn" id="arrayBtn" onclick="switchTool('array')" title="Array">
+                <span>⊞</span>
+                <span class="tool-label">Array</span>
+            </button>
+            <button class="tool-icon-btn" id="widenHoleBtn" onclick="switchTool('widenhole')" title="Widen Hole">
+                <span>⭕</span>
+                <span class="tool-label">Widen Hole</span>
+            </button>
+            </div>
+        </div>
+
+        <!-- VIEW CONTROLS -->
+        <div class="sidebar-section">
+            <h3 class="section-title">View</h3>
+            <button class="sidebar-btn" onclick="resetCamera()">
+                🎯 Reset View
+            </button>
+
+            <div style="margin:10px 0;">
+                <div style="font-size:0.75rem; color:#8ab4f8; margin-bottom:5px; text-align:center;">Camera Presets</div>
+                <div class="scene-actions-top" style="grid-template-columns: repeat(5, 1fr);">
+                    <button class="sidebar-btn-small" onclick="setCameraPreset('top')" title="Top View">
+                        ⬆️
+                    </button>
+                    <button class="sidebar-btn-small" onclick="setCameraPreset('front')" title="Front View">
+                        ⬅️
+                    </button>
+                    <button class="sidebar-btn-small" onclick="setCameraPreset('side')" title="Side View">
+                        ➡️
+                    </button>
+                    <button class="sidebar-btn-small" onclick="setCameraPreset('iso')" title="Isometric View">
+                        📐
+                    </button>
+                    <button class="sidebar-btn-small" onclick="setCameraPreset('fit')" title="Fit View">
+                        🔍
+                    </button>
+                </div>
+            </div>
+
+            <button class="sidebar-btn" onclick="snapToPlate()">
+                📍 Snap to Plate
+            </button>
+            <button class="sidebar-btn" id="gridToggle" onclick="toggleGrid()">
+                ⊞ Toggle Grid
+            </button>
+            <button class="sidebar-btn" onclick="showShapePicker()">
+                ✨ Generate Shape
+            </button>
+        </div>
+
+        <!-- SCENE MANAGER -->
+        <div class="sidebar-section">
+            <h3 class="section-title">Scene (<span id="sceneObjectCount">0</span>)</h3>
+            <div class="scene-actions-top">
+                <button class="sidebar-btn-small" onclick="clearScene()" title="Clear all">
+                    🗑️ Clear
+                </button>
+                <button class="sidebar-btn-small" onclick="fuseAllObjects()" title="Fuse all">
+                    ⊕ Fuse
+                </button>
+                <button class="sidebar-btn-small" onclick="undo()" id="undoBtn" disabled title="Undo">
+                    ↶ Undo
+                </button>
+                <button class="sidebar-btn-small" onclick="redo()" id="redoBtn" disabled title="Redo">
+                    ↷ Redo
+                </button>
+            </div>
+            <div id="sceneObjectsList" class="scene-objects-list">
+                <div class="scene-empty">No objects in scene</div>
+            </div>
+        </div>
+
+        <!-- TRANSFORM CONTROLS (when object selected) -->
+        <div class="sidebar-section" id="transformSection" style="display: none;">
+            <h3 class="section-title">Transform</h3>
+            <div class="transform-modes">
+                <button class="transform-mode-btn active" id="transformMode_translate" onclick="setTransformMode('translate')">
+                    ↔️ Move
+                </button>
+                <button class="transform-mode-btn" id="transformMode_rotate" onclick="setTransformMode('rotate')">
+                    🔄 Rotate
+                </button>
+                <button class="transform-mode-btn" id="transformMode_scale" onclick="setTransformMode('scale')">
+                    ⚖️ Scale
+                </button>
+            </div>
+
+            <div class="transform-section">
+                <h4>Position (mm)</h4>
+                <div class="transform-grid">
+                    <div class="transform-input">
+                        <label>X</label>
+                        <input type="number" id="objPosX" value="0" step="1" onchange="applyObjectPosition()">
+                    </div>
+                    <div class="transform-input">
+                        <label>Y</label>
+                        <input type="number" id="objPosY" value="0" step="1" onchange="applyObjectPosition()">
+                    </div>
+                    <div class="transform-input">
+                        <label>Z</label>
+                        <input type="number" id="objPosZ" value="0" step="1" onchange="applyObjectPosition()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="transform-section">
+                <h4>Rotation (degrees)</h4>
+                <div class="transform-grid">
+                    <div class="transform-input">
+                        <label>X</label>
+                        <input type="number" id="objRotX" value="0" step="5" onchange="applyObjectRotation()">
+                    </div>
+                    <div class="transform-input">
+                        <label>Y</label>
+                        <input type="number" id="objRotY" value="0" step="5" onchange="applyObjectRotation()">
+                    </div>
+                    <div class="transform-input">
+                        <label>Z</label>
+                        <input type="number" id="objRotZ" value="0" step="5" onchange="applyObjectRotation()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="transform-section">
+                <h4>Scale</h4>
+                <div class="transform-input">
+                    <label>Uniform</label>
+                    <input type="number" id="objScaleUniform" value="1.0" step="0.1" min="0.1" onchange="applyObjectScale()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING TOOL OPTIONS (DRAGGABLE WINDOWS) -->
+    <div class="tool-options-window" id="toolOptionsWindow" style="display: none;">
+        <div class="window-header">
+            <span class="window-title" id="toolOptionsTitle">Tool Options</span>
+            <button class="window-close-btn" onclick="closeToolOptions()">×</button>
+        </div>
+        <div class="window-body" id="toolOptionsBody">
+            <!-- Cookie Cutter Parameters -->
+            <div id="cookieParams" class="tool-params">
+                <div class="prop-section">
+                    <h3>Cookie Cutter Settings</h3>
+
+                    <!-- QUICK PRESETS -->
+                    <div style="margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <div style="font-size:0.8rem; color:#8ab4f8; margin-bottom:8px; font-weight:600;">Quick Presets</div>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px;">
+                            <button class="sidebar-btn-small" onclick="applyPreset('cookie')" title="Cookie Cutter (2mm blade, 20mm height)">
+                                🍪 Cookie
+                            </button>
+                            <button class="sidebar-btn-small" onclick="applyPreset('stamp')" title="Detail Stamp (raised, 2mm depth)">
+                                📍 Stamp
+                            </button>
+                            <button class="sidebar-btn-small" onclick="applyPreset('leather')" title="Leather Stamp (thick, deep)">
+                                🔨 Leather
+                            </button>
+                            <button class="sidebar-btn-small" onclick="applyPreset('solid')" title="Solid Object (no blade)">
+                                ⬛ Solid
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label>Detail Level</label>
+                        <input type="range" id="detailLevel" min="0" max="100" step="1" value="50">
+                        <div class="param-value">
+                            <span>Smooth</span>
+                            <span id="detailValue">0.5</span>
+                            <span>Detailed</span>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label>Blade Thickness (mm)</label>
+                        <input type="range" id="bladeThick" min="0.5" max="5" step="0.1" value="2">
+                        <div class="param-value">
+                            <span id="bladeThickValue">2.0</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label>Blade Height (mm)</label>
+                        <input type="range" id="bladeHeight" min="5" max="60" step="0.5" value="20">
+                        <div class="param-value">
+                            <span id="bladeHeightValue">20.0</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label>Base Thickness (mm)</label>
+                        <input type="range" id="baseThick" min="0.5" max="10" step="0.1" value="3">
+                        <div class="param-value">
+                            <span id="baseThickValue">3.0</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label>Base Extension (mm)</label>
+                        <input type="range" id="baseExtra" min="2" max="40" step="0.5" value="10">
+                        <div class="param-value">
+                            <span id="baseExtraValue">10.0</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label>Max Dimension (mm)</label>
+                        <input type="range" id="maxDim" min="20" max="300" step="1" value="90">
+                        <div class="param-value">
+                            <span id="maxDimValue">90</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="noBase">
+                            <span>No Base (blade only)</span>
+                        </label>
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid rgba(0, 149, 255, 0.2); margin: 20px 0;">
+
+                    <h4 style="color: rgba(0, 149, 255, 0.9); font-size: 14px; margin-bottom: 10px;">New Workflow</h4>
+
+                    <button class="btn" id="extractOutlineBtn" disabled onclick="extractOutlineFromImage()">
+                        <span id="extractOutlineText">📐 Extract & Edit Outline</span>
+                    </button>
+
+                    <div class="param-group" style="margin-top: 15px;">
+                        <label>Inner Detail Precision</label>
+                        <input type="range" id="detailPrecision" min="0" max="100" step="1" value="50">
+                        <div class="param-value">
+                            <span>Large Only</span>
+                            <span id="detailPrecisionValue">0.5</span>
+                            <span>All Details</span>
+                        </div>
+                    </div>
+
+                    <button class="btn" id="extractDetailsBtn" disabled onclick="extractDetailsFromImage()">
+                        <span>🎨 Extract Inner Details</span>
+                    </button>
+
+                    <hr style="border: none; border-top: 1px solid rgba(0, 149, 255, 0.2); margin: 20px 0;">
+
+                    <h4 style="color: rgba(0, 149, 255, 0.9); font-size: 14px; margin-bottom: 10px;">Direct Generation</h4>
+
+                    <button class="btn" id="generateBtn" disabled onclick="generateCookieCutter()">
+                        <span id="generateText">Upload Image First</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Thicken Parameters -->
+            <div id="thiccerParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Wall Thickener</h3>
+                    <p style="font-size: 0.8rem; color: #8ab4f8; margin-bottom: 15px;">
+                        Click faces to select, Shift+click for multi-select
+                    </p>
+
+                    <div class="param-group">
+                        <label>Thickness (mm)</label>
+                        <input type="number" id="wallThickness" min="0.1" max="20" step="0.1" value="2.0">
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="selectAllWalls()">
+                        🎯 Auto-Select Walls
+                    </button>
+
+                    <button class="btn btn-secondary" onclick="selectAllFaces()">
+                        ⬜ Select All Faces
+                    </button>
+
+                    <button class="btn btn-secondary" onclick="clearFaceSelection()">
+                        ❌ Clear Selection
+                    </button>
+
+                    <button class="btn" id="applyThickenBtn" onclick="applyThickening()" disabled>
+                        ✓ Apply Thickening
+                    </button>
+
+                    <div id="selectionInfo" style="margin-top: 10px; padding: 10px; background: rgba(0, 149, 255, 0.05); border-radius: 5px; display: none;">
+                        <div style="font-size: 0.85rem; color: #8ab4f8;">
+                            Selected: <span id="selectedCount" style="color: #00c8ff; font-weight: 600;">0</span> faces
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hollow Parameters -->
+            <div id="hollowParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Hollow Out</h3>
+
+                    <div class="param-group">
+                        <label>Wall Thickness (mm)</label>
+                        <input type="range" id="hollowWallThickness" min="0.8" max="5" step="0.1" value="2.0">
+                        <div class="param-value">
+                            <span id="hollowWallThicknessValue">2.0</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="hollowDrainage" checked>
+                            <span>Add Drainage Holes</span>
+                        </label>
+                    </div>
+
+                    <div class="param-group">
+                        <label>Drainage Diameter (mm)</label>
+                        <input type="range" id="drainageDiameter" min="2" max="10" step="0.5" value="5.0">
+                        <div class="param-value">
+                            <span id="drainageDiameterValue">5.0</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="applyHollow()">
+                        ✓ Hollow Model
+                    </button>
+                </div>
+            </div>
+
+            <!-- Repair Parameters -->
+            <div id="repairParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Mesh Repair</h3>
+
+                    <div class="param-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="aggressiveRepair">
+                            <span>Aggressive Repair</span>
+                        </label>
+                    </div>
+
+                    <button class="btn" onclick="applyRepair()">
+                        ✓ Repair Model
+                    </button>
+                </div>
+            </div>
+
+            <!-- Simplify Parameters -->
+            <div id="simplifyParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Simplify Mesh</h3>
+
+                    <div class="param-group">
+                        <label>Reduction %</label>
+                        <input type="range" id="reductionPercent" min="10" max="90" step="5" value="50">
+                        <div class="param-value">
+                            <span id="reductionPercentValue">50</span>
+                            <span>%</span>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="applySimplify()">
+                        ✓ Simplify
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mirror Parameters -->
+            <div id="mirrorParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Mirror Model</h3>
+
+                    <div class="param-group">
+                        <label>Mirror Axis</label>
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="mirrorAxis" value="x" checked>
+                                <span>X</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="mirrorAxis" value="y">
+                                <span>Y</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="mirrorAxis" value="z">
+                                <span>Z</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="mirrorMerge">
+                            <span>Merge with Original</span>
+                        </label>
+                    </div>
+
+                    <button class="btn" onclick="applyMirror()">
+                        ✓ Mirror
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scale Parameters -->
+            <div id="scaleParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Scale Model</h3>
+
+                    <div class="param-group">
+                        <label>Scale %</label>
+                        <input type="range" id="scalePercent" min="10" max="500" step="5" value="100">
+                        <div class="param-value">
+                            <span id="scalePercentValue">100</span>
+                            <span>%</span>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="applyScale()">
+                        ✓ Apply Scale
+                    </button>
+                </div>
+            </div>
+
+            <!-- Boolean Operations Parameters -->
+            <div id="booleanParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Boolean Operations</h3>
+                    <p style="font-size: 0.8rem; color: #8ab4f8; margin-bottom: 15px;">
+                        Load two STL files and combine them
+                    </p>
+
+                    <div class="param-group">
+                        <label>Operation</label>
+                        <select id="booleanOp" style="width: 100%; padding: 8px; background: rgba(0, 149, 255, 0.1); border: 1px solid rgba(0, 149, 255, 0.3); border-radius: 5px; color: #fff;">
+                            <option value="union">Union (Combine)</option>
+                            <option value="difference">Difference (Subtract)</option>
+                            <option value="intersection">Intersection</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="document.getElementById('booleanMesh2').click()">
+                        📂 Load Second Mesh
+                    </button>
+                    <input type="file" id="booleanMesh2" accept=".stl" style="display: none;">
+
+                    <div id="mesh2Info" style="display: none; padding: 10px; background: rgba(0, 149, 255, 0.05); border-radius: 5px; margin: 10px 0; font-size: 0.85rem;"></div>
+
+                    <button class="btn" id="applyBooleanBtn" onclick="applyBoolean()" disabled>
+                        ✓ Apply Boolean
+                    </button>
+                </div>
+            </div>
+
+            <!-- Split/Cut Parameters -->
+            <div id="splitParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Split/Cut Model</h3>
+
+                    <div class="param-group">
+                        <label>Cut Plane Axis</label>
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="splitAxis" value="x">
+                                <span>X</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="splitAxis" value="y">
+                                <span>Y</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="splitAxis" value="z" checked>
+                                <span>Z</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label>Position Along Axis</label>
+                        <input type="number" id="splitPosition" value="0" step="1">
+                    </div>
+
+                    <div class="param-group">
+                        <label>Keep Parts</label>
+                        <select id="splitKeepPart" style="width: 100%; padding: 8px; background: rgba(0, 149, 255, 0.1); border: 1px solid rgba(0, 149, 255, 0.3); border-radius: 5px; color: #fff;">
+                            <option value="both">Both Parts</option>
+                            <option value="positive">Positive Side Only</option>
+                            <option value="negative">Negative Side Only</option>
+                        </select>
+                    </div>
+
+                    <button class="btn" onclick="applySplit()">
+                        ✓ Cut Model
+                    </button>
+                </div>
+            </div>
+
+            <!-- Measurement Tool Parameters -->
+            <div id="measureParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Measure Tool</h3>
+                    <p style="font-size: 0.8rem; color: #8ab4f8; margin-bottom: 15px;">
+                        Click two points on the model to measure distance
+                    </p>
+
+                    <div id="measureInfo" style="padding: 15px; background: rgba(0, 149, 255, 0.1); border-radius: 5px; text-align: center;">
+                        <div style="font-size: 0.85rem; color: #8ab4f8;">Distance</div>
+                        <div style="font-size: 2rem; color: #00c8ff; font-weight: 600; margin: 10px 0;" id="measureDistance">--</div>
+                        <div style="font-size: 0.8rem; color: #8ab4f8;">mm</div>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="clearMeasurement()">
+                        Clear Measurement
+                    </button>
+                </div>
+            </div>
+
+            <!-- Array/Pattern Parameters -->
+            <div id="arrayParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Array Pattern</h3>
+
+                    <div class="param-group">
+                        <label>Array Type</label>
+                        <select id="arrayType" onchange="updateArrayParams()" style="width: 100%; padding: 8px; background: rgba(0, 149, 255, 0.1); border: 1px solid rgba(0, 149, 255, 0.3); border-radius: 5px; color: #fff;">
+                            <option value="linear">Linear Grid</option>
+                            <option value="circular">Circular</option>
+                        </select>
+                    </div>
+
+                    <!-- Linear Array Params -->
+                    <div id="linearArrayParams">
+                        <div class="param-group">
+                            <label>Count X</label>
+                            <input type="number" id="arrayCountX" value="3" min="1" max="20">
+                        </div>
+
+                        <div class="param-group">
+                            <label>Count Y</label>
+                            <input type="number" id="arrayCountY" value="1" min="1" max="20">
+                        </div>
+
+                        <div class="param-group">
+                            <label>Spacing X (mm)</label>
+                            <input type="number" id="arraySpacingX" value="50" step="5">
+                        </div>
+
+                        <div class="param-group">
+                            <label>Spacing Y (mm)</label>
+                            <input type="number" id="arraySpacingY" value="50" step="5">
+                        </div>
+                    </div>
+
+                    <!-- Circular Array Params -->
+                    <div id="circularArrayParams" style="display: none;">
+                        <div class="param-group">
+                            <label>Count</label>
+                            <input type="number" id="arrayCircularCount" value="8" min="3" max="36">
+                        </div>
+
+                        <div class="param-group">
+                            <label>Radius (mm)</label>
+                            <input type="number" id="arrayRadius" value="100" step="10">
+                        </div>
+
+                        <div class="param-group">
+                            <label style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="arrayRotateToCenter">
+                                <span>Rotate to face center</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="applyArray()">
+                        ✓ Create Array
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stamp Tool Parameters -->
+            <div id="widenholeParams" class="tool-params" style="display: none;">
+                <h3 class="tool-params-title">⭕ Widen Hole</h3>
+                <p class="tool-params-desc">Enlarge cylindrical holes for pain beads, fidget pens, etc.</p>
+
+                <div class="param-group">
+                    <label class="param-label">
+                        New Radius (mm):
+                        <span id="widenHoleRadiusValue" class="param-value">5.0</span>
+                    </label>
+                    <input type="range" id="widenHoleRadius" min="1" max="20" step="0.5" value="5" class="param-slider" oninput="document.getElementById('widenHoleRadiusValue').textContent = this.value">
+                </div>
+
+                <div class="param-group">
+                    <label class="param-checkbox">
+                        <input type="checkbox" id="widenHoleAutoDetect" checked>
+                        Auto-detect center hole
+                    </label>
+                </div>
+
+                <div id="widenholeManualControls" style="display: none;">
+                    <div class="param-group">
+                        <label class="param-label">Current Radius (mm):</label>
+                        <input type="number" id="widenHoleCurrentRadius" value="3" min="0.1" max="50" step="0.1" class="param-input">
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">Hole Axis:</label>
+                        <select id="widenHoleAxis" class="param-select">
+                            <option value="2">Z-axis (vertical)</option>
+                            <option value="0">X-axis</option>
+                            <option value="1">Y-axis</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label class="param-checkbox">
+                        <input type="checkbox" id="widenHolePartial">
+                        Widen only part of hole (advanced)
+                    </label>
+                </div>
+
+                <div id="widenholePartialControls" style="display: none;">
+                    <div class="param-group">
+                        <label class="param-label">Height Min (mm):</label>
+                        <input type="number" id="widenHoleHeightMin" value="0" step="0.5" class="param-input">
+                    </div>
+                    <div class="param-group">
+                        <label class="param-label">Height Max (mm):</label>
+                        <input type="number" id="widenHoleHeightMax" value="10" step="0.5" class="param-input">
+                    </div>
+                </div>
+
+                <button class="apply-btn" onclick="applyWidenHole()">⭕ Widen Hole</button>
+            </div>
+
+            <div id="stampParams" class="tool-params" style="display: none;">
+                <div class="prop-section">
+                    <h3>Stamp Generator</h3>
+                    <p style="font-size: 0.8rem; color: #8ab4f8; margin-bottom: 15px;">
+                        Create raised or recessed stamps for cookie dough, leather work, and more
+                    </p>
+
+                    <!-- Stamp Type -->
+                    <div class="param-group">
+                        <label>Stamp Type</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="stampType" value="positive" checked style="margin-right: 5px;">
+                                <span style="font-size: 18px;">⬆️</span> Raised
+                            </label>
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="stampType" value="negative" style="margin-right: 5px;">
+                                <span style="font-size: 18px;">⬇️</span> Recessed
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Detail Level (Sharp ↔ Detailed) -->
+                    <div class="param-group">
+                        <label>Detail Level</label>
+                        <input type="range" id="stampDetailLevel" min="0" max="100" step="1" value="50">
+                        <div class="param-value">
+                            <span>🗡️ Sharp</span>
+                            <span id="stampDetailLevelValue">0.5</span>
+                            <span>✨ Detailed</span>
+                        </div>
+                    </div>
+
+                    <!-- Base Type -->
+                    <div class="param-group">
+                        <label>Base Type</label>
+                        <select id="stampBaseType" style="width: 100%; padding: 8px; background: rgba(0, 149, 255, 0.1); border: 1px solid rgba(0, 149, 255, 0.3); border-radius: 5px; color: #fff;">
+                            <option value="solid">Full Solid Base</option>
+                            <option value="backbar">Connected by Back Bar</option>
+                            <option value="minimal">Minimal Support</option>
+                        </select>
+                    </div>
+
+                    <!-- Base Thickness -->
+                    <div class="param-group">
+                        <label>Base Thickness (mm)</label>
+                        <input type="range" id="stampBaseThickness" min="2" max="20" step="0.5" value="5">
+                        <div class="param-value">
+                            <span id="stampBaseThicknessValue">5.0</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <!-- Detail Height/Depth -->
+                    <div class="param-group">
+                        <label>Detail Height/Depth (mm)</label>
+                        <input type="range" id="stampDetailHeight" min="0.5" max="10" step="0.1" value="2">
+                        <div class="param-value">
+                            <span id="stampDetailHeightValue">2.0</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <!-- Detail Style -->
+                    <div class="param-group">
+                        <label>Detail Style</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="stampDetailStyle" value="solid" checked style="margin-right: 5px;">
+                                ⬛ Solid
+                            </label>
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="stampDetailStyle" value="hollow" style="margin-right: 5px;">
+                                ⭕ Hollow
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Wall Thickness (if hollow) -->
+                    <div class="param-group" id="stampWallThicknessGroup">
+                        <label>Wall Thickness (mm)</label>
+                        <input type="range" id="stampWallThickness" min="0.5" max="3" step="0.1" value="1.5">
+                        <div class="param-value">
+                            <span id="stampWallThicknessValue">1.5</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <!-- Edge Profile -->
+                    <div class="param-group">
+                        <label>Edge Profile</label>
+                        <select id="stampEdgeProfile" onchange="updateStampEdgeSettings()" style="width: 100%; padding: 8px; background: rgba(0, 149, 255, 0.1); border: 1px solid rgba(0, 149, 255, 0.3); border-radius: 5px; color: #fff;">
+                            <option value="rounded">Rounded (Safe)</option>
+                            <option value="sharp">Sharp (Cutting)</option>
+                            <option value="beveled">Beveled (Leather Work)</option>
+                        </select>
+                    </div>
+
+                    <!-- Bevel Settings (only for beveled) -->
+                    <div id="stampBevelSettings" style="display: none;">
+                        <div class="param-group">
+                            <label>Bevel Angle (degrees)</label>
+                            <input type="range" id="stampBevelAngle" min="15" max="60" step="1" value="30">
+                            <div class="param-value">
+                                <span id="stampBevelAngleValue">30</span>
+                                <span>°</span>
+                            </div>
+                        </div>
+
+                        <div class="param-group">
+                            <label>Bevel Depth (mm)</label>
+                            <input type="range" id="stampBevelDepth" min="0.5" max="5" step="0.1" value="2">
+                            <div class="param-value">
+                                <span id="stampBevelDepthValue">2.0</span>
+                                <span>mm</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Max Dimension -->
+                    <div class="param-group">
+                        <label>Max Dimension (mm)</label>
+                        <input type="range" id="stampMaxDim" min="20" max="300" step="5" value="80">
+                        <div class="param-value">
+                            <span id="stampMaxDimValue">80</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <!-- Handle -->
+                    <div class="param-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="stampIncludeHandle" checked>
+                            <span>Include Handle/Grip</span>
+                        </label>
+                    </div>
+
+                    <div class="param-group" id="stampHandleHeightGroup">
+                        <label>Handle Height (mm)</label>
+                        <input type="range" id="stampHandleHeight" min="5" max="30" step="1" value="10">
+                        <div class="param-value">
+                            <span id="stampHandleHeightValue">10</span>
+                            <span>mm</span>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="generateStampFromSettings()">
+                        ✓ Generate Stamp
+                    </button>
+
+                    <script>
+                        // Update value displays
+                        document.getElementById('stampDetailLevel')?.addEventListener('input', (e) => {
+                            document.getElementById('stampDetailLevelValue').textContent = (parseFloat(e.target.value) / 100).toFixed(2);
+                        });
+                        document.getElementById('stampBaseThickness')?.addEventListener('input', (e) => {
+                            document.getElementById('stampBaseThicknessValue').textContent = e.target.value;
+                        });
+                        document.getElementById('stampDetailHeight')?.addEventListener('input', (e) => {
+                            document.getElementById('stampDetailHeightValue').textContent = e.target.value;
+                        });
+                        document.getElementById('stampWallThickness')?.addEventListener('input', (e) => {
+                            document.getElementById('stampWallThicknessValue').textContent = e.target.value;
+                        });
+                        document.getElementById('stampBevelAngle')?.addEventListener('input', (e) => {
+                            document.getElementById('stampBevelAngleValue').textContent = e.target.value;
+                        });
+                        document.getElementById('stampBevelDepth')?.addEventListener('input', (e) => {
+                            document.getElementById('stampBevelDepthValue').textContent = e.target.value;
+                        });
+                        document.getElementById('stampMaxDim')?.addEventListener('input', (e) => {
+                            document.getElementById('stampMaxDimValue').textContent = e.target.value;
+                        });
+                        document.getElementById('stampHandleHeight')?.addEventListener('input', (e) => {
+                            document.getElementById('stampHandleHeightValue').textContent = e.target.value;
+                        });
+
+                        // Show/hide settings based on selections
+                        function updateStampEdgeSettings() {
+                            const profile = document.getElementById('stampEdgeProfile')?.value;
+                            const bevelSettings = document.getElementById('stampBevelSettings');
+                            if (bevelSettings) {
+                                bevelSettings.style.display = profile === 'beveled' ? 'block' : 'none';
+                            }
+                        }
+
+                        document.querySelectorAll('input[name="stampDetailStyle"]')?.forEach(radio => {
+                            radio.addEventListener('change', () => {
+                                const group = document.getElementById('stampWallThicknessGroup');
+                                if (group) {
+                                    group.style.display = radio.value === 'hollow' ? 'block' : 'none';
+                                }
+                            });
+                        });
+
+                        document.getElementById('stampIncludeHandle')?.addEventListener('change', (e) => {
+                            const group = document.getElementById('stampHandleHeightGroup');
+                            if (group) {
+                                group.style.display = e.target.checked ? 'block' : 'none';
+                            }
+                        });
+
+                        // Generate stamp function
+                        async function generateStampFromSettings() {
+                            // Check if outline editor is open and has data
+                            if (!outlineEditorV2 || !outlineEditorV2.isOpen) {
+                                showNotification('Please extract an outline first', 'error');
+                                return;
+                            }
+
+                            const outlineData = outlineEditorV2.getOutlineData();
+                            if (!outlineData || !outlineData.outline || outlineData.outline.length === 0) {
+                                showNotification('No outline data available', 'error');
+                                return;
+                            }
+
+                            // Gather all stamp parameters
+                            const params = {
+                                stamp_type: document.querySelector('input[name="stampType"]:checked')?.value || 'positive',
+                                detail_level: parseFloat(document.getElementById('stampDetailLevel')?.value || 50) / 100,
+                                base_type: document.getElementById('stampBaseType')?.value || 'solid',
+                                base_thickness: parseFloat(document.getElementById('stampBaseThickness')?.value || 5),
+                                detail_height: parseFloat(document.getElementById('stampDetailHeight')?.value || 2),
+                                edge_profile: document.getElementById('stampEdgeProfile')?.value || 'rounded',
+                                bevel_angle: parseFloat(document.getElementById('stampBevelAngle')?.value || 30),
+                                bevel_depth: parseFloat(document.getElementById('stampBevelDepth')?.value || 2),
+                                wall_thickness: parseFloat(document.getElementById('stampWallThickness')?.value || 1.5),
+                                detail_style: document.querySelector('input[name="stampDetailStyle"]:checked')?.value || 'solid',
+                                max_dimension: parseFloat(document.getElementById('stampMaxDim')?.value || 80),
+                                handle_height: parseFloat(document.getElementById('stampHandleHeight')?.value || 10),
+                                include_handle: document.getElementById('stampIncludeHandle')?.checked || false
+                            };
+
+                            showNotification('Generating stamp...', 'processing');
+
+                            try {
+                                const response = await fetch('/modeling/api/generate_stamp', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        outline_data: outlineData,
+                                        params: params
+                                    })
+                                });
+
+                                const data = await response.json();
+
+                                if (data.success) {
+                                    showNotification(`${params.stamp_type} stamp generated!`, 'success');
+                                    loadSTL(data.download_url);
+
+                                    if (typeof addObjectToScene === 'function') {
+                                        const name = `${params.stamp_type === 'positive' ? 'Raised' : 'Recessed'} Stamp`;
+                                        addObjectToScene(name, data.download_url);
+                                    }
+                                } else {
+                                    showNotification('Error: ' + data.error, 'error');
+                                }
+                            } catch (error) {
+                                showNotification('Generation failed: ' + error.message, 'error');
+                            }
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- FILE UPLOAD OVERLAY -->
+    <div class="file-overlay" id="fileOverlay">
+        <button class="overlay-close-btn" onclick="closeFileOverlay()">×</button>
+        <div class="file-drop-zone" id="dropZone">
+            <div class="icon">📁</div>
+            <h2>Drop your file here</h2>
+            <p>Drag and drop anywhere or click to browse</p>
+            <p style="font-size: 0.85rem; margin-top: 10px; color: #8ab4f8;">
+                Supported: PNG, JPG, GIF, STL
+            </p>
+            <input type="file" id="fileInput" accept="image/*,.stl" style="display: none;">
+            <button class="btn" style="max-width: 200px; margin: 20px auto 0;" onclick="document.getElementById('fileInput').click()">
+                Browse Files
+            </button>
+        </div>
+    </div>
+
+    <!-- DROP ZONE INDICATOR (shows when dragging over viewport) -->
+    <div class="viewport-drop-indicator" id="viewportDropIndicator" style="display: none;">
+        <div class="drop-indicator-content">
+            <div style="font-size: 4rem; margin-bottom: 20px;">📁</div>
+            <h2>Drop file to open</h2>
+            <p>PNG, JPG, GIF, or STL files</p>
+        </div>
+    </div>
+
+    <!-- STATS OVERLAY -->
+    <div class="stats-overlay" id="statsOverlay">
+        <div class="stat-item">
+            <div class="stat-label">Vertices</div>
+            <div class="stat-value" id="statVertices">-</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Faces</div>
+            <div class="stat-value" id="statFaces">-</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Watertight</div>
+            <div class="stat-value" id="statWatertight">-</div>
+        </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span>Model:</span>
+            <span class="status-value" id="statusFile">No file loaded</span>
+        </div>
+        <div class="status-item">
+            <span>Tool:</span>
+            <span class="status-value" id="statusTool">Cookie Cutter</span>
+        </div>
+        <div class="status-item">
+            <span>Camera:</span>
+            <span class="status-value" id="statusCamera">Ready</span>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div class="notification" id="notification"></div>
+
+    <!-- CONTEXT MENU -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="resetCamera()">
+            🎯 Reset View
+        </div>
+        <div class="context-menu-item" onclick="snapToPlate()">
+            📍 Snap to Build Plate
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" onclick="toggleGrid()">
+            ⊞ Toggle Grid
+        </div>
+        <div class="context-menu-item" onclick="toggleStats()">
+            📊 Toggle Stats
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" onclick="downloadModel()">
+            💾 Download STL
+        </div>
+    </div>
+
+    <!-- MY MODELS PANEL -->
+    <div id="myModelsPanel" class="shape-picker-overlay">
+        <div class="shape-picker-container">
+            <div class="shape-picker-header">
+                <h2>📂 My Models</h2>
+                <button class="shape-picker-close" onclick="closeMyModels()">×</button>
+            </div>
+            <div class="shape-picker-body">
+                <p class="shape-picker-subtitle">Your saved models</p>
+                <div id="myModelsListContainer" class="my-models-list"></div>
+                <div class="my-models-actions">
+                    <button class="btn-primary" onclick="saveToMyModels()" title="Save current model">
+                        💾 Save Current Model
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OUTLINE EDITOR PANEL -->
+    <div id="outlineEditorPanel" class="shape-picker-overlay">
+        <div class="shape-picker-container outline-editor-container">
+            <div class="shape-picker-header">
+                <h2>✏️ Outline Editor</h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="toolbar-btn" onclick="toggleEnlargedView()" title="Toggle enlarged view">
+                        🔍 Enlarge
+                    </button>
+                    <button class="shape-picker-close" onclick="closeOutlineEditor()">×</button>
+                </div>
+            </div>
+            <div class="outline-editor-body">
+                <div class="outline-canvas-container">
+                    <canvas id="outlineCanvas"></canvas>
+                </div>
+                <div class="outline-editor-actions">
+                    <button class="btn-primary" onclick="generateFromOutline()">
+                        🍪 Generate Cookie Cutter
+                    </button>
+                    <button class="btn-primary" onclick="generateDetailStamp()" id="generateStampBtn" style="display: none;">
+                        🎨 Generate Detail Stamp
+                    </button>
+                </div>
+                <div class="outline-editor-info">
+                    <p style="font-size: 0.85rem; color: rgba(0, 149, 255, 0.7); margin: 10px 0;">
+                        💡 Click and drag points to adjust the outline. The outline will update in real-time.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHAPE PICKER POPUP -->
+    <div id="shapePicker" class="shape-picker-overlay">
+        <div class="shape-picker-container">
+            <div class="shape-picker-header">
+                <h2>✨ Generate Shape</h2>
+                <button class="shape-picker-close" onclick="hideShapePicker()">×</button>
+            </div>
+            <div class="shape-picker-body">
+                <p class="shape-picker-subtitle">Select a shape to customize and generate</p>
+                <div id="shapeCategories" class="shape-categories"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHAPE PARAMETER PANEL -->
+    <div id="shapeParamsPanel" class="shape-params-panel" style="display: none;">
+        <div class="panel-header">
+            <span class="panel-title" id="selectedShapeName">Shape</span>
+            <button class="minimize-btn" onclick="closeShapeParams()">×</button>
+        </div>
+        <div class="panel-body">
+            <div id="shapeParamsContainer" class="shape-params-container"></div>
+            <div class="shape-params-actions">
+                <button class="btn-primary" onclick="generateShapeFromPicker()">✓ Generate</button>
+                <button class="btn-secondary" onclick="closeShapeParams()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div id="loadingText" class="loading-text">Processing...</div>
+            <div id="loadingProgress" class="loading-progress" style="display:none;">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORKFLOW PROGRESS INDICATOR -->
+    <div id="workflowProgressContainer" style="position:fixed; bottom:20px; left:320px; right:20px; z-index:900; pointer-events:none;">
+        <div id="workflowProgress" class="workflow-progress-bar"></div>
+    </div>
+
+    <!-- Core systems (load first) -->
+    <script src="/static/js/floating_windows.js"></script>
+    <script src="/static/js/selection_manager.js"></script>
+
+    <!-- Main functionality -->
+    <script src="/static/js/modeling_controller.js"></script>
+    <script src="/static/js/advanced_tools.js"></script>
+    <script src="/static/js/new_tools.js"></script>
+    <script src="/static/js/shape_picker.js"></script>
+    <script src="/static/js/scene_manager.js"></script>
+    <script src="/static/js/transform_gizmo.js"></script>
+    <script src="/static/js/undo_redo.js"></script>
+    <script src="/static/js/my_models.js"></script>
+    <script src="/static/js/outline_editor.js"></script>
+
+    <!-- UI Modernizer (load last to transform UI) -->
+    <script src="/static/js/ui_modernizer.js"></script>
+
+    <!-- NEW ENHANCEMENTS - Background Tasks, Shortcuts, Measurements -->
+    <script src="/modeling/static/js/background_tasks.js"></script>
+    <script src="/modeling/static/js/keyboard_shortcuts.js"></script>
+    <script src="/modeling/static/js/measurement_overlay.js"></script>
+    <script src="/modeling/static/js/task_integration.js"></script>
+</body>
+</html>
