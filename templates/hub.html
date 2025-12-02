@@ -175,11 +175,91 @@
             font-size: 0.9rem;
             z-index: 2;
         }
+
+        /* User info display in top-right */
+        .user-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(30, 30, 40, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 149, 255, 0.3);
+            border-radius: 25px;
+            padding: 10px 20px;
+            z-index: 2;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 149, 255, 0.2);
+        }
+
+        .user-info:hover {
+            border-color: #0095ff;
+            box-shadow: 0 0 30px rgba(0, 149, 255, 0.4);
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0095ff, #00c8ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 149, 255, 0.4);
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .user-number {
+            font-size: 0.85rem;
+            color: #8ab4f8;
+            line-height: 1.2;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 5px rgba(255, 107, 107, 0.6));
+        }
     </style>
 </head>
 <body>
     <div class="grid-background"></div>
-    
+
+    <!-- User info in top-right -->
+    <div class="user-info">
+        <div class="user-avatar" id="userAvatar">Z</div>
+        <div class="user-details">
+            <div class="user-name" id="userName">Loading...</div>
+            <div class="user-number" id="userNumber">#000000</div>
+        </div>
+        <button class="logout-btn" onclick="logout()" title="Logout">🚪</button>
+    </div>
+
     <div class="hub-container">
         <h1 class="hub-title">ZoolZ</h1>
         <p class="hub-subtitle">Multi-Purpose 3D Design Tool</p>
@@ -226,8 +306,49 @@
     <div class="version-tag">v1.0.0-alpha</div>
 
     <script>
+        // Load user info (passed from Flask template)
+        const user = {{ user | tojson | safe }};
+
+        // Display user info on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (user) {
+                // Set avatar (first letter of name)
+                const avatarElement = document.getElementById('userAvatar');
+                avatarElement.textContent = user.name.charAt(0).toUpperCase();
+
+                // Set name
+                const nameElement = document.getElementById('userName');
+                nameElement.textContent = user.name;
+
+                // Format user number: show last 3 digits with asterisks
+                // Example: 100001 -> #***001
+                const numberElement = document.getElementById('userNumber');
+                const userNumber = user.userNumber || '000000';
+                const lastThree = userNumber.slice(-3);
+                const formatted = `#***${lastThree}`;
+                numberElement.textContent = formatted;
+            }
+        });
+
         function navigateTo(path) {
             window.location.href = path;
+        }
+
+        function logout() {
+            // Call logout API
+            fetch('/api/auth/logout', {
+                method: 'POST'
+            }).then(() => {
+                // Clear session storage
+                sessionStorage.removeItem('zoolz_user');
+                sessionStorage.removeItem('zoolz_authenticated');
+                // Redirect to login
+                window.location.href = '/';
+            }).catch(err => {
+                console.error('Logout error:', err);
+                // Force redirect anyway
+                window.location.href = '/';
+            });
         }
 
         // Add subtle parallax effect to grid on mouse move
