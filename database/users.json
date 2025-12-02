@@ -3,11 +3,13 @@
     "zay": {
       "name": "Zay",
       "fullName": "Isaiah Miro",
+      "email": "Isaiahjmiro@gmail.com",
       "userNumber": "100001",
       "passwordHash": "8d23cf6c86e834a7aa6eded54c26ce2bb2e74903538c61bdd5d2197997ab2f72",
       "role": "admin",
       "createdAt": "2025-12-01T00:00:00Z",
-      "lastLogin": null
+      "lastLogin": null,
+      "emailVerified": true
     }
   },
   "nextUserNumber": 100002
