@@ -1,0 +1,14 @@
+{
+  "users": {
+    "zay": {
+      "name": "Zay",
+      "fullName": "Isaiah Miro",
+      "userNumber": "100001",
+      "passkey": "442767",
+      "role": "admin",
+      "createdAt": "2025-12-01T00:00:00Z",
+      "lastLogin": null
+    }
+  },
+  "nextUserNumber": 100002
+}

@@ -338,6 +338,60 @@ def image_operation(f):
 
 
 # ============================================================================
+# AUTHENTICATION DECORATORS
+# ============================================================================
+
+def login_required(f):
+    """
+    Decorator to require authentication for a route.
+
+    Usage:
+        @app.route('/hub')
+        @login_required
+        def hub():
+            # User is guaranteed to be authenticated
+            user = session.get('user')
+            return render_template('hub.html', user=user)
+    """
+    from flask import session, redirect, url_for
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('authenticated'):
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def admin_required(f):
+    """
+    Decorator to require admin role for a route.
+
+    Usage:
+        @app.route('/admin')
+        @admin_required
+        def admin_panel():
+            # User is guaranteed to be authenticated AND admin
+            return render_template('admin.html')
+    """
+    from flask import session, jsonify
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('authenticated'):
+            return jsonify({'error': 'Authentication required'}), 401
+
+        user = session.get('user')
+        if not user or user.get('role') != 'admin':
+            return jsonify({'error': 'Admin access required'}), 403
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+# ============================================================================
 # USAGE EXAMPLES
 # ============================================================================
 
