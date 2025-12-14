@@ -38,9 +38,16 @@ gunicorn==21.2.0
 # 3D MODELING & MESH PROCESSING
 # ========================================
 
+# CRITICAL: NumPy version MUST be <2.0 for compatibility!
+# - opencv-python 4.8.1 compiled against NumPy 1.x
+# - shapely 2.0.2 compiled against NumPy 1.x
+# - trimesh 4.0.5 compiled against NumPy 1.x
+# NEVER use numpy>=2.0 or everything breaks!
+numpy>=1.24.0,<2.0  # LOCKED to 1.x - DO NOT CHANGE
+
 # Image processing for cookie cutters
-numpy>=1.24.0  # Flexible for Python 3.13+ compatibility
-opencv-python>=4.6.0  # Flexible version
+# opencv-python 4.8.1 is the LAST version compatible with NumPy 1.x
+opencv-python>=4.8.0,<4.9  # LOCKED - DO NOT UPGRADE to 4.10+
 Pillow>=10.0.0
 
 # 3D mesh processing

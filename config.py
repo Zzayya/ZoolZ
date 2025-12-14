@@ -6,7 +6,7 @@ Centralized settings for 3D Modulator Flask app
 
 import os
 from dotenv import load_dotenv
-from ZoolZmstr import get_data_paths
+from zoolz.ZoolZmstr import get_data_paths
 
 # Load environment variables from .env file
 load_dotenv()

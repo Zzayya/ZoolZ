@@ -18,7 +18,7 @@ import hashlib
 import atexit
 
 # ZoolZmstr - Zoolz Master Control Logic
-from ZoolZmstr import (
+from zoolz.ZoolZmstr import (
     is_server,
     get_environment,
     setup_server_folders,

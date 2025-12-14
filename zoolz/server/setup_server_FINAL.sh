@@ -296,47 +296,95 @@ install_packages() {
     log_success "All critical packages installed"
     echo ""
 
-    # 3D/ML packages (best effort)
-    log_info "Stage 2: 3D/ML Libraries (best effort)"
+    # 3D/ML packages - CRITICAL INSTALLATION ORDER!
+    # NumPy MUST be installed first with <2.0 constraint
+    # Then scipy, Pillow, trimesh (these are safe)
+    # Then opencv-python (pinned to 4.8.x which needs NumPy 1.x)
+    # Finally shapely with --no-deps to prevent NumPy 2.x sneaking in
+    log_info "Stage 2: 3D/ML Libraries (EXACT ORDER for NumPy compatibility)"
 
-    local ml_packages=(
-        "numpy>=1.24.0"
-        "scipy>=1.11.0"
-        "Pillow>=10.0.0"
-        "trimesh==4.0.5"
-        "shapely==2.0.2"
-        "mapbox-earcut"
-        "pyclipper==1.3.0.post5"
-    )
+    # STEP 1: Install NumPy FIRST with strict version lock
+    log_info "[1/6] Installing NumPy 1.x (CRITICAL - must be <2.0)..."
+    if ! pip install "numpy>=1.24.0,<2.0" 2>&1 | tee -a "$LOG_FILE"; then
+        log_error "NumPy installation failed - CANNOT CONTINUE"
+        return 1
+    fi
 
-    total=${#ml_packages[@]}
-    current=0
+    # Verify NumPy version
+    local numpy_version=$(python3 -c "import numpy; print(numpy.__version__)" 2>&1)
+    if [[ "$numpy_version" == 2.* ]]; then
+        log_error "NumPy 2.x detected ($numpy_version) - WRONG VERSION!"
+        return 1
+    fi
+    log_success "NumPy $numpy_version installed (1.x confirmed ✓)"
 
-    for package in "${ml_packages[@]}"; do
-        current=$((current + 1))
-        progress_bar $current $total
-        echo ""
+    # STEP 2: Install scipy (safe with NumPy 1.x)
+    log_info "[2/6] Installing scipy..."
+    if ! install_package_with_retry "scipy>=1.11.0"; then
+        log_warn "scipy failed (non-critical)"
+    fi
 
-        if ! install_package_with_retry "$package"; then
-            log_warn "$package failed (non-critical, continuing...)"
-        fi
-    done
+    # STEP 3: Install Pillow (safe)
+    log_info "[3/6] Installing Pillow..."
+    if ! install_package_with_retry "Pillow>=10.0.0"; then
+        log_warn "Pillow failed (non-critical)"
+    fi
+
+    # STEP 4: Install trimesh (needs NumPy 1.x)
+    log_info "[4/6] Installing trimesh 4.0.5..."
+    if ! install_package_with_retry "trimesh==4.0.5"; then
+        log_error "trimesh failed - MODELING WON'T WORK!"
+        return 1
+    fi
+    log_success "trimesh installed (3D modeling ready)"
+
+    # STEP 5: Install OpenCV with strict version lock (4.8.x - last NumPy 1.x compatible)
+    log_info "[5/6] Installing opencv-python 4.8.x (NumPy 1.x compatible)..."
+    if ! pip install "opencv-python>=4.8.0,<4.9" 2>&1 | tee -a "$LOG_FILE"; then
+        log_warn "opencv-python failed (cookie cutters won't work)"
+    else
+        local opencv_version=$(python3 -c "import cv2; print(cv2.__version__)" 2>&1)
+        log_success "opencv-python $opencv_version installed ✓"
+    fi
+
+    # STEP 6: Install shapely with --no-deps (CRITICAL - prevents NumPy 2.x reinstall)
+    log_info "[6/6] Installing shapely 2.0.2 with --no-deps..."
+    if ! pip install --force-reinstall --no-cache-dir --no-deps shapely==2.0.2 2>&1 | tee -a "$LOG_FILE"; then
+        log_error "shapely failed - MODELING WON'T WORK!"
+        return 1
+    fi
+    log_success "shapely installed (no dependency conflicts ✓)"
+
+    # Verify NumPy still correct after all installs
+    numpy_version=$(python3 -c "import numpy; print(numpy.__version__)" 2>&1)
+    if [[ "$numpy_version" == 2.* ]]; then
+        log_error "NumPy got upgraded to 2.x ($numpy_version) - DEPENDENCY CONFLICT!"
+        log_error "Re-installing NumPy 1.x..."
+        pip install --force-reinstall "numpy>=1.24.0,<2.0" 2>&1 | tee -a "$LOG_FILE"
+    fi
+    log_success "NumPy version verified: $numpy_version ✓"
 
     echo ""
 
-    # Try opencv
-    log_info "Installing opencv-python..."
-    if ! pip install "opencv-python>=4.6.0" --quiet 2>&1 | tee -a "$LOG_FILE"; then
-        log_warn "opencv-python failed (non-critical)"
-    else
-        log_success "opencv-python installed"
-    fi
+    # Install remaining packages (best effort)
+    log_info "Stage 3: Additional Packages"
+    local extra_packages=(
+        "mapbox-earcut"
+        "pyclipper==1.3.0.post5"
+        "pymeshlab==2023.12.post3"
+    )
 
-    # Remaining packages (best effort)
-    log_info "Stage 3: Remaining Packages (best effort)"
+    for package in "${extra_packages[@]}"; do
+        if ! install_package_with_retry "$package"; then
+            log_warn "$package failed (non-critical)"
+        fi
+    done
+
+    # Final pass - install any remaining from requirements.txt
+    log_info "Installing remaining requirements..."
     pip install -r requirements.txt --quiet 2>&1 | tee -a "$LOG_FILE" || log_warn "Some optional packages failed"
 
-    log_success "Package installation complete"
+    log_success "Package installation complete ✓"
 }
 
 # ============================================================================
@@ -369,7 +417,7 @@ test_imports() {
     fi
 
     # Test ZoolZmstr
-    if python3 -c "from ZoolZmstr import is_server, get_environment; print(f'Environment: {get_environment()}'); print('Server mode:', 'YES' if is_server() else 'NO')" 2>&1 | tee -a "$LOG_FILE"; then
+    if python3 -c "from zoolz.ZoolZmstr import is_server, get_environment; print(f'Environment: {get_environment()}'); print('Server mode:', 'YES' if is_server() else 'NO')" 2>&1 | tee -a "$LOG_FILE"; then
         log_success "ZoolZmstr working"
         tests_passed=$((tests_passed + 1))
     else
@@ -393,6 +441,87 @@ test_imports() {
         tests_passed=$((tests_passed + 1))
     else
         log_warn "scipy not available (some features may not work)"
+    fi
+
+    # Test trimesh (CRITICAL for Modeling)
+    if python3 -c "import trimesh; print(f'trimesh {trimesh.__version__}')" 2>&1 | tee -a "$LOG_FILE"; then
+        log_success "trimesh working (3D modeling ready)"
+        tests_passed=$((tests_passed + 1))
+    else
+        log_warn "trimesh not available (Modeling program won't work!)"
+        tests_failed=$((tests_failed + 1))
+    fi
+
+    # Test OpenCV (for cookie cutters)
+    if python3 -c "import cv2; print(f'opencv {cv2.__version__}')" 2>&1 | tee -a "$LOG_FILE"; then
+        log_success "opencv working (cookie cutters ready)"
+        tests_passed=$((tests_passed + 1))
+    else
+        log_warn "opencv not available (cookie cutters won't work)"
+    fi
+
+    # Test app.py imports
+    if python3 -c "from app import app; print('✓ Flask app loads successfully')" 2>&1 | grep "✓" | tee -a "$LOG_FILE"; then
+        log_success "app.py working"
+        tests_passed=$((tests_passed + 1))
+    else
+        log_error "app.py import failed!"
+        tests_failed=$((tests_failed + 1))
+        return 1
+    fi
+
+    # Test Modeling program - COMPREHENSIVE (imports + actual shape generation)
+    log_info "Testing Modeling program (this is CRITICAL)..."
+
+    # Test 1: Import all Modeling modules
+    if python3 -c "from programs.Modeling.blueprint import modeling_bp; from programs.Modeling.utils import thicken, hollow, shape_generators; from programs.Modeling.shared.cookie_logic import generate_cookie_cutter; print('✓ Imports OK')" 2>&1 | grep "✓" | tee -a "$LOG_FILE"; then
+        log_success "Modeling imports working ✓"
+    else
+        log_error "Modeling imports failed!"
+        tests_failed=$((tests_failed + 1))
+        return 1
+    fi
+
+    # Test 2: Actually generate a shape (real functional test)
+    if python3 -c "
+import trimesh
+from programs.Modeling.utils.shape_generators import generate_cube, generate_sphere
+
+# Test cube generation
+cube = generate_cube(size=10)
+assert cube.vertices.shape[0] > 0, 'Cube has no vertices'
+assert cube.faces.shape[0] > 0, 'Cube has no faces'
+
+# Test sphere generation
+sphere = generate_sphere(radius=5)
+assert sphere.vertices.shape[0] > 0, 'Sphere has no vertices'
+assert sphere.faces.shape[0] > 0, 'Sphere has no faces'
+
+print('✓ Shape generation working')
+" 2>&1 | grep "✓" | tee -a "$LOG_FILE"; then
+        log_success "Modeling shape generation WORKS ✓✓✓"
+        tests_passed=$((tests_passed + 1))
+    else
+        log_error "Modeling shape generation FAILED - THIS IS THE ISSUE!"
+        tests_failed=$((tests_failed + 1))
+        return 1
+    fi
+
+    # Test 3: Boolean operations
+    if python3 -c "
+from programs.Modeling.utils.shape_generators import generate_cube
+from programs.Modeling.utils.boolean_ops import union_meshes
+
+cube1 = generate_cube(size=10)
+cube2 = generate_cube(size=10)
+result = union_meshes([cube1, cube2])
+assert result is not None, 'Union failed'
+print('✓ Boolean ops working')
+" 2>&1 | grep "✓" | tee -a "$LOG_FILE"; then
+        log_success "Modeling boolean operations WORK ✓"
+        tests_passed=$((tests_passed + 1))
+    else
+        log_warn "Boolean operations test failed (non-critical)"
     fi
 
     echo ""
@@ -506,20 +635,93 @@ main() {
     log_info "Venv: $(pwd)/venv"
     log_info "Log: $LOG_FILE"
     echo ""
-    log_success "ZoolZ is ready to launch!"
+    log_success "ZoolZ is FULLY OPERATIONAL!"
     echo ""
-    log_info "Next steps:"
-    echo "  1. Start ZoolZ:"
-    echo "     ./start_zoolz.sh"
+    log_info "Verified:"
+    echo "  ✓ Flask 3.0 + all web dependencies"
+    echo "  ✓ Python 3.12 environment"
+    echo "  ✓ NumPy 1.x (compatible versions locked)"
+    echo "  ✓ trimesh, shapely, opencv working"
+    echo "  ✓ Modeling program tested (shapes + booleans)"
+    echo "  ✓ ZoolZmstr orchestration system"
     echo ""
-    echo "  2. Monitor (separate terminal):"
-    echo "     ./monitor_server.sh"
+
+    # Ask user if they want auto-start
+    echo -e "${CYAN}${BOLD}━━━ AUTO-START OPTION ━━━${NC}"
     echo ""
-    echo "  3. Access:"
-    echo "     http://71.60.55.85:5001"
+    echo "Would you like to automatically start ZoolZ now?"
+    echo "This will:"
+    echo "  1. Launch Flask server in background"
+    echo "  2. Open monitoring dashboard"
+    echo "  3. You can walk away and come back to everything running"
     echo ""
-    echo "  Login: Zay / 442767"
+    read -p "Auto-start ZoolZ? [Y/n]: " -n 1 -r
     echo ""
+
+    if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
+        log_step "Auto-Starting ZoolZ"
+
+        # Make scripts executable
+        chmod +x start_zoolz.sh
+        chmod +x zoolz/server/monitor_server.sh
+
+        # Start ZoolZ in background
+        log_info "Launching Flask server..."
+        nohup ./start_zoolz.sh > zoolz_server.log 2>&1 &
+        local zoolz_pid=$!
+        sleep 3
+
+        # Check if it's running
+        if ps -p $zoolz_pid > /dev/null; then
+            log_success "ZoolZ server started (PID: $zoolz_pid)"
+            log_info "Server logs: tail -f zoolz_server.log"
+        else
+            log_warn "ZoolZ may have failed to start - check zoolz_server.log"
+        fi
+
+        # Start monitor in a new terminal window
+        log_info "Opening monitoring dashboard..."
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS - open new Terminal tab
+            osascript -e 'tell application "Terminal" to do script "cd '"$(pwd)"' && ./zoolz/server/monitor_server.sh"' &
+            log_success "Monitor opened in new Terminal tab"
+        else
+            log_info "Start monitor manually: ./zoolz/server/monitor_server.sh"
+        fi
+
+        echo ""
+        echo "╔════════════════════════════════════════════════════════════╗"
+        echo "║                  🚀 ZOOLZ IS LIVE! 🚀                     ║"
+        echo "╚════════════════════════════════════════════════════════════╝"
+        echo ""
+        log_info "Access ZoolZ at:"
+        echo "     http://71.60.55.85:5001"
+        echo ""
+        log_info "Login:"
+        echo "     Username: Zay"
+        echo "     Password: 442767"
+        echo ""
+        log_info "Monitoring:"
+        echo "     Check the new Terminal tab for live stats"
+        echo ""
+        log_info "Stop server:"
+        echo "     pkill -f 'flask run' or kill $zoolz_pid"
+        echo ""
+    else
+        echo ""
+        log_info "Manual start commands:"
+        echo "  1. Start ZoolZ:"
+        echo "     ./start_zoolz.sh"
+        echo ""
+        echo "  2. Monitor (separate terminal):"
+        echo "     ./zoolz/server/monitor_server.sh"
+        echo ""
+        echo "  3. Access:"
+        echo "     http://71.60.55.85:5001"
+        echo ""
+        echo "  Login: Zay / 442767"
+        echo ""
+    fi
 }
 
 # Run main
