@@ -30,7 +30,9 @@ from programs.Modeling.utils import (
     scale,
     cut,
     channels,
-    bore_hole
+    bore_hole,
+    fidget_generators,
+    advanced_operations
 )
 
 # Import Celery tasks for background processing
@@ -1910,4 +1912,240 @@ def detect_holes_route():
 
     except Exception as e:
         logger.error(f"Error detecting holes: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# BROWSE FILES ENDPOINTS
+# ============================================================================
+
+@modeling_bp.route('/modeling/api/browse/stls', methods=['GET'])
+def browse_stls():
+    """Browse saved STL files"""
+    try:
+        stl_folder = os.path.join(current_app.root_path, 'programs/Modeling/ModelingSaves/STLs')
+
+        if not os.path.exists(stl_folder):
+            return jsonify({'success': True, 'files': []})
+
+        files = []
+        for filename in os.listdir(stl_folder):
+            if filename.lower().endswith('.stl'):
+                filepath = os.path.join(stl_folder, filename)
+                file_size = os.path.getsize(filepath)
+                files.append({
+                    'filename': filename,
+                    'size': file_size,
+                    'url': f'/modeling/ModelingSaves/STLs/{filename}'
+                })
+
+        # Sort by filename
+        files.sort(key=lambda x: x['filename'])
+
+        return jsonify({
+            'success': True,
+            'files': files
+        })
+
+    except Exception as e:
+        logger.error(f"Error browsing STL files: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@modeling_bp.route('/modeling/api/browse/images', methods=['GET'])
+def browse_images():
+    """Browse saved image files"""
+    try:
+        image_folder = os.path.join(current_app.root_path, 'programs/Modeling/ModelingSaves/Images')
+
+        if not os.path.exists(image_folder):
+            return jsonify({'success': True, 'files': []})
+
+        files = []
+        image_extensions = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'}
+
+        for filename in os.listdir(image_folder):
+            ext = os.path.splitext(filename)[1].lower()
+            if ext in image_extensions:
+                filepath = os.path.join(image_folder, filename)
+                file_size = os.path.getsize(filepath)
+                files.append({
+                    'filename': filename,
+                    'size': file_size,
+                    'url': f'/modeling/ModelingSaves/Images/{filename}'
+                })
+
+        # Sort by filename
+        files.sort(key=lambda x: x['filename'])
+
+        return jsonify({
+            'success': True,
+            'files': files
+        })
+
+    except Exception as e:
+        logger.error(f"Error browsing image files: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# SHAPE GENERATOR ENDPOINT
+# ============================================================================
+
+@modeling_bp.route('/modeling/api/generate/shape', methods=['POST'])
+def generate_shape_api():
+    """Generate parametric shapes"""
+    try:
+        shape_type = request.form.get('shape_type')
+
+        if not shape_type:
+            return jsonify({'error': 'No shape type specified'}), 400
+
+        # Collect parameters
+        params = {}
+        for key in request.form:
+            if key != 'shape_type':
+                value = request.form.get(key)
+                # Try to convert to appropriate type
+                try:
+                    if value.lower() in ('true', 'false'):
+                        params[key] = value.lower() == 'true'
+                    elif '.' in value:
+                        params[key] = float(value)
+                    else:
+                        params[key] = int(value)
+                except (ValueError, AttributeError):
+                    params[key] = value
+
+        # Generate the shape
+        mesh = shape_generators.generate_shape(shape_type, params)
+
+        # Save the result
+        output_filename = f"{shape_type}_{hash(str(params)) % 1000000}.stl"
+        output_path = os.path.join(current_app.config['OUTPUT_FOLDER'], output_filename)
+        mesh.export(output_path)
+
+        download_url = f'/modeling/download/{output_filename}'
+
+        # Get stats
+        stats = {
+            'vertices': len(mesh.vertices),
+            'faces': len(mesh.faces),
+            'volume': float(mesh.volume),
+            'surface_area': float(mesh.area)
+        }
+
+        return jsonify({
+            'success': True,
+            'download_url': download_url,
+            'filename': output_filename,
+            'stats': stats
+        })
+
+    except Exception as e:
+        logger.error(f"Error generating shape: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# FIDGET TOY GENERATOR ENDPOINT
+# ============================================================================
+
+@modeling_bp.route('/modeling/api/generate/fidget', methods=['POST'])
+def generate_fidget_api():
+    """Generate fidget toys"""
+    try:
+        fidget_type = request.form.get('fidget_type')
+
+        if not fidget_type:
+            return jsonify({'error': 'No fidget type specified'}), 400
+
+        # Collect parameters
+        params = {}
+        for key in request.form:
+            if key != 'fidget_type':
+                value = request.form.get(key)
+                # Try to convert to appropriate type
+                try:
+                    if value.lower() in ('true', 'false'):
+                        params[key] = value.lower() == 'true'
+                    elif '.' in value:
+                        params[key] = float(value)
+                    else:
+                        params[key] = int(value)
+                except (ValueError, AttributeError):
+                    params[key] = value
+
+        # Create generator instance
+        generator = fidget_generators.FidgetGenerators()
+
+        # Generate based on type
+        if fidget_type == 'flexi_worm':
+            mesh = generator.flexi_worm(
+                length=params.get('length', 100.0),
+                diameter=params.get('diameter', 15.0),
+                num_segments=params.get('num_segments', 20),
+                flex_gap=params.get('flex_gap', 0.3)
+            )
+        elif fidget_type == 'interlocking_rings':
+            mesh = generator.interlocking_rings(
+                ring_diameter=params.get('ring_diameter', 30.0),
+                ring_thickness=params.get('ring_thickness', 3.0),
+                num_rings=params.get('num_rings', 5),
+                ring_type=params.get('ring_type', 'circular')
+            )
+        elif fidget_type == 'fidget_spinner':
+            mesh = generator.fidget_spinner(
+                center_diameter=params.get('center_diameter', 22.0),
+                bearing_diameter=params.get('bearing_diameter', 8.0),
+                num_weights=params.get('num_weights', 3)
+            )
+        elif fidget_type == 'gear_fidget':
+            mesh = generator.gear_fidget(
+                num_teeth=params.get('num_teeth', 12),
+                outer_radius=params.get('outer_radius', 25.0),
+                num_gears=params.get('num_gears', 3)
+            )
+        elif fidget_type == 'chain_link':
+            mesh = generator.chain_link(
+                link_length=params.get('link_length', 30.0),
+                link_width=params.get('link_width', 15.0),
+                num_links=params.get('num_links', 5)
+            )
+        elif fidget_type == 'pop_it_bubble':
+            # Parse grid_size tuple
+            grid_size_str = params.get('grid_size', '(5, 5)')
+            grid_size = eval(grid_size_str)  # Safe here since we control the input
+
+            mesh = generator.pop_it_bubble(
+                bubble_diameter=params.get('bubble_diameter', 15.0),
+                grid_size=grid_size
+            )
+        else:
+            return jsonify({'error': f'Unknown fidget type: {fidget_type}'}), 400
+
+        # Save the result
+        output_filename = f"{fidget_type}_{hash(str(params)) % 1000000}.stl"
+        output_path = os.path.join(current_app.config['OUTPUT_FOLDER'], output_filename)
+        mesh.export(output_path)
+
+        download_url = f'/modeling/download/{output_filename}'
+
+        # Get stats
+        stats = {
+            'vertices': len(mesh.vertices),
+            'faces': len(mesh.faces),
+            'volume': float(mesh.volume),
+            'surface_area': float(mesh.area)
+        }
+
+        return jsonify({
+            'success': True,
+            'download_url': download_url,
+            'filename': output_filename,
+            'stats': stats
+        })
+
+    except Exception as e:
+        logger.error(f"Error generating fidget: {str(e)}")
         return jsonify({'error': str(e)}), 500

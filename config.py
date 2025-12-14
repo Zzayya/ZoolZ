@@ -6,6 +6,7 @@ Centralized settings for 3D Modulator Flask app
 
 import os
 from dotenv import load_dotenv
+from ZoolZmstr import get_data_paths
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,12 +23,16 @@ class Config:
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 104857600))  # Default 100MB
     ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
 
-    # Directory settings
+    # Directory settings - NOW USING ZOOLZMSTR FOR SERVER/LAPTOP DETECTION
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(BASE_DIR, 'programs/Modeling/ModelingSaves/uploads'))
-    OUTPUT_FOLDER = os.getenv('OUTPUT_FOLDER', os.path.join(BASE_DIR, 'programs/Modeling/outputs'))
-    DATABASE_FOLDER = os.getenv('DATABASE_FOLDER', os.path.join(BASE_DIR, 'database'))
-    MY_MODELS_FOLDER = os.getenv('MY_MODELS_FOLDER', os.path.join(BASE_DIR, 'programs/Modeling/ModelingSaves'))
+
+    # Get environment-aware paths from ZoolZmstr
+    _data_paths = get_data_paths()
+
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', str(_data_paths['uploads']))
+    OUTPUT_FOLDER = os.getenv('OUTPUT_FOLDER', str(_data_paths['outputs']))
+    DATABASE_FOLDER = os.getenv('DATABASE_FOLDER', str(_data_paths['database']))
+    MY_MODELS_FOLDER = os.getenv('MY_MODELS_FOLDER', str(_data_paths['modeling_saves']))
 
     # Cookie cutter defaults
     COOKIE_CUTTER_DEFAULTS = {
@@ -97,7 +102,7 @@ class Config:
     }
 
     # People Finder settings
-    PEOPLE_FINDER_DB = os.path.join(BASE_DIR, 'database', 'search_cache.db')
+    PEOPLE_FINDER_DB = os.path.join(str(_data_paths['database']), 'search_cache.db')
     PEOPLE_FINDER_CACHE_HOURS = int(os.getenv('PEOPLE_FINDER_CACHE_HOURS', 24))
 
     # People Finder API keys (optional - set via environment variables)

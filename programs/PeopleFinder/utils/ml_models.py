@@ -28,9 +28,12 @@ except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
 
 # spaCy for named entity recognition
+# DISABLED: pydantic v2 compatibility issues - regex fallback works great!
+SPACY_AVAILABLE = False
 try:
-    import spacy
-    SPACY_AVAILABLE = True
+    # import spacy  # Commented out - using regex fallback instead
+    # SPACY_AVAILABLE = True
+    pass
 except ImportError:
     SPACY_AVAILABLE = False
 

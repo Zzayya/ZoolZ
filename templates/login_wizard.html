@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WELCOME TO ZOOLZ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Comic Sans MS', cursive;
+        }
+
+        /* Crazy swirly title */
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
+
+        .main-title {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Creepster', cursive;
+            font-size: 6rem;
+            color: #FFD700;
+            text-shadow:
+                0 0 20px #FF00FF,
+                0 0 40px #00FFFF,
+                5px 5px 0 #FF0000,
+                -5px -5px 0 #0000FF;
+            letter-spacing: 10px;
+            animation: crazyWobble 3s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        @keyframes crazyWobble {
+            0%, 100% { transform: translateX(-50%) rotate(-2deg) scale(1); }
+            25% { transform: translateX(-50%) rotate(2deg) scale(1.05); }
+            50% { transform: translateX(-50%) rotate(-1deg) scale(0.95); }
+            75% { transform: translateX(-50%) rotate(1deg) scale(1.02); }
+        }
+
+        /* SHITTY stick wizard - intentionally bad with white square */
+        .wizard-container {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 400px;
+            background: white; /* THE WHITE SQUARE YOU WANTED! */
+            border: 5px solid #000;
+            animation: wizardFloat 4s ease-in-out infinite;
+            transition: all 0.5s ease;
+        }
+
+        /* UPGRADED WIZARD - better pixel art after revealing both boxes */
+        .wizard-container.upgraded {
+            background: linear-gradient(135deg, #1a0033 0%, #330066 50%, #1a0033 100%);
+            border: 5px solid #FFD700;
+            box-shadow:
+                0 0 20px #FFD700,
+                0 0 40px #FF00FF,
+                inset 0 0 30px rgba(255, 215, 0, 0.2);
+        }
+
+        /* Casting spell animation - staff glows and shoots lightning */
+        .wizard-container.casting .wizard-staff {
+            animation: staffGlow 1.5s ease-in-out;
+        }
+
+        @keyframes staffGlow {
+            0%, 100% { filter: brightness(1); }
+            10%, 30%, 50%, 70%, 90% {
+                filter: brightness(3) drop-shadow(0 0 20px #FFD700);
+                transform: translateY(-5px);
+            }
+            20%, 40%, 60%, 80% {
+                filter: brightness(1.5) drop-shadow(0 0 10px #FFD700);
+                transform: translateY(0px);
+            }
+        }
+
+        /* Upgrade wizard body parts when casting */
+        .wizard-container.upgraded .wizard-head {
+            background: #FFE4B5;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .wizard-container.upgraded .wizard-hat {
+            border-bottom-color: #6B0099;
+            filter: drop-shadow(0 0 10px #FF00FF);
+        }
+
+        .wizard-container.upgraded .wizard-body,
+        .wizard-container.upgraded .wizard-arm-left,
+        .wizard-container.upgraded .wizard-arm-right,
+        .wizard-container.upgraded .wizard-leg-left,
+        .wizard-container.upgraded .wizard-leg-right {
+            background: linear-gradient(90deg, #000 0%, #333 50%, #000 100%);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .wizard-container.upgraded .wizard-staff {
+            background: linear-gradient(180deg, #654321 0%, #8B4513 50%, #654321 100%);
+            box-shadow: 0 0 5px rgba(139, 69, 19, 0.8);
+        }
+
+        @keyframes wizardFloat {
+            0%, 100% { transform: translate(-50%, -50%); }
+            50% { transform: translate(-50%, calc(-50% - 20px)); }
+        }
+
+        /* Wizard hat - CLICKABLE */
+        .wizard-hat {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-bottom: 100px solid purple;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .wizard-hat:hover {
+            filter: brightness(1.5);
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        .wizard-hat::after {
+            content: '★';
+            position: absolute;
+            top: 40px;
+            left: -10px;
+            font-size: 20px;
+            color: yellow;
+        }
+
+        /* Head */
+        .wizard-head {
+            position: absolute;
+            top: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            border: 3px solid #000;
+            border-radius: 50%;
+            background: #FFE4B5;
+        }
+
+        /* Eyes */
+        .wizard-head::before,
+        .wizard-head::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            width: 10px;
+            height: 10px;
+            background: #000;
+            border-radius: 50%;
+        }
+
+        .wizard-head::before {
+            left: 10px;
+        }
+
+        .wizard-head::after {
+            right: 10px;
+        }
+
+        /* Body */
+        .wizard-body {
+            position: absolute;
+            top: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 80px;
+            background: #000;
+        }
+
+        /* Arms */
+        .wizard-arm-left,
+        .wizard-arm-right {
+            position: absolute;
+            top: 180px;
+            width: 60px;
+            height: 4px;
+            background: #000;
+        }
+
+        .wizard-arm-left {
+            left: 90px;
+            transform: rotate(-45deg);
+        }
+
+        .wizard-arm-right {
+            right: 90px;
+            transform: rotate(45deg);
+        }
+
+        /* Magic staff */
+        .wizard-staff {
+            position: absolute;
+            top: 170px;
+            right: 40px;
+            width: 6px;
+            height: 120px;
+            background: #8B4513;
+        }
+
+        .wizard-staff::before {
+            content: '⚡';
+            position: absolute;
+            top: -20px;
+            left: -10px;
+            font-size: 30px;
+        }
+
+        /* Legs */
+        .wizard-leg-left,
+        .wizard-leg-right {
+            position: absolute;
+            top: 240px;
+            width: 4px;
+            height: 70px;
+            background: #000;
+        }
+
+        .wizard-leg-left {
+            left: 145px;
+            transform: rotate(-10deg);
+        }
+
+        .wizard-leg-right {
+            left: 155px;
+            transform: rotate(10deg);
+        }
+
+        /* 8 LIGHTNING BOLTS - scattered around, only ONE works */
+        .lightning-bolt {
+            position: absolute;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            animation: boltFlicker 2s ease-in-out infinite;
+            user-select: none;
+        }
+
+        .lightning-bolt:hover {
+            transform: scale(1.3) rotate(10deg);
+            filter: brightness(1.5);
+        }
+
+        @keyframes boltFlicker {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .bolt-1 { top: 10%; left: 10%; animation-delay: 0s; }
+        .bolt-2 { top: 15%; right: 15%; animation-delay: 0.3s; }
+        .bolt-3 { top: 60%; left: 5%; animation-delay: 0.6s; }
+        .bolt-4 { top: 70%; right: 10%; animation-delay: 0.9s; }
+        .bolt-5 { bottom: 10%; left: 20%; animation-delay: 1.2s; }
+        .bolt-6 { bottom: 15%; right: 25%; animation-delay: 1.5s; }
+        .bolt-7 { top: 40%; left: 15%; animation-delay: 1.8s; }
+        .bolt-8 { top: 45%; right: 20%; animation-delay: 2.1s; } /* THIS ONE REVEALS PASSWORD */
+
+        /* Hidden login boxes */
+        .login-box {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #FFD700;
+            border-radius: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .login-box.revealed {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* GOLD ELECTRIC SPELL EFFECT on boxes */
+        .login-box.spell-cast {
+            animation: electricGlow 1.5s ease-in-out;
+            border-color: #FFD700;
+            box-shadow:
+                0 0 20px #FFD700,
+                0 0 40px #FFD700,
+                0 0 60px #FF00FF,
+                inset 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        @keyframes electricGlow {
+            0% {
+                box-shadow: none;
+                border-color: #FFD700;
+            }
+            10%, 30%, 50%, 70%, 90% {
+                box-shadow:
+                    0 0 30px #FFD700,
+                    0 0 60px #FFD700,
+                    0 0 90px #FF00FF,
+                    inset 0 0 30px rgba(255, 215, 0, 0.8);
+                border-color: #FFD700;
+            }
+            20%, 40%, 60%, 80% {
+                box-shadow:
+                    0 0 10px #FFD700,
+                    0 0 20px #FFD700,
+                    0 0 30px #FF00FF,
+                    inset 0 0 10px rgba(255, 215, 0, 0.3);
+                border-color: #FFFF00;
+            }
+            100% {
+                box-shadow:
+                    0 0 15px #FFD700,
+                    0 0 30px #FFD700,
+                    inset 0 0 10px rgba(255, 215, 0, 0.3);
+                border-color: #FFD700;
+            }
+        }
+
+        .username-box {
+            top: 25%;
+        }
+
+        .password-box {
+            top: 40%;
+        }
+
+        .login-input {
+            width: 300px;
+            padding: 15px;
+            font-size: 1.2rem;
+            text-align: center;
+            background: #000;
+            border: 2px solid #FFD700;
+            color: #FFD700;
+            font-family: 'Comic Sans MS', cursive;
+        }
+
+        .login-input::placeholder {
+            color: rgba(255, 215, 0, 0.3);
+        }
+
+        /* Remember me */
+        .remember-container {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.5s ease 0.5s;
+        }
+
+        .remember-container.show {
+            opacity: 1;
+        }
+
+        .remember-label {
+            color: #FFD700;
+            font-size: 1rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-checkbox {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* Enter button */
+        .enter-button {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            font-family: 'Creepster', cursive;
+            background: purple;
+            border: 5px solid #FFD700;
+            color: #FFD700;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .enter-button.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .enter-button:hover {
+            background: #FFD700;
+            color: purple;
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        /* SHITTY PIXELATED SWIRLY TRANSITION */
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: repeating-linear-gradient(
+                45deg,
+                #FF00FF 0px,
+                #FF00FF 20px,
+                #00FFFF 20px,
+                #00FFFF 40px,
+                #FFFF00 40px,
+                #FFFF00 60px,
+                #00FF00 60px,
+                #00FF00 80px
+            );
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            animation: pixelSwirl 2s linear;
+            animation-play-state: paused;
+            image-rendering: pixelated;
+            filter: contrast(2) saturate(2);
+        }
+
+        .transition-overlay.active {
+            animation-play-state: running;
+        }
+
+        @keyframes pixelSwirl {
+            0% {
+                opacity: 0;
+                transform: rotate(0deg) scale(0);
+                filter: contrast(2) saturate(2) blur(0px);
+            }
+            50% {
+                opacity: 1;
+                transform: rotate(720deg) scale(1.5);
+                filter: contrast(5) saturate(5) blur(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: rotate(1440deg) scale(10);
+                filter: contrast(10) saturate(10) blur(50px);
+            }
+        }
+
+        /* WELCOME MESSAGE */
+        .welcome-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Creepster', cursive;
+            font-size: 5rem;
+            color: #FFD700;
+            text-shadow:
+                0 0 40px #FF00FF,
+                0 0 80px #00FFFF,
+                10px 10px 0 #000;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .welcome-message.show {
+            animation: welcomeZoom 2s ease;
+        }
+
+        @keyframes welcomeZoom {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0) rotate(-360deg);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.5) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5) rotate(360deg);
+            }
+        }
+
+        /* Stars background */
+        .stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(2px 2px at 20% 30%, white, transparent),
+                radial-gradient(2px 2px at 60% 70%, white, transparent),
+                radial-gradient(1px 1px at 50% 50%, white, transparent),
+                radial-gradient(1px 1px at 80% 10%, white, transparent),
+                radial-gradient(2px 2px at 90% 60%, white, transparent),
+                radial-gradient(1px 1px at 33% 80%, white, transparent),
+                radial-gradient(1px 1px at 75% 40%, white, transparent);
+            background-size: 200% 200%;
+            animation: starsMove 100s linear infinite;
+        }
+
+        @keyframes starsMove {
+            from { background-position: 0% 0%; }
+            to { background-position: 100% 100%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Stars -->
+    <div class="stars"></div>
+
+    <!-- Crazy title -->
+    <div class="main-title">WELCOME TO ZOOLZ</div>
+
+    <!-- Shitty wizard in white square -->
+    <div class="wizard-container">
+        <div class="wizard-hat" onclick="revealUsername()"></div>
+        <div class="wizard-head"></div>
+        <div class="wizard-body"></div>
+        <div class="wizard-arm-left"></div>
+        <div class="wizard-arm-right"></div>
+        <div class="wizard-staff"></div>
+        <div class="wizard-leg-left"></div>
+        <div class="wizard-leg-right"></div>
+    </div>
+
+    <!-- 8 Lightning bolts - only bolt-8 works, rest do nothing silently -->
+    <div class="lightning-bolt bolt-1" onclick="">⚡</div>
+    <div class="lightning-bolt bolt-2" onclick="">⚡</div>
+    <div class="lightning-bolt bolt-3" onclick="">⚡</div>
+    <div class="lightning-bolt bolt-4" onclick="">⚡</div>
+    <div class="lightning-bolt bolt-5" onclick="">⚡</div>
+    <div class="lightning-bolt bolt-6" onclick="">⚡</div>
+    <div class="lightning-bolt bolt-7" onclick="">⚡</div>
+    <div class="lightning-bolt bolt-8" onclick="revealPassword()">⚡</div>
+
+    <!-- Hidden login boxes -->
+    <div class="login-box username-box" id="usernameBox">
+        <input type="text" class="login-input" id="usernameInput" placeholder="Enter Your Name" autocomplete="username">
+    </div>
+
+    <div class="login-box password-box" id="passwordBox">
+        <input type="password" class="login-input" id="passwordInput" placeholder="Secret Code" autocomplete="current-password">
+    </div>
+
+    <!-- Remember Me -->
+    <div class="remember-container" id="rememberContainer">
+        <label class="remember-label">
+            <input type="checkbox" class="remember-checkbox" id="rememberMe">
+            Remember Me on This Computer
+        </label>
+    </div>
+
+    <!-- Enter button -->
+    <button class="enter-button" id="enterButton" onclick="attemptLogin()">ENTER</button>
+
+    <!-- Transition overlay -->
+    <div class="transition-overlay" id="transitionOverlay"></div>
+
+    <!-- Welcome message -->
+    <div class="welcome-message" id="welcomeMessage">WELCOME ZAY</div>
+
+    <script>
+        let usernameRevealed = false;
+        let passwordRevealed = false;
+
+        // Reveal username when hat clicked
+        function revealUsername() {
+            if (!usernameRevealed) {
+                document.getElementById('usernameBox').classList.add('revealed');
+                usernameRevealed = true;
+                checkBothRevealed();
+                document.getElementById('usernameInput').focus();
+            }
+        }
+
+        // Reveal password when bolt-8 clicked (the one on right side, mid-height)
+        function revealPassword() {
+            if (!passwordRevealed) {
+                document.getElementById('passwordBox').classList.add('revealed');
+                passwordRevealed = true;
+                checkBothRevealed();
+            }
+        }
+
+        // Show remember me and enter button when both revealed
+        function checkBothRevealed() {
+            if (usernameRevealed && passwordRevealed) {
+                // CAST THE SPELL! ⚡✨
+                const wizardContainer = document.querySelector('.wizard-container');
+                const usernameBox = document.getElementById('usernameBox');
+                const passwordBox = document.getElementById('passwordBox');
+
+                // Wizard starts casting
+                wizardContainer.classList.add('casting');
+
+                // After 0.3s delay, boxes get electrified
+                setTimeout(() => {
+                    usernameBox.classList.add('spell-cast');
+                    passwordBox.classList.add('spell-cast');
+                }, 300);
+
+                // After 0.8s, upgrade the wizard to better pixel art
+                setTimeout(() => {
+                    wizardContainer.classList.add('upgraded');
+                }, 800);
+
+                // Show remember me and enter button after spell completes
+                setTimeout(() => {
+                    document.getElementById('rememberContainer').classList.add('show');
+                    document.getElementById('enterButton').classList.add('show');
+                }, 1500);
+            }
+        }
+
+        // Check for remembered login on page load
+        window.addEventListener('load', () => {
+            const remembered = localStorage.getItem('zoolz_remember');
+            if (remembered === 'true') {
+                const savedUsername = localStorage.getItem('zoolz_username');
+                const savedPassword = localStorage.getItem('zoolz_password');
+                if (savedUsername && savedPassword) {
+                    // Auto-reveal and fill
+                    revealUsername();
+                    revealPassword();
+                    document.getElementById('usernameInput').value = savedUsername;
+                    document.getElementById('passwordInput').value = savedPassword;
+                    document.getElementById('rememberMe').checked = true;
+                }
+            }
+        });
+
+        // Enter key handlers
+        document.getElementById('usernameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && passwordRevealed) {
+                document.getElementById('passwordInput').focus();
+            }
+        });
+
+        document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                attemptLogin();
+            }
+        });
+
+        // Attempt login
+        async function attemptLogin() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            if (!username || !password) {
+                // Shake the wizard
+                document.querySelector('.wizard-container').style.animation = 'wizardFloat 0.1s ease 5';
+                setTimeout(() => {
+                    document.querySelector('.wizard-container').style.animation = 'wizardFloat 4s ease-in-out infinite';
+                }, 500);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Save remember me preference
+                    if (rememberMe) {
+                        localStorage.setItem('zoolz_remember', 'true');
+                        localStorage.setItem('zoolz_username', username);
+                        localStorage.setItem('zoolz_password', password);
+                    } else {
+                        localStorage.removeItem('zoolz_remember');
+                        localStorage.removeItem('zoolz_username');
+                        localStorage.removeItem('zoolz_password');
+                    }
+
+                    // Show welcome message with user's actual name
+                    const userName = data.user.name || username;
+                    document.getElementById('welcomeMessage').textContent = `WELCOME ${userName.toUpperCase()}`;
+                    document.getElementById('welcomeMessage').classList.add('show');
+
+                    // Trigger shitty pixelated swirly transition
+                    setTimeout(() => {
+                        document.getElementById('transitionOverlay').classList.add('active');
+                    }, 500);
+
+                    // Redirect after transition
+                    setTimeout(() => {
+                        window.location.href = '/hub';
+                    }, 2500);
+                } else {
+                    // Wrong password - shake everything
+                    document.querySelector('.wizard-container').style.animation = 'wizardFloat 0.1s ease 10';
+                    document.querySelector('.main-title').style.animation = 'crazyWobble 0.1s ease 10';
+                    setTimeout(() => {
+                        document.querySelector('.wizard-container').style.animation = 'wizardFloat 4s ease-in-out infinite';
+                        document.querySelector('.main-title').style.animation = 'crazyWobble 3s ease-in-out infinite';
+                    }, 1000);
+                    document.getElementById('passwordInput').value = '';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

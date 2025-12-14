@@ -15,6 +15,16 @@ import os
 import json
 from datetime import datetime
 import hashlib
+import atexit
+
+# ZoolZmstr - Zoolz Master Control Logic
+from ZoolZmstr import (
+    is_server,
+    get_environment,
+    setup_server_folders,
+    process_manager,
+    health_monitor
+)
 
 app = Flask(__name__)
 
@@ -22,16 +32,87 @@ app = Flask(__name__)
 config_name = os.getenv('FLASK_ENV', 'development')
 app.config.from_object(config[config_name])
 
-# Ensure folders exist
+# ============================================================================
+# ZOOLZ MASTER INITIALIZATION
+# ============================================================================
+
+# If running on server, set up ZoolZData folder structure
+if is_server():
+    print("\n" + "=" * 60)
+    print("🖥️  ZOOLZ RUNNING ON SERVER")
+    print("=" * 60)
+    setup_server_folders(verbose=True)
+
+    # Log server startup
+    health_monitor.log('STARTUP', 'Zoolz server initialized')
+    health_monitor.log_system_stats()
+else:
+    print("\n💻 Zoolz running on laptop (development mode)")
+
+print(f"📍 Environment: {get_environment()}")
+print(f"📂 Data root: {app.config['DATABASE_FOLDER']}")
+print()
+
+# Ensure folders exist (works for both server and laptop)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 os.makedirs(app.config['DATABASE_FOLDER'], exist_ok=True)
+
+# Register cleanup handler for processes
+atexit.register(process_manager.cleanup_all)
 
 # Register blueprints
 app.register_blueprint(parametric_bp, url_prefix='/parametric')
 app.register_blueprint(modeling_bp, url_prefix='/modeling')
 app.register_blueprint(people_finder_bp, url_prefix='/people_finder')
 app.register_blueprint(digital_footprint_bp, url_prefix='/footprint')
+
+
+# ============================================================================
+# SMART PROCESS MANAGEMENT
+# ============================================================================
+
+# Track which programs are currently accessed
+_program_url_map = {
+    '/modeling': 'Modeling',
+    '/parametric': 'ParametricCAD',
+    '/people_finder': 'PeopleFinder',
+    '/footprint': 'DigitalFootprint'
+}
+
+@app.before_request
+def manage_program_processes():
+    """
+    Before each request, check if accessing a program and start required processes.
+    This is Zoolz's brain - it knows what each program needs and boots it up automatically.
+    """
+    # Only manage processes for program routes
+    for url_prefix, program_name in _program_url_map.items():
+        if request.path.startswith(url_prefix):
+            # User is accessing this program
+            # Check if we've already started processes for this session
+            session_key = f'_processes_started_{program_name}'
+
+            if not session.get(session_key):
+                # First access to this program in this session
+                results = process_manager.program_accessed(program_name)
+
+                # Log what happened
+                for process_name, status in results.items():
+                    if status == 'started':
+                        app.logger.info(f"🚀 Started {process_name} for {program_name}")
+                        health_monitor.log_process_start(process_name)
+                    elif status == 'failed':
+                        app.logger.warning(f"⚠️  Failed to start {process_name} for {program_name}")
+                        health_monitor.log_error('PROCESS_START', f'Failed to start {process_name}')
+
+                # Log program access
+                health_monitor.log_program_access(program_name)
+
+                # Mark that we've started processes for this program
+                session[session_key] = True
+
+            break
 
 
 # ============================================================================
@@ -249,11 +330,31 @@ def admin_create_user():
 
 @app.route('/api/health')
 def health_check():
-    """Simple health check endpoint"""
+    """
+    Server health check endpoint.
+
+    Returns system stats, uptime, process status, and any warnings.
+    Useful for monitoring when running on server.
+    """
+    health_data = health_monitor.check_health()
+    process_status = process_manager.get_status()
+
     return jsonify({
-        'status': 'healthy',
+        'status': health_data['status'],
         'version': '1.0.0',
-        'authenticated': session.get('authenticated', False)
+        'environment': get_environment(),
+        'authenticated': session.get('authenticated', False),
+        'uptime_hours': round(health_data.get('uptime_hours', 0), 2),
+        'system': {
+            'cpu_percent': health_data['stats'].get('cpu_percent', 0),
+            'memory_percent': health_data['stats'].get('memory_percent', 0),
+            'memory_available_gb': round(health_data['stats'].get('memory_available_gb', 0), 1),
+            'disk_percent': health_data['stats'].get('disk_percent', 0),
+            'disk_free_gb': round(health_data['stats'].get('disk_free_gb', 0), 1)
+        },
+        'warnings': health_data.get('warnings', []),
+        'active_programs': process_status.get('active_programs', []),
+        'running_processes': list(process_status.get('running_processes', {}).keys())
     })
 
 

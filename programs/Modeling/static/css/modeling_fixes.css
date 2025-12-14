@@ -182,3 +182,87 @@
 .tool-panel::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 149, 255, 0.7);
 }
+
+/* 10. FILE BROWSER STYLES */
+.file-browser-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.file-browser-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.file-browser-item:hover {
+    background: rgba(0, 149, 255, 0.2);
+    border-color: #0095ff;
+    transform: translateX(5px);
+}
+
+.file-icon {
+    font-size: 24px;
+    margin-right: 12px;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-name {
+    color: #8ab4f8;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.file-size {
+    color: #888;
+    font-size: 0.75rem;
+}
+
+/* Image browser grid */
+.file-browser-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.image-browser-item {
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.image-browser-item:hover {
+    transform: scale(1.05);
+}
+
+.image-thumbnail {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 5px;
+}
+
+.image-browser-item:hover .image-thumbnail {
+    border-color: #0095ff;
+    box-shadow: 0 4px 15px rgba(0, 149, 255, 0.4);
+}
+
+.image-browser-item .image-name {
+    font-size: 0.75rem;
+    color: #8ab4f8;
+    word-break: break-word;
+}

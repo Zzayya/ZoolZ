@@ -1638,6 +1638,71 @@
             </div>
         </div>
 
+        <!-- MY SAVES -->
+        <div class="sidebar-section">
+            <h3 class="section-title">My Saves</h3>
+            <button class="sidebar-btn" onclick="browseSavedSTLs()">
+                📁 Browse STL Files
+            </button>
+            <button class="sidebar-btn" onclick="browseSavedImages()">
+                🖼️ Browse Images
+            </button>
+        </div>
+
+        <!-- SHAPE GENERATORS -->
+        <div class="sidebar-section">
+            <h3 class="section-title">Shape Generators</h3>
+            <div class="tool-grid">
+                <button class="tool-icon-btn" id="snapClipBtn" onclick="enterAttachmentMode('snap_clip')" title="Add Snap Clip to Object">
+                    <span>📎</span>
+                    <span class="tool-label">Snap Clip</span>
+                </button>
+                <button class="tool-icon-btn" id="containerBtn" onclick="showShapeGenerator('container')" title="Container/Box">
+                    <span>📦</span>
+                    <span class="tool-label">Container</span>
+                </button>
+                <button class="tool-icon-btn" id="mountingPatternBtn" onclick="showShapeGenerator('mounting_pattern')" title="Mounting Pattern">
+                    <span>⊞</span>
+                    <span class="tool-label">Mount</span>
+                </button>
+                <button class="tool-icon-btn" id="thread510Btn" onclick="showShapeGenerator('thread_510')" title="510 Thread">
+                    <span>🔩</span>
+                    <span class="tool-label">510 Thread</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- FIDGET TOYS -->
+        <div class="sidebar-section">
+            <h3 class="section-title">Fidget Toys</h3>
+            <div class="tool-grid">
+                <button class="tool-icon-btn" id="flexiWormBtn" onclick="showFidgetGenerator('flexi_worm')" title="Flexi Worm">
+                    <span>🪱</span>
+                    <span class="tool-label">Flexi Worm</span>
+                </button>
+                <button class="tool-icon-btn" id="ringsBtn" onclick="showFidgetGenerator('interlocking_rings')" title="Interlocking Rings">
+                    <span>⭕</span>
+                    <span class="tool-label">Rings</span>
+                </button>
+                <button class="tool-icon-btn" id="spinnerBtn" onclick="showFidgetGenerator('fidget_spinner')" title="Fidget Spinner">
+                    <span>💫</span>
+                    <span class="tool-label">Spinner</span>
+                </button>
+                <button class="tool-icon-btn" id="gearFidgetBtn" onclick="showFidgetGenerator('gear_fidget')" title="Gear Fidget">
+                    <span>⚙️</span>
+                    <span class="tool-label">Gears</span>
+                </button>
+                <button class="tool-icon-btn" id="chainLinkBtn" onclick="showFidgetGenerator('chain_link')" title="Chain Link">
+                    <span>🔗</span>
+                    <span class="tool-label">Chain</span>
+                </button>
+                <button class="tool-icon-btn" id="popItBtn" onclick="showFidgetGenerator('pop_it_bubble')" title="Pop It Bubble">
+                    <span>🫧</span>
+                    <span class="tool-label">Pop It</span>
+                </button>
+            </div>
+        </div>
+
         <!-- VIEW CONTROLS -->
         <div class="sidebar-section">
             <h3 class="section-title">View</h3>
@@ -2720,6 +2785,8 @@
     <script src="/modeling/static/js/modeling_controller.js"></script>
     <script src="/modeling/static/js/advanced_tools.js"></script>
     <script src="/modeling/static/js/new_tools.js"></script>
+    <script src="/modeling/static/js/shape_fidget_generators.js"></script>
+    <script src="/modeling/static/js/attachment_system.js"></script>
     <script src="/modeling/static/js/shape_picker.js"></script>
     <script src="/modeling/static/js/scene_manager.js"></script>
     <script src="/modeling/static/js/transform_gizmo.js"></script>

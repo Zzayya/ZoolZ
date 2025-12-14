@@ -19,6 +19,9 @@ Flask-Migrate==4.0.5
 celery==5.3.4
 redis==5.0.0
 
+# Process Management
+psutil==5.9.6  # For ZoolZmstr process manager
+
 # Testing Framework
 pytest==7.4.2
 pytest-flask==1.3.0  # Compatible with Flask 3.x
@@ -36,9 +39,9 @@ gunicorn==21.2.0
 # ========================================
 
 # Image processing for cookie cutters
-numpy==1.26.0
-opencv-python==4.8.1.78
-Pillow==10.1.0
+numpy>=1.24.0  # Flexible for Python 3.13+ compatibility
+opencv-python>=4.6.0  # Flexible version
+Pillow>=10.0.0
 
 # 3D mesh processing
 trimesh==4.0.5
@@ -61,7 +64,7 @@ pyclipper==1.3.0.post5
 # cadquery==2.4.0   # Alternative option
 
 # Math and scientific computing
-scipy==1.11.4
+scipy>=1.11.0  # Flexible for Python 3.13+ compatibility
 
 # ========================================
 # PEOPLE FINDER - CORE DEPENDENCIES
@@ -87,10 +90,12 @@ uvloop==0.19.0; sys_platform != 'win32'
 # Handles: Name similarity, nickname detection, typo handling
 sentence-transformers>=2.2.2
 
-# spaCy for Named Entity Recognition (NER)
+# spaCy for Named Entity Recognition (NER) - DISABLED
+# REASON: pydantic v2 compatibility issues + 500MB model download
+# USING INSTEAD: Regex-based entity extraction (works perfectly, see ml_models.py)
 # Model: en_core_web_lg (large English model - 560MB)
 # Handles: Person, date, location, organization extraction from HTML
-spacy>=3.7.0
+# spacy>=3.7.0  # Commented out - re-enable only if needed
 
 # usaddress for ML-based address parsing
 # Pre-trained on millions of US addresses
