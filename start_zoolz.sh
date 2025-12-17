@@ -22,14 +22,22 @@ fi
 cleanup() {
     echo ""
     echo "🛑 Shutting down ZoolZ..."
-    if [ ! -z "$REDIS_PID" ]; then
-        echo "   Stopping Redis..."
-        kill $REDIS_PID 2>/dev/null
-    fi
+
+    # Stop Celery worker
     if [ ! -z "$CELERY_PID" ]; then
         echo "   Stopping Celery..."
-        kill $CELERY_PID 2>/dev/null
+        kill -TERM $CELERY_PID 2>/dev/null
+        sleep 2
+        # Force kill if still running
+        kill -9 $CELERY_PID 2>/dev/null || true
     fi
+
+    # Stop Redis (if we started it)
+    if command -v brew &> /dev/null; then
+        echo "   Stopping Redis..."
+        brew services stop redis &> /dev/null || true
+    fi
+
     echo "✅ Shutdown complete"
     exit 0
 }
@@ -39,14 +47,16 @@ trap cleanup SIGINT SIGTERM
 # Start Redis
 if [ "$START_CELERY" = true ]; then
     echo "📦 Starting Redis..."
-    redis-server --daemonize yes --port 6379
-    REDIS_PID=$(pgrep -f "redis-server.*6379")
 
-    if [ -z "$REDIS_PID" ]; then
-        echo "❌ Failed to start Redis"
-        START_CELERY=false
-    else
-        echo "✅ Redis started (PID: $REDIS_PID)"
+    # Try to start Redis with brew services first (better for server)
+    if command -v brew &> /dev/null; then
+        brew services start redis &> /dev/null || true
+        sleep 1
+    fi
+
+    # Check if Redis is running
+    if redis-cli ping &> /dev/null; then
+        echo "✅ Redis is running"
 
         # Start Celery
         echo "⚙️  Starting Celery worker..."
@@ -62,6 +72,10 @@ if [ "$START_CELERY" = true ]; then
             echo "   Check celery.log for details"
             START_CELERY=false
         fi
+    else
+        echo "❌ Redis not running"
+        echo "   Start it with: brew services start redis"
+        START_CELERY=false
     fi
 fi
 
@@ -71,11 +85,9 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "   🎨 ZoolZ Studio"
-echo "   URL: http://localhost:5001"
-echo ""
-echo "   Login Credentials:"
-echo "   Username: Zay"
-echo "   Password: 442767"
+echo "   Local:    http://localhost:5001"
+echo "   Network:  http://$(ipconfig getifaddr en0 2>/dev/null || echo "localhost"):5001"
+echo "   External: http://71.60.55.85:5001"
 echo ""
 if [ "$START_CELERY" = true ]; then
     echo "   ⚡ Background tasks: ENABLED"

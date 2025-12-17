@@ -12,6 +12,7 @@ trap 'handle_error $? $LINENO' ERR
 REQUIRED_PYTHON_VERSION="3.12"
 BACKUP_DIR="$HOME/Desktop/ZoolZ_backup_$(date +%Y%m%d_%H%M%S)"
 LOG_FILE="setup.log"
+ENV_FILE=".env"
 
 # Colors
 RED='\033[0;31m'
@@ -338,13 +339,82 @@ install_packages() {
     fi
     log_success "trimesh installed (3D modeling ready)"
 
-    # STEP 5: Install OpenCV with strict version lock (4.8.x - last NumPy 1.x compatible)
-    log_info "[5/6] Installing opencv-python 4.8.x (NumPy 1.x compatible)..."
-    if ! pip install "opencv-python>=4.8.0,<4.9" 2>&1 | tee -a "$LOG_FILE"; then
-        log_warn "opencv-python failed (cookie cutters won't work)"
+    # STEP 5: Install OpenCV (FORCE pre-built wheel, NEVER compile from source)
+    log_info "[5/6] Installing opencv-python (SMART VERSION DETECTION)..."
+
+    # Function to find best available OpenCV version with wheels
+    find_best_opencv_version() {
+        log_info "Detecting available opencv-python versions with wheels for this Mac..."
+
+        # Get all available versions from pip
+        local versions=$(pip index versions opencv-python 2>&1 | grep "Available versions:" | sed 's/Available versions: //')
+
+        if [ -z "$versions" ]; then
+            log_error "Cannot query pip for opencv-python versions"
+            return 1
+        fi
+
+        log_info "Available versions: $versions"
+
+        # Preferred versions (try these first, in order)
+        local preferred_versions=("4.10.0.84" "4.8.1.78" "4.6.0.66" "4.5.5.64" "4.5.5.62")
+
+        # Try preferred versions first
+        for pref_ver in "${preferred_versions[@]}"; do
+            if echo "$versions" | grep -q "$pref_ver"; then
+                log_info "Trying preferred version: $pref_ver..."
+                if pip install --only-binary=:all: "opencv-python==$pref_ver" --quiet 2>&1 | tee -a "$LOG_FILE"; then
+                    # Verify it actually works
+                    if python3 -c "import cv2; print(cv2.__version__)" 2>&1 > /dev/null; then
+                        echo "$pref_ver"
+                        return 0
+                    else
+                        log_warn "Version $pref_ver installed but import failed, trying next..."
+                        pip uninstall -y opencv-python --quiet 2>&1 > /dev/null
+                    fi
+                fi
+            fi
+        done
+
+        # If preferred versions don't work, try the latest available
+        log_info "Preferred versions unavailable, trying latest with wheel..."
+        if pip install --only-binary=:all: opencv-python --quiet 2>&1 | tee -a "$LOG_FILE"; then
+            if python3 -c "import cv2; print(cv2.__version__)" 2>&1 > /dev/null; then
+                local installed_ver=$(python3 -c "import cv2; print(cv2.__version__)" 2>&1)
+                echo "$installed_ver"
+                return 0
+            fi
+        fi
+
+        # Last resort: try opencv-python-headless (smaller, no GUI)
+        log_warn "opencv-python failed, trying opencv-python-headless..."
+        if pip install --only-binary=:all: opencv-python-headless --quiet 2>&1 | tee -a "$LOG_FILE"; then
+            if python3 -c "import cv2; print(cv2.__version__)" 2>&1 > /dev/null; then
+                local installed_ver=$(python3 -c "import cv2; print(cv2.__version__)" 2>&1)
+                echo "$installed_ver"
+                return 0
+            fi
+        fi
+
+        return 1
+    }
+
+    # Find and install best OpenCV version
+    opencv_installed_version=$(find_best_opencv_version)
+
+    if [ $? -eq 0 ] && [ -n "$opencv_installed_version" ]; then
+        # Final verification
+        if python3 -c "import cv2" 2>&1 | grep -q "Error\|Traceback"; then
+            log_error "opencv-python $opencv_installed_version installed but HAS IMPORT ERRORS!"
+            return 1
+        fi
+        log_success "opencv-python $opencv_installed_version VERIFIED WORKING ✓"
+        log_info "Cookie cutter generation will work!"
     else
-        local opencv_version=$(python3 -c "import cv2; print(cv2.__version__)" 2>&1)
-        log_success "opencv-python $opencv_version installed ✓"
+        log_error "FAILED to install ANY working opencv-python version!"
+        log_error "Your Mac architecture may not have pre-built wheels."
+        log_error "Cookie cutter generation will NOT work."
+        return 1
     fi
 
     # STEP 6: Install shapely with --no-deps (CRITICAL - prevents NumPy 2.x reinstall)
@@ -371,7 +441,7 @@ install_packages() {
     local extra_packages=(
         "mapbox-earcut"
         "pyclipper==1.3.0.post5"
-        "pymeshlab==2023.12.post3"
+        "pymeshlab==2023.12.post1"
     )
 
     for package in "${extra_packages[@]}"; do
@@ -416,15 +486,21 @@ test_imports() {
         return 1
     fi
 
-    # Test ZoolZmstr
-    if python3 -c "from zoolz.ZoolZmstr import is_server, get_environment; print(f'Environment: {get_environment()}'); print('Server mode:', 'YES' if is_server() else 'NO')" 2>&1 | tee -a "$LOG_FILE"; then
-        log_success "ZoolZmstr working"
-        tests_passed=$((tests_passed + 1))
-    else
-        log_error "ZoolZmstr import failed!"
+    # Test ZoolZmstr (CRITICAL - app.py needs this)
+    log_info "Testing ZoolZmstr imports..."
+    if ! python3 -c "from zoolz.ZoolZmstr import is_server, get_environment; print(f'Environment: {get_environment()}'); print('Server mode:', 'YES' if is_server() else 'NO')" 2>&1 | tee -a "$LOG_FILE"; then
+        log_error "ZoolZmstr import FAILED!"
         tests_failed=$((tests_failed + 1))
         return 1
     fi
+    # Double-check no errors in output
+    if python3 -c "from zoolz.ZoolZmstr import is_server" 2>&1 | grep -q "Error\|Traceback"; then
+        log_error "ZoolZmstr has import errors!"
+        tests_failed=$((tests_failed + 1))
+        return 1
+    fi
+    log_success "ZoolZmstr VERIFIED WORKING"
+    tests_passed=$((tests_passed + 1))
 
     # Test numpy (non-critical but important)
     if python3 -c "import numpy; print(f'numpy {numpy.__version__}')" 2>&1 | tee -a "$LOG_FILE"; then
@@ -452,29 +528,42 @@ test_imports() {
         tests_failed=$((tests_failed + 1))
     fi
 
-    # Test OpenCV (for cookie cutters)
+    # Test OpenCV (CRITICAL for cookie cutters)
     if python3 -c "import cv2; print(f'opencv {cv2.__version__}')" 2>&1 | tee -a "$LOG_FILE"; then
-        log_success "opencv working (cookie cutters ready)"
-        tests_passed=$((tests_passed + 1))
+        # Check if import actually succeeded (no "ModuleNotFoundError" in output)
+        if python3 -c "import cv2" 2>&1 | grep -q "ModuleNotFoundError"; then
+            log_error "opencv IMPORT FAILED - cv2 module not found!"
+            tests_failed=$((tests_failed + 1))
+        else
+            log_success "opencv VERIFIED WORKING (cookie cutters ready)"
+            tests_passed=$((tests_passed + 1))
+        fi
     else
-        log_warn "opencv not available (cookie cutters won't work)"
+        log_error "opencv not available (cookie cutters WON'T WORK!)"
+        tests_failed=$((tests_failed + 1))
     fi
 
-    # Test app.py imports
-    if python3 -c "from app import app; print('✓ Flask app loads successfully')" 2>&1 | grep "✓" | tee -a "$LOG_FILE"; then
-        log_success "app.py working"
-        tests_passed=$((tests_passed + 1))
-    else
-        log_error "app.py import failed!"
+    # Test app.py imports (CRITICAL - if this fails, Flask won't start!)
+    log_info "Testing Flask app.py..."
+    if ! python3 -c "from app import app; print('✓ Flask app loads successfully')" 2>&1 | tee -a "$LOG_FILE"; then
+        log_error "app.py import FAILED!"
         tests_failed=$((tests_failed + 1))
         return 1
     fi
+    # Check for errors in output
+    if python3 -c "from app import app" 2>&1 | grep -q "Error\|Traceback\|ModuleNotFoundError"; then
+        log_error "app.py has import errors!"
+        tests_failed=$((tests_failed + 1))
+        return 1
+    fi
+    log_success "app.py VERIFIED WORKING (Flask will start!)"
+    tests_passed=$((tests_passed + 1))
 
     # Test Modeling program - COMPREHENSIVE (imports + actual shape generation)
     log_info "Testing Modeling program (this is CRITICAL)..."
 
     # Test 1: Import all Modeling modules
-    if python3 -c "from programs.Modeling.blueprint import modeling_bp; from programs.Modeling.utils import thicken, hollow, shape_generators; from programs.Modeling.shared.cookie_logic import generate_cookie_cutter; print('✓ Imports OK')" 2>&1 | grep "✓" | tee -a "$LOG_FILE"; then
+    if python3 -c "from programs.Modeling.blueprint import modeling_bp; from programs.Modeling.utils import thicken, hollow, shape_generators; from programs.Modeling.utils.cookie_logic import generate_cookie_cutter; print('✓ Imports OK')" 2>&1 | grep "✓" | tee -a "$LOG_FILE"; then
         log_success "Modeling imports working ✓"
     else
         log_error "Modeling imports failed!"
@@ -485,15 +574,18 @@ test_imports() {
     # Test 2: Actually generate a shape (real functional test)
     if python3 -c "
 import trimesh
-from programs.Modeling.utils.shape_generators import generate_cube, generate_sphere
+from programs.Modeling.utils.shape_generators import generate_shape
 
 # Test cube generation
-cube = generate_cube(size=10)
+cube_result = generate_shape('cube', {'size': 10})
+assert 'mesh' in cube_result, 'No mesh returned'
+cube = cube_result['mesh']
 assert cube.vertices.shape[0] > 0, 'Cube has no vertices'
 assert cube.faces.shape[0] > 0, 'Cube has no faces'
 
 # Test sphere generation
-sphere = generate_sphere(radius=5)
+sphere_result = generate_shape('sphere', {'radius': 5})
+sphere = sphere_result['mesh']
 assert sphere.vertices.shape[0] > 0, 'Sphere has no vertices'
 assert sphere.faces.shape[0] > 0, 'Sphere has no faces'
 
@@ -509,11 +601,11 @@ print('✓ Shape generation working')
 
     # Test 3: Boolean operations
     if python3 -c "
-from programs.Modeling.utils.shape_generators import generate_cube
+from programs.Modeling.utils.shape_generators import generate_shape
 from programs.Modeling.utils.boolean_ops import union_meshes
 
-cube1 = generate_cube(size=10)
-cube2 = generate_cube(size=10)
+cube1 = generate_shape('cube', {'size': 10})['mesh']
+cube2 = generate_shape('cube', {'size': 10})['mesh']
 result = union_meshes([cube1, cube2])
 assert result is not None, 'Union failed'
 print('✓ Boolean ops working')
@@ -558,6 +650,202 @@ check_redis() {
     fi
 }
 
+verify_network_config() {
+    log_step "Verifying Network Configuration"
+
+    # Get Mac's local IP address
+    local mac_ip=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "unknown")
+
+    if [ "$mac_ip" == "unknown" ]; then
+        log_warn "Could not detect Mac's IP address"
+        log_info "Check manually with: ipconfig getifaddr en0"
+    else
+        log_success "Mac's local IP: $mac_ip"
+    fi
+
+    # Check if port 5001 is available
+    if lsof -i :5001 &> /dev/null; then
+        log_warn "Port 5001 is already in use!"
+        log_info "Stop the process using it: lsof -i :5001"
+    else
+        log_success "Port 5001 is available"
+    fi
+
+    # Verify Flask configuration in app.py
+    if grep -q "host='0.0.0.0'" app.py; then
+        log_success "Flask configured correctly (0.0.0.0:5001)"
+    elif grep -q 'host="0.0.0.0"' app.py; then
+        log_success "Flask configured correctly (0.0.0.0:5001)"
+    else
+        log_error "Flask NOT configured to accept network connections!"
+        log_error "app.py should have: app.run(host='0.0.0.0', port=...)"
+        return 1
+    fi
+
+    # Show access URLs
+    echo ""
+    log_info "${BOLD}Access URLs after Flask starts:${NC}"
+    echo "  ${CYAN}From Mac:      http://localhost:5001${NC}"
+    if [ "$mac_ip" != "unknown" ]; then
+        echo "  ${CYAN}From network:  http://$mac_ip:5001${NC}"
+    fi
+    echo "  ${CYAN}From internet: http://71.60.55.85:5001${NC} (via router)"
+    echo ""
+    log_info "${BOLD}Port forwarding required:${NC}"
+    echo "  Router must forward: External 5001 → $mac_ip:5001"
+    echo ""
+
+    return 0
+}
+
+verify_cookie_cutter_dependencies() {
+    log_step "Testing Cookie Cutter Pipeline"
+
+    local all_good=true
+
+    # Test 1: OpenCV with actual image processing
+    log_info "Testing OpenCV image processing..."
+    if python3 -c "
+import cv2
+import numpy as np
+
+# Create a test image
+img = np.zeros((100, 100, 3), dtype=np.uint8)
+img[25:75, 25:75] = [255, 255, 255]
+
+# Test edge detection
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+edges = cv2.Canny(gray, 50, 150)
+
+# Test contour finding
+contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# Test morphological operations
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+dilated = cv2.dilate(edges, kernel)
+
+print(f'✓ OpenCV image processing: {len(contours)} contours found')
+" 2>&1 | tee -a "$LOG_FILE"; then
+        log_success "OpenCV image processing working"
+    else
+        log_warn "OpenCV image processing test failed"
+        all_good=false
+    fi
+
+    # Test 2: Cookie cutter full pipeline
+    log_info "Testing cookie cutter generation pipeline..."
+    if python3 -c "
+from programs.Modeling.utils.cookie_logic import build_mask_from_image, find_and_smooth_contour
+import numpy as np
+import cv2
+import tempfile
+
+# Create a test image with a simple shape
+img = np.zeros((200, 200, 3), dtype=np.uint8)
+cv2.circle(img, (100, 100), 50, (255, 255, 255), -1)
+
+# Save to temp file
+with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
+    temp_path = f.name
+    cv2.imwrite(temp_path, img)
+
+try:
+    # Test mask building
+    mask = build_mask_from_image(temp_path)
+
+    # Test contour extraction
+    contour = find_and_smooth_contour(mask, mode='outer')
+
+    print(f'✓ Cookie cutter pipeline: {len(contour)} points extracted')
+except Exception as e:
+    print(f'✗ Cookie cutter pipeline failed: {e}')
+    import sys
+    sys.exit(1)
+finally:
+    import os
+    os.unlink(temp_path)
+" 2>&1 | tee -a "$LOG_FILE"; then
+        log_success "Cookie cutter pipeline working"
+    else
+        log_warn "Cookie cutter pipeline test failed"
+        all_good=false
+    fi
+
+    # Test 3: trimesh 3D mesh creation
+    log_info "Testing trimesh 3D mesh creation..."
+    if python3 -c "
+import trimesh
+from shapely.geometry import Polygon
+
+# Create a simple polygon
+points = [(0, 0), (10, 0), (10, 10), (0, 10)]
+poly = Polygon(points)
+
+# Extrude to 3D
+mesh = trimesh.creation.extrude_polygon(poly, height=5.0)
+
+print(f'✓ Trimesh extrusion: {len(mesh.vertices)} vertices, {len(mesh.faces)} faces')
+" 2>&1 | tee -a "$LOG_FILE"; then
+        log_success "Trimesh 3D mesh creation working"
+    else
+        log_warn "Trimesh test failed"
+        all_good=false
+    fi
+
+    echo ""
+    if $all_good; then
+        log_success "Cookie cutter generation pipeline working ✓"
+        return 0
+    else
+        log_warn "Cookie cutter tests failed - troubleshoot after Flask starts"
+        return 1
+    fi
+}
+
+# ============================================================================
+# ENV SETUP HELPERS
+# ============================================================================
+
+ensure_env_secret() {
+    log_step "Ensuring .env has strong SECRET_KEY"
+
+    # If file missing, create it with sane defaults
+    if [ ! -f "$ENV_FILE" ]; then
+        log_info "No .env found; creating a fresh one with a random SECRET_KEY"
+        cat > "$ENV_FILE" << EOF
+# ZoolZ Environment (generated by setup)
+FLASK_ENV=production
+DEBUG=False
+SECRET_KEY=$(openssl rand -hex 32)
+REDIS_URL=redis://localhost:6379/0
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+PORT=5001
+CELERY_TASK_TIMEOUT=600
+EOF
+        log_success ".env created with secure SECRET_KEY"
+        return 0
+    fi
+
+    # If exists, ensure SECRET_KEY present and not placeholder
+    if ! grep -q '^SECRET_KEY=' "$ENV_FILE"; then
+        log_info "Adding SECRET_KEY to existing .env"
+        echo "SECRET_KEY=$(openssl rand -hex 32)" >> "$ENV_FILE"
+        log_success "SECRET_KEY appended to .env"
+    else
+        local current_key
+        current_key=$(grep '^SECRET_KEY=' "$ENV_FILE" | head -n1 | cut -d'=' -f2-)
+        if [ -z "$current_key" ] || [ "$current_key" = "dev-secret-key-change-in-production" ]; then
+            log_info "SECRET_KEY in .env is empty/placeholder; replacing it"
+            # Replace line in place
+            sed -i '' "s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" "$ENV_FILE"
+            log_success "SECRET_KEY refreshed"
+        else
+            log_success "SECRET_KEY already set"
+        fi
+    fi
+}
+
 # ============================================================================
 # MAIN SETUP FLOW
 # ============================================================================
@@ -568,6 +856,10 @@ main() {
     echo "║         ZOOLZ SERVER SETUP - STATE OF THE ART             ║"
     echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
+
+    local macos_version
+    macos_version=$(sw_vers -productVersion 2>/dev/null || echo "unknown")
+    log_info "Detected macOS: $macos_version (target: Catalina 10.15.x)"
 
     # Check not running as root
     if [ "$EUID" -eq 0 ] || [ "$USER" == "root" ]; then
@@ -625,6 +917,15 @@ main() {
     # Check Redis
     check_redis
 
+    # Show network configuration (informational only)
+    verify_network_config || log_warn "Network check had warnings - continuing anyway"
+
+    # Test cookie cutter dependencies (informational only - don't block deployment)
+    verify_cookie_cutter_dependencies || log_warn "Some features may not work - Flask will still start"
+
+    # Ensure .env and SECRET_KEY exist
+    ensure_env_secret
+
     # Success!
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
@@ -646,82 +947,26 @@ main() {
     echo "  ✓ ZoolZmstr orchestration system"
     echo ""
 
-    # Ask user if they want auto-start
-    echo -e "${CYAN}${BOLD}━━━ AUTO-START OPTION ━━━${NC}"
+    # Make scripts executable
+    chmod +x start_zoolz.sh 2>/dev/null || true
+    chmod +x start_zoolz_multi_terminal.sh 2>/dev/null || true
+    chmod +x zoolz/server/*.sh 2>/dev/null || true
+
+    echo "╔════════════════════════════════════════════════════════════╗"
+    echo "║                   HOW TO START ZOOLZ                      ║"
+    echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
-    echo "Would you like to automatically start ZoolZ now?"
-    echo "This will:"
-    echo "  1. Launch Flask server in background"
-    echo "  2. Open monitoring dashboard"
-    echo "  3. You can walk away and come back to everything running"
+    log_info "${BOLD}START:${NC}"
+    echo "  ${CYAN}./start_zoolz.sh${NC}"
     echo ""
-    read -p "Auto-start ZoolZ? [Y/n]: " -n 1 -r
+    log_info "${BOLD}STOP:${NC}"
+    echo "  ${CYAN}Press Ctrl+C in the terminal${NC}"
     echo ""
-
-    if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
-        log_step "Auto-Starting ZoolZ"
-
-        # Make scripts executable
-        chmod +x start_zoolz.sh
-        chmod +x zoolz/server/monitor_server.sh
-
-        # Start ZoolZ in background
-        log_info "Launching Flask server..."
-        nohup ./start_zoolz.sh > zoolz_server.log 2>&1 &
-        local zoolz_pid=$!
-        sleep 3
-
-        # Check if it's running
-        if ps -p $zoolz_pid > /dev/null; then
-            log_success "ZoolZ server started (PID: $zoolz_pid)"
-            log_info "Server logs: tail -f zoolz_server.log"
-        else
-            log_warn "ZoolZ may have failed to start - check zoolz_server.log"
-        fi
-
-        # Start monitor in a new terminal window
-        log_info "Opening monitoring dashboard..."
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            # macOS - open new Terminal tab
-            osascript -e 'tell application "Terminal" to do script "cd '"$(pwd)"' && ./zoolz/server/monitor_server.sh"' &
-            log_success "Monitor opened in new Terminal tab"
-        else
-            log_info "Start monitor manually: ./zoolz/server/monitor_server.sh"
-        fi
-
-        echo ""
-        echo "╔════════════════════════════════════════════════════════════╗"
-        echo "║                  🚀 ZOOLZ IS LIVE! 🚀                     ║"
-        echo "╚════════════════════════════════════════════════════════════╝"
-        echo ""
-        log_info "Access ZoolZ at:"
-        echo "     http://71.60.55.85:5001"
-        echo ""
-        log_info "Login:"
-        echo "     Username: Zay"
-        echo "     Password: 442767"
-        echo ""
-        log_info "Monitoring:"
-        echo "     Check the new Terminal tab for live stats"
-        echo ""
-        log_info "Stop server:"
-        echo "     pkill -f 'flask run' or kill $zoolz_pid"
-        echo ""
-    else
-        echo ""
-        log_info "Manual start commands:"
-        echo "  1. Start ZoolZ:"
-        echo "     ./start_zoolz.sh"
-        echo ""
-        echo "  2. Monitor (separate terminal):"
-        echo "     ./zoolz/server/monitor_server.sh"
-        echo ""
-        echo "  3. Access:"
-        echo "     http://71.60.55.85:5001"
-        echo ""
-        echo "  Login: Zay / 442767"
-        echo ""
-    fi
+    log_info "${BOLD}ACCESS:${NC}"
+    echo "  Local:    ${CYAN}http://localhost:5001${NC}"
+    echo "  Network:  ${CYAN}http://$(ipconfig getifaddr en0 2>/dev/null || echo "10.0.0.11"):5001${NC}"
+    echo "  Internet: ${CYAN}http://71.60.55.85:5001${NC}"
+    echo ""
 }
 
 # Run main

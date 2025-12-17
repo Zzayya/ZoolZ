@@ -575,3 +575,100 @@ async function generateFidget(fidgetType) {
         showNotification('Error: ' + error.message, 'error');
     }
 }
+
+// ============================================================================
+// QUICK START FUNCTIONS
+// ============================================================================
+
+/**
+ * Quick start: Cookie Cutter workflow
+ * Opens file upload overlay for cookie cutter generation
+ */
+function quickStartCookieCutter() {
+    showNotification('Upload an image to create a cookie cutter', 'info');
+    openFileOverlay();
+}
+
+/**
+ * Quick start: Drainage Tray generator
+ * Opens shape generator with drainage tray preset
+ */
+function quickStartDrainageTray() {
+    // Generate drainage tray with default parameters
+    const params = {
+        diameter: 100.0,
+        base_thickness: 3.0,
+        rim_height: 5.0,
+        rim_thickness: 2.0,
+        num_channels: 8,
+        channel_width: 2.0,
+        channel_depth: 1.0,
+        spout_width: 15.0,
+        spout_length: 20.0,
+        spout_angle: 15.0,
+        center_drain_diameter: 10.0
+    };
+
+    showNotification('Generating drainage tray...', 'info');
+
+    fetch('/modeling/api/generate_shape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            shape_type: 'drainage_tray',
+            params: params
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showNotification('Error: ' + data.error, 'error');
+        } else {
+            showNotification('Drainage tray generated!', 'success');
+            loadSTL(data.download_url);
+        }
+    })
+    .catch(error => {
+        showNotification('Error generating drainage tray: ' + error.message, 'error');
+    });
+}
+
+/**
+ * Quick start: Basic Shape picker
+ * Opens shape picker overlay
+ */
+function quickStartBasicShape() {
+    // Open shape picker if it exists
+    if (typeof showShapePicker === 'function') {
+        showShapePicker();
+    } else {
+        // Fallback: show cube by default
+        const params = {
+            size: 20.0,
+            center: true
+        };
+
+        showNotification('Generating cube...', 'info');
+
+        fetch('/modeling/api/generate_shape', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                shape_type: 'cube',
+                params: params
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showNotification('Error: ' + data.error, 'error');
+            } else {
+                showNotification('Cube generated! (Use shape picker for more shapes)', 'success');
+                loadSTL(data.download_url);
+            }
+        })
+        .catch(error => {
+            showNotification('Error generating cube: ' + error.message, 'error');
+        });
+    }
+}
