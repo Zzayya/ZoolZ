@@ -74,8 +74,8 @@ class FidgetGenerators:
                 try:
                     socket = socket.difference(inner)
                     segment = trimesh.util.concatenate([segment, socket])
-                except:
-                    pass
+                except (ValueError, AttributeError, TypeError):
+                    pass  # Mesh boolean operation failed, skip socket
 
             # Position segment
             z_pos = i * (segment_length + flex_gap)
@@ -132,8 +132,8 @@ class FidgetGenerators:
                 )
                 try:
                     ring = outer_hex.difference(inner_hex)
-                except:
-                    ring = outer_hex
+                except (ValueError, AttributeError, TypeError):
+                    ring = outer_hex  # Boolean op failed, use solid ring
 
             else:  # square
                 outer_square = trimesh.creation.box(
@@ -144,8 +144,8 @@ class FidgetGenerators:
                 )
                 try:
                     ring = outer_square.difference(inner_square)
-                except:
-                    ring = outer_square
+                except (ValueError, AttributeError, TypeError):
+                    ring = outer_square  # Boolean op failed, use solid ring
 
             # Rotate and position each ring to interlock
             if i % 2 == 0:
@@ -202,8 +202,8 @@ class FidgetGenerators:
 
         try:
             center = center.difference(bearing)
-        except:
-            pass
+        except (ValueError, AttributeError, TypeError):
+            pass  # Bearing hole creation failed
 
         # Add weights
         weights = [center]
@@ -294,8 +294,8 @@ class FidgetGenerators:
 
         try:
             frame = outer_frame.difference(inner_cavity)
-        except:
-            frame = outer_frame
+        except (ValueError, AttributeError, TypeError):
+            frame = outer_frame  # Cavity creation failed, use solid frame
 
         logger.info(f"Created {grid_size}x{grid_size} sliding puzzle")
 
@@ -350,8 +350,8 @@ class FidgetGenerators:
         try:
             segment = outer.difference(cut_box1)
             segment = segment.difference(cut_box2)
-        except:
-            segment = outer
+        except (ValueError, AttributeError, TypeError):
+            segment = outer  # Cutting failed, use cylindrical segment
 
         # Add interlocking nubs for rotation mechanism
         nub = trimesh.creation.cylinder(
@@ -434,7 +434,7 @@ class FidgetGenerators:
         for bubble in bubbles:
             try:
                 result = result.difference(bubble)
-            except:
+            except (ValueError, AttributeError, TypeError):
                 logger.warning("Failed to subtract bubble, continuing...")
 
         logger.info(f"Created {rows}x{cols} pop-it toy")
@@ -513,8 +513,8 @@ class FidgetGenerators:
 
             try:
                 link = outer.difference(inner)
-            except:
-                link = outer
+            except (ValueError, AttributeError, TypeError):
+                link = outer  # Hollow operation failed, use solid link
 
             # Rotate every other link 90 degrees to interlock
             if i % 2 == 1:
@@ -596,8 +596,8 @@ class FidgetGenerators:
 
             try:
                 gear = gear.difference(axle_hole)
-            except:
-                pass
+            except (ValueError, AttributeError, TypeError):
+                pass  # Axle hole creation failed
 
             # Position gears to interlock
             if gear_idx > 0:

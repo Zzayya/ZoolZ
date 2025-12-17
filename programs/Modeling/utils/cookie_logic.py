@@ -168,7 +168,7 @@ def build_mask_from_image(img_path: str) -> np.ndarray:
                 cv2.grabCut(img, mask_gc, rect, bgd_model, fgd_model, 5, cv2.GC_INIT_WITH_RECT)
                 # Create binary mask (foreground and probable foreground)
                 mask = np.where((mask_gc == 2) | (mask_gc == 0), 0, 1).astype('uint8') * 255
-            except:
+            except (cv2.error, ValueError, TypeError):
                 # If GrabCut fails, fall back to simple thresholding
                 print(f"🪙 GrabCut failed, using simple threshold")
                 _, mask = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
@@ -557,8 +557,8 @@ def generate_detail_stamp_from_outlines(detail_data: dict, params: dict) -> trim
             # Extrude to create raised detail
             detail_mesh = trimesh.creation.extrude_polygon(poly, height=stamp_depth)
             detail_meshes.append(detail_mesh)
-        except:
-            continue
+        except (ValueError, AttributeError, TypeError, IndexError):
+            continue  # Polygon creation or extrusion failed
 
     if not detail_meshes:
         raise ValueError("No valid detail contours found")

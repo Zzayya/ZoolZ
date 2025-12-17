@@ -47,7 +47,7 @@ class HealthMonitor:
             try:
                 with open(self.log_file, 'a') as f:
                     f.write(log_message + '\n')
-            except:
+            except (OSError, IOError):
                 pass  # Don't crash if logging fails
 
     def get_system_stats(self) -> Dict:
@@ -65,7 +65,7 @@ class HealthMonitor:
                 'disk_free_gb': disk.free / (1024**3),
                 'uptime_seconds': time.time() - self.start_time,
             }
-        except:
+        except (psutil.Error, OSError):
             return {}
 
     def log_system_stats(self):

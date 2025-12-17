@@ -127,7 +127,7 @@ class ShapeGenerator:
         try:
             funnel_mesh = outer.difference(inner)
             return funnel_mesh
-        except:
+        except (ValueError, AttributeError, TypeError):
             logger.warning("Boolean difference failed, returning outer cone")
             return outer
 
@@ -149,7 +149,7 @@ class ShapeGenerator:
         try:
             tube_mesh = outer.difference(inner)
             return tube_mesh
-        except:
+        except (ValueError, AttributeError, TypeError):
             return outer
 
     @staticmethod
@@ -165,7 +165,7 @@ class ShapeGenerator:
         try:
             ring_mesh = outer.difference(inner)
             return ring_mesh
-        except:
+        except (ValueError, AttributeError, TypeError):
             return outer
 
     @staticmethod
@@ -224,8 +224,8 @@ class ShapeGenerator:
                 path=path
             )
             return mesh
-        except:
-            # Fallback to simple torus
+        except (ValueError, AttributeError, TypeError, ImportError):
+            # Fallback to simple torus (ImportError if sweep_polygon not available)
             return trimesh.creation.torus(
                 major_radius=major_radius,
                 minor_radius=minor_radius
@@ -417,13 +417,13 @@ class ShapeGenerator:
 
         try:
             rim = outer_rim.difference(inner_rim)
-        except:
+        except (ValueError, AttributeError, TypeError):
             rim = outer_rim
 
         # 3. Combine base and rim
         try:
             tray = trimesh.util.concatenate([base, rim])
-        except:
+        except (ValueError, AttributeError, TypeError):
             tray = base
 
         # 4. Add central drain hole
