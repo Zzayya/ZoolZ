@@ -49,7 +49,7 @@ class ProcessInfo:
             try:
                 process.kill()  # Send SIGKILL
                 return True
-            except:
+            except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
                 return False
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return False
@@ -231,7 +231,7 @@ class ProcessManager:
                         return True
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
-        except:
+        except (psutil.Error, OSError):
             pass
 
         return False
@@ -289,7 +289,7 @@ class ProcessManager:
                     timeout=5
                 )
                 time.sleep(0.5)
-            except:
+            except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError):
                 pass
 
         # Then try graceful stop
