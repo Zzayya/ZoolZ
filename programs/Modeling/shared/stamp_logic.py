@@ -129,8 +129,8 @@ def generate_stamp(
             # Position details to cut into base
             detail_mesh.apply_translation([0, 0, base_thickness - detail_height])
             stamp_mesh = base_mesh.difference(detail_mesh, engine='blender')
-        except:
-            # Fallback if boolean fails
+        except (ValueError, AttributeError, TypeError, RuntimeError):
+            # Fallback if boolean fails (RuntimeError from blender engine)
             print("⚠️ Boolean subtraction failed, using basic stamp")
             stamp_mesh = base_mesh
 

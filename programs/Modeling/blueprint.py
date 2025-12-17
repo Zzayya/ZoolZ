@@ -35,6 +35,8 @@ from programs.Modeling.utils import (
     advanced_operations
 )
 
+logger = logging.getLogger(__name__)
+
 # Import Celery tasks for background processing
 try:
     from tasks import (
@@ -55,7 +57,6 @@ modeling_bp = Blueprint(
     static_folder='static',
     static_url_path='/modeling/static'
 )
-logger = logging.getLogger(__name__)
 
 # Safety limits
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
