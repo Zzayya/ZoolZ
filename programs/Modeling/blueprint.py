@@ -7,6 +7,7 @@ Handles 3D modeling tools: cookie cutter, outline generator, and STL operations
 from flask import Blueprint, render_template, request, jsonify, send_file, current_app
 from werkzeug.utils import secure_filename
 import os
+import ast
 import trimesh
 import numpy as np
 import logging
@@ -2107,9 +2108,14 @@ def generate_fidget_api():
                 num_links=params.get('num_links', 5)
             )
         elif fidget_type == 'pop_it_bubble':
-            # Parse grid_size tuple
+            # Parse grid_size tuple safely
             grid_size_str = params.get('grid_size', '(5, 5)')
-            grid_size = eval(grid_size_str)  # Safe here since we control the input
+            try:
+                grid_size = ast.literal_eval(grid_size_str)  # Safe: only evaluates literals
+                if not isinstance(grid_size, tuple) or len(grid_size) != 2:
+                    raise ValueError("grid_size must be a tuple of 2 integers")
+            except (ValueError, SyntaxError) as e:
+                return jsonify({'error': f'Invalid grid_size format: {str(e)}'}), 400
 
             mesh = generator.pop_it_bubble(
                 bubble_diameter=params.get('bubble_diameter', 15.0),
