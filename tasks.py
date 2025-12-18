@@ -6,6 +6,7 @@ Handles long-running operations without blocking Flask
 
 import os
 import logging
+import uuid
 from celery import Celery
 from dotenv import load_dotenv
 
@@ -34,6 +35,45 @@ celery.conf.update(
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# ERROR CATEGORIZATION - Prevent Information Disclosure
+# ============================================================================
+
+def categorize_error(exception: Exception) -> tuple[str, str]:
+    """
+    Categorize exception and return safe user message with error code.
+
+    Prevents information disclosure by returning generic error messages to clients
+    while logging full details server-side for debugging.
+
+    Args:
+        exception: The caught exception
+
+    Returns:
+        Tuple of (safe_user_message, unique_error_code)
+
+    Example:
+        >>> msg, code = categorize_error(FileNotFoundError("secret/path/file.txt"))
+        >>> print(msg)  # "File operation failed" (no path leaked)
+        >>> print(code)  # "a3f7b2c1" (for log correlation)
+    """
+    error_code = str(uuid.uuid4())[:8]  # Short unique ID for support/logs
+
+    # Map exception types to user-friendly messages
+    if isinstance(exception, (FileNotFoundError, IOError)):
+        user_msg = "File operation failed"
+    elif isinstance(exception, MemoryError):
+        user_msg = "Insufficient memory for operation"
+    elif isinstance(exception, ValueError):
+        user_msg = "Invalid parameter value"
+    elif isinstance(exception, (ImportError, ModuleNotFoundError)):
+        user_msg = "Required module not available"
+    else:
+        user_msg = "Operation failed"
+
+    return user_msg, error_code
 
 
 # ============================================================================
@@ -112,14 +152,25 @@ def generate_cookie_cutter_task(self, upload_path, params, output_folder):
         }
 
     except Exception as e:
-        logger.error(f"Cookie cutter generation failed: {e}", exc_info=True)
+        # Categorize error for safe client response
+        user_msg, error_code = categorize_error(e)
+
+        # Log FULL details server-side (including paths, stack trace)
+        logger.error(
+            f"Cookie cutter generation failed [Error: {error_code}] - Path: {upload_path}",
+            exc_info=True
+        )
+
+        # Return GENERIC message to client
         self.update_state(
             state='FAILURE',
-            meta={'error': str(e), 'status': 'Failed'}
+            meta={'error': user_msg, 'error_code': error_code, 'status': 'Failed'}
         )
         return {
             'success': False,
-            'error': str(e)
+            'error': user_msg,
+            'error_code': error_code,
+            'support_message': f'Error code: {error_code}'
         }
 
 
@@ -159,8 +210,9 @@ def thicken_mesh_task(self, input_path, params, output_folder):
             'stats': result.get('stats', {})
         }
     except Exception as e:
-        logger.error(f"Thicken task failed: {e}", exc_info=True)
-        return {'success': False, 'error': str(e)}
+        user_msg, error_code = categorize_error(e)
+        logger.error(f"Thicken task failed [Error: {error_code}] - Path: {input_path}", exc_info=True)
+        return {'success': False, 'error': user_msg, 'error_code': error_code}
 
 
 @celery.task(bind=True, name='tasks.hollow_mesh')
@@ -195,8 +247,9 @@ def hollow_mesh_task(self, input_path, params, output_folder):
             'stats': result.get('stats', {})
         }
     except Exception as e:
-        logger.error(f"Hollow task failed: {e}", exc_info=True)
-        return {'success': False, 'error': str(e)}
+        user_msg, error_code = categorize_error(e)
+        logger.error(f"Hollow task failed [Error: {error_code}] - Path: {input_path}", exc_info=True)
+        return {'success': False, 'error': user_msg, 'error_code': error_code}
 
 
 @celery.task(bind=True, name='tasks.boolean_operation')
@@ -240,8 +293,9 @@ def boolean_operation_task(self, mesh1_path, mesh2_path, operation, output_folde
             }
         }
     except Exception as e:
-        logger.error(f"Boolean task failed: {e}", exc_info=True)
-        return {'success': False, 'error': str(e)}
+        user_msg, error_code = categorize_error(e)
+        logger.error(f"Boolean task failed [Error: {error_code}] - Operation: {operation}", exc_info=True)
+        return {'success': False, 'error': user_msg, 'error_code': error_code}
 
 
 # ============================================================================

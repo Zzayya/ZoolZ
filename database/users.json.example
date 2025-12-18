@@ -1,0 +1,16 @@
+{
+  "users": {
+    "example_user": {
+      "name": "Example",
+      "fullName": "Example User",
+      "email": "user@example.com",
+      "userNumber": "100001",
+      "passwordHash": "CHANGE_THIS_TO_YOUR_HASHED_PASSWORD",
+      "role": "user",
+      "createdAt": "2025-01-01T00:00:00Z",
+      "lastLogin": null,
+      "emailVerified": false
+    }
+  },
+  "nextUserNumber": 100002
+}

@@ -15,6 +15,46 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
+# PATH VALIDATION
+# ============================================================================
+
+def validate_safe_path(base_dir: str, filename: str) -> tuple[bool, str]:
+    """
+    Validate that filename resolves to path within base_dir.
+
+    Prevents path traversal attacks by ensuring the resolved absolute path
+    is within the allowed base directory.
+
+    Args:
+        base_dir: Absolute path to allowed directory
+        filename: Sanitized filename (already passed through secure_filename)
+
+    Returns:
+        (is_safe, resolved_path) tuple
+
+    Example:
+        >>> validate_safe_path('/uploads', 'test.stl')
+        (True, '/uploads/test.stl')
+        >>> validate_safe_path('/uploads', '../../../etc/passwd')
+        (False, '/etc/passwd')
+    """
+    # Get absolute paths
+    base_dir = os.path.abspath(base_dir)
+    resolved_path = os.path.abspath(os.path.join(base_dir, filename))
+
+    # Check if resolved path is within base directory
+    # Use commonpath to prevent symlink attacks
+    try:
+        common = os.path.commonpath([base_dir, resolved_path])
+        is_safe = common == base_dir
+    except ValueError:
+        # Paths on different drives (Windows)
+        is_safe = False
+
+    return is_safe, resolved_path
+
+
+# ============================================================================
 # FILE UPLOAD DECORATORS
 # ============================================================================
 
@@ -47,9 +87,15 @@ def requires_stl_file(param_name='stl'):
             if not file.filename.lower().endswith('.stl'):
                 return jsonify({'error': 'File must be an STL'}), 400
 
-            # Save file
+            # Save file with path traversal protection
             filename = secure_filename(file.filename)
-            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            base_folder = current_app.config['UPLOAD_FOLDER']
+
+            # Validate path safety
+            is_safe, upload_path = validate_safe_path(base_folder, filename)
+            if not is_safe:
+                logger.warning(f"SECURITY: Path traversal blocked - {file.filename}")
+                return jsonify({'error': 'Invalid file path'}), 400
 
             try:
                 file.save(upload_path)
@@ -117,9 +163,15 @@ def requires_image_file(param_name='image'):
             if file_size > max_size:
                 return jsonify({'error': f'File too large (max {max_size // 1024 // 1024}MB)'}), 400
 
-            # Save file
+            # Save file with path traversal protection
             filename = secure_filename(file.filename)
-            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            base_folder = current_app.config['UPLOAD_FOLDER']
+
+            # Validate path safety
+            is_safe, upload_path = validate_safe_path(base_folder, filename)
+            if not is_safe:
+                logger.warning(f"SECURITY: Path traversal blocked - {file.filename}")
+                return jsonify({'error': 'Invalid file path'}), 400
 
             try:
                 file.save(upload_path)

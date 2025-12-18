@@ -7,11 +7,14 @@ Logs important events, monitors resource usage, and helps debug issues.
 
 import psutil
 import time
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 from .detection import is_server
 from .folder_manager import get_data_paths
+
+logger = logging.getLogger(__name__)
 
 
 class HealthMonitor:
@@ -47,8 +50,11 @@ class HealthMonitor:
             try:
                 with open(self.log_file, 'a') as f:
                     f.write(log_message + '\n')
-            except:
-                pass  # Don't crash if logging fails
+            except (IOError, OSError) as e:
+                # Don't crash if logging fails - but at least print to stderr
+                import sys
+                print(f"Logging failed: {e}", file=sys.stderr)
+                pass
 
     def get_system_stats(self) -> Dict:
         """Get current system resource usage."""
@@ -65,7 +71,8 @@ class HealthMonitor:
                 'disk_free_gb': disk.free / (1024**3),
                 'uptime_seconds': time.time() - self.start_time,
             }
-        except:
+        except (psutil.Error, OSError) as e:
+            logger.warning(f"Failed to get system stats: {e}")
             return {}
 
     def log_system_stats(self):

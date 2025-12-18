@@ -15,9 +15,13 @@ This saves server resources and allows each program to have unique dependencies.
 import subprocess
 import time
 import signal
+import shlex
+import logging
 from typing import Dict, List, Optional, Set
 from pathlib import Path
 import psutil
+
+logger = logging.getLogger(__name__)
 
 
 class ProcessInfo:
@@ -49,7 +53,8 @@ class ProcessInfo:
             try:
                 process.kill()  # Send SIGKILL
                 return True
-            except:
+            except (psutil.NoSuchProcess, psutil.AccessDenied, OSError) as e:
+                logger.debug(f"Failed to kill process {self.pid}: {e}")
                 return False
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return False
@@ -114,14 +119,14 @@ class ProcessManager:
         modeling = ProgramRequirements('Modeling')
         modeling.require(
             'redis',
-            start_cmd='redis-server --daemonize yes --port 6379',
-            stop_cmd='redis-cli shutdown',
-            check_cmd='redis-cli ping'
+            start_cmd=['redis-server', '--daemonize', 'yes', '--port', '6379'],
+            stop_cmd=['redis-cli', 'shutdown'],
+            check_cmd=['redis-cli', 'ping']
         ).require(
             'celery',
-            start_cmd='celery -A tasks.celery worker --loglevel=info --detach',
-            stop_cmd='pkill -f "celery.*worker"',
-            check_cmd='pgrep -f "celery.*worker"'
+            start_cmd=['celery', '-A', 'tasks.celery', 'worker', '--loglevel=info', '--detach'],
+            stop_cmd=['pkill', '-f', 'celery.*worker'],
+            check_cmd=['pgrep', '-f', 'celery.*worker']
         )
         self.program_requirements['Modeling'] = modeling
 
@@ -238,7 +243,8 @@ class ProcessManager:
                         return True
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
-        except:
+        except (psutil.Error, OSError) as e:
+            logger.debug(f"Error checking process list: {e}")
             pass
 
         return False
@@ -250,11 +256,15 @@ class ProcessManager:
 
         cmd = requirements.start_commands[process_name]
 
+        # Convert string commands to list if needed (backward compatibility)
+        if isinstance(cmd, str):
+            cmd = shlex.split(cmd)
+
         try:
-            # Start the process
+            # Start the process (SECURITY: shell=False prevents injection)
             result = subprocess.run(
                 cmd,
-                shell=True,
+                shell=False,
                 capture_output=True,
                 text=True,
                 timeout=10
@@ -290,13 +300,19 @@ class ProcessManager:
         # Try custom stop command first
         if process_name in requirements.stop_commands:
             try:
+                cmd = requirements.stop_commands[process_name]
+                # Convert string to list if needed (backward compatibility)
+                if isinstance(cmd, str):
+                    cmd = shlex.split(cmd)
+
                 subprocess.run(
-                    requirements.stop_commands[process_name],
-                    shell=True,
+                    cmd,
+                    shell=False,
                     timeout=5
                 )
                 time.sleep(0.5)
-            except:
+            except (subprocess.TimeoutExpired, OSError) as e:
+                logger.warning(f"Stop command failed for {process_name}: {e}")
                 pass
 
         # Then try graceful stop

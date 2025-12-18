@@ -27,6 +27,9 @@ programs/*/ModelingSaves/uploads/*
 # Database files (People Finder cache)
 database/*.db
 database/*.db-journal
+# User database with password hashes (NEVER commit!)
+database/users.json
+database/users_backup_*.json
 !database/.gitkeep
 
 # IDEs

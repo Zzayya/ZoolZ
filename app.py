@@ -123,6 +123,27 @@ def manage_program_processes():
 USERS_FILE = os.path.join(app.config['DATABASE_FOLDER'], 'users.json')
 
 
+def ensure_users_file_permissions():
+    """
+    Set secure permissions on users.json (owner read/write only).
+
+    Sets file permissions to 0o600 (rw-------) on Unix/Linux/macOS to prevent
+    other users from reading password hashes. On Windows or if permissions
+    cannot be set, this function silently fails to avoid breaking startup.
+
+    This is a security measure to protect sensitive user data.
+    """
+    if os.path.exists(USERS_FILE):
+        try:
+            # Unix/Linux/macOS: 600 (owner read/write only)
+            os.chmod(USERS_FILE, 0o600)
+            logger.info(f"Set secure permissions on {USERS_FILE}")
+        except (OSError, NotImplementedError) as e:
+            # Windows or permission denied - don't crash, just log
+            logger.warning(f"Could not set file permissions on {USERS_FILE}: {e}")
+            pass
+
+
 def load_users():
     """Load users from JSON file"""
     if not os.path.exists(USERS_FILE):
@@ -383,5 +404,8 @@ def zoolz_chat():
 
 
 if __name__ == '__main__':
+    # Security: Set secure permissions on users.json
+    ensure_users_file_permissions()
+
     port = int(os.getenv('PORT', 5001))
     app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=port)
