@@ -13,10 +13,13 @@ from decorators import login_required, admin_required
 from config import config
 import os
 import json
+import logging
 from datetime import datetime
 import atexit
 from werkzeug.security import generate_password_hash, check_password_hash
 from zoolz.brain import generate_zoolz_reply
+
+logger = logging.getLogger(__name__)
 
 # ZoolZmstr - Zoolz Master Control Logic
 from zoolz.ZoolZmstr import (
