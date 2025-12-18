@@ -985,8 +985,9 @@ def boolean_operation():
         if not is_valid:
             return jsonify({'error': f'Result mesh: {error_msg}'}), 400
 
-        # Save result
-        output_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f'boolean_{operation}.stl')
+        # Save result to outputs (avoid polluting uploads and reduce collisions)
+        output_filename = f"boolean_{operation}_{uuid.uuid4().hex[:8]}.stl"
+        output_path = os.path.join(current_app.config['OUTPUT_FOLDER'], output_filename)
         result_mesh.export(output_path)
 
         # Calculate stats
@@ -1106,11 +1107,13 @@ def array_mesh():
         mesh_array = []
 
         if array_type == 'linear':
+            total_copies = count_x * count_y
+            if total_copies > MAX_ARRAY_COPIES:
+                return jsonify({'error': f'Array too large ({total_copies} copies). Maximum is {MAX_ARRAY_COPIES}.'}), 400
+
             for i in range(count_x):
                 for j in range(count_y):
-                    # Copy mesh
                     mesh_copy = mesh.copy()
-                    # Translate
                     translation = np.array([i * spacing_x, j * spacing_y, 0])
                     mesh_copy.apply_translation(translation)
                     mesh_array.append(mesh_copy)
@@ -1118,6 +1121,9 @@ def array_mesh():
         elif array_type == 'circular':
             count = int(request.form.get('count', 8))
             radius = float(request.form.get('radius', 100.0))
+
+            if count > MAX_ARRAY_COPIES:
+                return jsonify({'error': f'Array too large ({count} copies). Maximum is {MAX_ARRAY_COPIES}.'}), 400
 
             for i in range(count):
                 angle = (2 * np.pi * i) / count

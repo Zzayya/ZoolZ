@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Literal
 
 # Marker file that only exists on the server
-# YOU manually create this file on the server Desktop before running Zoolz
-# Just: touch ~/Desktop/SERVER
+# Create this file on the server Desktop before running Zoolz:
+#   touch ~/Desktop/SERVER
 # Uses HOME directory - works for any Mac username
 SERVER_MARKER_FILE = Path.home() / "Desktop" / "SERVER"
 
@@ -55,7 +55,7 @@ def get_server_marker_path() -> Path:
 
     Note:
         To set up the server, manually create this file:
-        touch /Users/isaiahmiro/Desktop/Zoolzmstr/.IM_THE_SERVER
+        touch ~/Desktop/SERVER
     """
     return SERVER_MARKER_FILE
 

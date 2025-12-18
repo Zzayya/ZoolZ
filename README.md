@@ -25,7 +25,7 @@ python3 app.py
 ```
 
 Visit: `http://localhost:5000`
-**Passkey:** 442767
+**Auth:** create a username/password (see "Accounts" below)
 
 ## 📦 Programs
 
@@ -100,8 +100,8 @@ ZoolZ/
 │
 ├── templates/               # Shared templates (hub, login)
 ├── static/                  # Shared static files
-├── database/                # SQLite databases
-├── uploads/                 # User uploaded files
+├── database/                # SQLite databases (goes to ZoolZData on server)
+├── uploads/                 # User uploaded files (ZoolZData on server)
 ├── my_models/              # Saved models
 ├── tests/                   # Pytest test suite
 └── docs/                    # Documentation
@@ -262,6 +262,24 @@ curl -X POST http://localhost:5000/people_finder/api/search \
 - [Celery Setup](docs/START_CELERY.md) - Background task configuration
 - [Modeling Program](programs/modeling/README.md) - 3D modeling documentation
 - [Data Collection Guide](docs/DATA_COLLECTION_GUIDE.md) - People Finder setup
+
+## 🔐 Accounts
+
+ZoolZ uses username/password auth stored in `database/users.json` (on the server this lives in `~/Desktop/ZoolZData/database/users.json` via ZoolZmstr). There is no baked-in default user. To add yourself quickly from the project root:
+
+```bash
+python3 - <<'PY'
+from app import create_user
+user, err = create_user("zay", "Zay", "442767", role="admin")
+print("created" if user else err)
+PY
+```
+
+Sign in at `/` with `zay` / `442767`, then manage users via the admin API when available.
+
+## 📂 Server data locations
+
+When the server marker `~/Desktop/SERVER` exists, ZoolZmstr stores uploads, outputs, logs, and the `database/` folder in `~/Desktop/ZoolZData/`. Modeling saves stay in the repo so they can sync. On a laptop dev environment those folders stay inside the project root.
 
 ## 🚧 Current Status
 

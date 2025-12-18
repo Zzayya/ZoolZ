@@ -37,9 +37,9 @@ ZoolZmstr/
 **Purpose:** Know where Zoolz is running
 
 **How it works:**
-- Checks for marker file: `/Users/isaiahmiro/Desktop/Zoolzmstr/.IM_THE_SERVER`
-- If exists → Server mode (use ZoolZData folders)
-- If not → Laptop mode (use local project folders)
+- Looks for `~/Desktop/SERVER`
+- If the marker exists → **server mode** (use ZoolZData folders)
+- If not → **laptop mode** (use local project folders)
 
 **Usage:**
 ```python
@@ -55,9 +55,7 @@ env = get_environment()  # Returns 'server' or 'laptop'
 
 **Setup server mode:**
 ```bash
-# On the Mac server, create the marker:
-mkdir -p /Users/isaiahmiro/Desktop/Zoolzmstr
-touch /Users/isaiahmiro/Desktop/Zoolzmstr/.IM_THE_SERVER
+touch ~/Desktop/SERVER
 ```
 
 ---
@@ -248,8 +246,7 @@ When deploying to Mac server for the first time:
 
 ### 1. Create server marker
 ```bash
-mkdir -p /Users/isaiahmiro/Desktop/Zoolzmstr
-touch /Users/isaiahmiro/Desktop/Zoolzmstr/.IM_THE_SERVER
+touch ~/Desktop/SERVER
 ```
 
 ### 2. Sync code with rsync
@@ -334,8 +331,8 @@ Output:
   "environment": "laptop",
   "is_server": false,
   "marker_exists": false,
-  "marker_path": "/Users/isaiahmiro/Desktop/Zoolzmstr/.IM_THE_SERVER",
-  "instructions": "To set up server mode:\n1. mkdir -p /Users/isaiahmiro/Desktop/Zoolzmstr\n2. touch /Users/isaiahmiro/Desktop/Zoolzmstr/.IM_THE_SERVER"
+  "marker_path": "/Users/isaiahmiro/Desktop/SERVER",
+  "instructions": "To set up server mode:\nCreate marker: touch ~/Desktop/SERVER"
 }
 ```
 
@@ -398,7 +395,7 @@ Shows:
 ## Troubleshooting
 
 ### "Not detected as server" on Mac server
-- Check marker file exists: `ls -la /Users/isaiahmiro/Desktop/Zoolzmstr/.IM_THE_SERVER`
+- Check marker file exists: `ls -la ~/Desktop/SERVER`
 - Verify path is exact (case-sensitive)
 
 ### "Failed to start process"
