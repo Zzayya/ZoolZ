@@ -11,6 +11,7 @@ from programs.PeopleFinder.blueprint import people_finder_bp
 from programs.DigitalFootprint.blueprint import digital_footprint_bp
 from decorators import login_required, admin_required
 from config import config
+from rate_limit import limiter
 import os
 import json
 import logging
@@ -35,6 +36,9 @@ app = Flask(__name__)
 # Load configuration
 config_name = os.getenv('FLASK_ENV', 'development')
 app.config.from_object(config[config_name])
+
+# Initialize rate limiter
+limiter.init_app(app)
 
 # ============================================================================
 # ZOOLZ MASTER INITIALIZATION
@@ -117,6 +121,61 @@ def manage_program_processes():
                 session[session_key] = True
 
             break
+
+
+# ============================================================================
+# CSRF PROTECTION (session-based)
+# ============================================================================
+
+def _generate_csrf_token():
+    import secrets
+    token = secrets.token_hex(16)
+    session['csrf_token'] = token
+    return token
+
+
+@app.before_request
+def enforce_csrf():
+    """
+    Simple double-submit CSRF: for authenticated sessions, require the session
+    token to match either the X-CSRFToken header or XSRF-TOKEN cookie on
+    unsafe methods. Exempt safe/unauthenticated or specific routes.
+    """
+    # Only enforce for authenticated sessions
+    if not session.get('authenticated'):
+        return
+
+    # Safe methods
+    if request.method in ('GET', 'HEAD', 'OPTIONS'):
+        return
+
+    # Exemptions
+    csrf_exempt_paths = {
+        '/api/auth/login',
+        '/api/logout',
+        '/api/health',
+    }
+    if any(request.path.startswith(p) for p in csrf_exempt_paths):
+        return
+
+    session_token = session.get('csrf_token')
+    header_token = request.headers.get('X-CSRFToken') or request.headers.get('X-CSRF-Token')
+    cookie_token = request.cookies.get('XSRF-TOKEN')
+    provided = header_token or cookie_token
+
+    if not session_token or not provided or session_token != provided:
+        return jsonify({'error': 'CSRF token missing or invalid'}), 400
+
+
+@app.after_request
+def set_csrf_cookie(response):
+    """
+    Mirror the session CSRF token into a readable cookie for double-submit.
+    """
+    if session.get('authenticated'):
+        token = session.get('csrf_token') or _generate_csrf_token()
+        response.set_cookie('XSRF-TOKEN', token, samesite='Lax')
+    return response
 
 
 # ============================================================================
@@ -289,18 +348,25 @@ def api_login():
         'role': user['role']
     }
 
-    return jsonify({
+    # Issue CSRF token
+    csrf_token = session.get('csrf_token') or _generate_csrf_token()
+
+    resp = jsonify({
         'success': True,
         'message': f"Welcome back, {user['name']}!",
         'user': session['user']
     })
+    resp.set_cookie('XSRF-TOKEN', csrf_token, samesite='Lax')
+    return resp
 
 
 @app.route('/api/logout', methods=['POST'])
 def api_logout():
     """Logout endpoint - clears session"""
     session.clear()
-    return jsonify({'success': True, 'message': 'Logged out'})
+    resp = jsonify({'success': True, 'message': 'Logged out'})
+    resp.set_cookie('XSRF-TOKEN', '', expires=0)
+    return resp
 
 
 @app.route('/api/auth/user', methods=['GET'])
@@ -362,6 +428,7 @@ def admin_create_user():
 
 
 @app.route('/api/health')
+@limiter.exempt
 def health_check():
     """
     Server health check endpoint.
@@ -396,13 +463,15 @@ def health_check():
 def zoolz_chat():
     """
     Lightweight local chat endpoint (no external AI calls).
+    Logs interactions to JEFF for summaries.
     """
     data = request.get_json(silent=True) or {}
     message = (data.get('message') or '').strip()
     if not message:
         return jsonify({'success': False, 'reply': "Type something to chat."}), 400
 
-    reply = generate_zoolz_reply(message, status_fetcher=process_manager.get_status)
+    user = session.get('user', {}).get('name', 'unknown')
+    reply = generate_zoolz_reply(message, status_fetcher=process_manager.get_status, user=user)
     return jsonify({'success': True, **reply})
 
 

@@ -12,6 +12,7 @@ import trimesh
 import numpy as np
 import logging
 import uuid
+from rate_limit import limiter
 
 from programs.Modeling.utils.cookie_logic import (
     generate_cookie_cutter,
@@ -65,6 +66,7 @@ modeling_bp = Blueprint(
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
 MAX_VERTICES = 10_000_000  # 10 million vertices
 MAX_ARRAY_COPIES = 1000  # Maximum array pattern copies
+RATE_LIMIT = "65 per minute"
 
 
 def unique_secure_filename(filename: str) -> str:
@@ -231,6 +233,7 @@ def index():
 
 
 @modeling_bp.route('/api/generate', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def generate():
     """
     Generate cookie cutter STL from uploaded image
@@ -322,6 +325,7 @@ def get_default_params():
 
 
 @modeling_bp.route('/api/extract_outline', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def extract_outline():
     """
     Extract outline from image and return as JSON for preview/editing
@@ -364,6 +368,7 @@ def extract_outline():
 
 
 @modeling_bp.route('/api/extract_details', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def extract_details():
     """
     Extract inner detail contours from image for stamp generation
@@ -406,6 +411,7 @@ def extract_details():
 
 
 @modeling_bp.route('/api/generate_from_outline', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def generate_from_outline():
     """
     Generate cookie cutter from pre-extracted outline data (edited by user)
@@ -459,6 +465,7 @@ def generate_from_outline():
 
 
 @modeling_bp.route('/api/generate_detail_stamp', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def generate_detail_stamp():
     """
     Generate detail stamp from inner detail contours
@@ -508,6 +515,7 @@ def generate_detail_stamp():
 
 
 @modeling_bp.route('/api/generate_stamp', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def generate_stamp_route():
     """
     Generate professional stamp from outline data
@@ -577,6 +585,7 @@ def generate_stamp_route():
 # ============================================================================
 
 @modeling_bp.route('/api/stl/analyze', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def analyze_stl():
     """
     Analyze STL file and return wall detection and mesh information.
@@ -633,6 +642,7 @@ def analyze_stl():
 
 
 @modeling_bp.route('/api/stl/thicken', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def thicken_stl():
     """
     Thicken walls in STL model.
@@ -696,6 +706,7 @@ def thicken_stl():
 
 
 @modeling_bp.route('/api/stl/hollow', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def hollow_stl():
     """
     Hollow out STL model.
@@ -754,6 +765,7 @@ def hollow_stl():
 
 
 @modeling_bp.route('/api/stl/repair', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def repair_stl():
     """
     Repair STL model (fix normals, holes, non-manifold edges, etc.).
@@ -807,6 +819,7 @@ def repair_stl():
 
 
 @modeling_bp.route('/api/stl/simplify', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def simplify_stl():
     """
     Simplify STL model (reduce polygon count).
@@ -872,6 +885,7 @@ def simplify_stl():
 
 
 @modeling_bp.route('/api/stl/mirror', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def mirror_stl():
     """
     Mirror STL model across axis.
@@ -929,6 +943,7 @@ def mirror_stl():
 # ============================================================================
 
 @modeling_bp.route('/api/stl/boolean', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def boolean_operation():
     """
     Perform boolean operations on two STL meshes (Union, Subtract, Intersect)
@@ -1015,6 +1030,7 @@ def boolean_operation():
 
 
 @modeling_bp.route('/api/stl/split', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def split_mesh():
     """
     Split/cut mesh along a plane
@@ -1086,6 +1102,7 @@ def split_mesh():
 
 
 @modeling_bp.route('/api/stl/array', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def array_mesh():
     """
     Create array/pattern of mesh (linear or circular)
@@ -1171,6 +1188,7 @@ def array_mesh():
         return jsonify({'error': str(e)}), 500
 
 @modeling_bp.route('/api/generate_shape', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def generate_shape():
     """
     Generate parametric 3D shape from scratch
@@ -1318,6 +1336,7 @@ def delete_my_model(filename):
 # ============================================================================
 
 @modeling_bp.route('/api/stl/scale', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def scale_stl():
     """
     Scale/resize STL model
@@ -1396,6 +1415,7 @@ def scale_stl():
 # ============================================================================
 
 @modeling_bp.route('/api/stl/cut', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def cut_stl():
     """
     Cut STL model with a plane
@@ -1488,6 +1508,7 @@ def cut_stl():
 # ============================================================================
 
 @modeling_bp.route('/api/stl/channels', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def add_channels_stl():
     """
     Add channels/grooves to STL model
@@ -1568,6 +1589,7 @@ def add_channels_stl():
 # ============================================================================
 
 @modeling_bp.route('/api/generate_async', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def generate_async():
     """
     Generate cookie cutter asynchronously using Celery background task
@@ -1626,6 +1648,7 @@ def generate_async():
 
 
 @modeling_bp.route('/api/stl/thicken_async', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def thicken_async():
     """
     Thicken mesh walls asynchronously using Celery background task
@@ -1668,6 +1691,7 @@ def thicken_async():
 
 
 @modeling_bp.route('/api/stl/hollow_async', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def hollow_async():
     """
     Hollow out mesh asynchronously using Celery background task
@@ -1776,6 +1800,7 @@ def task_status(task_id):
 
 
 @modeling_bp.route('/api/stl/widen_hole', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def widen_hole_route():
     """
     Widen a cylindrical hole in an STL mesh
@@ -1863,6 +1888,7 @@ def widen_hole_route():
 
 
 @modeling_bp.route('/api/stl/detect_holes', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def detect_holes_route():
     """
     Detect holes in an STL mesh
@@ -1914,7 +1940,7 @@ def detect_holes_route():
 # BROWSE FILES ENDPOINTS
 # ============================================================================
 
-@modeling_bp.route('/modeling/api/browse/stls', methods=['GET'])
+@modeling_bp.route('/api/browse/stls', methods=['GET'])
 def browse_stls():
     """Browse saved STL files"""
     try:
@@ -1947,7 +1973,7 @@ def browse_stls():
         return jsonify({'error': str(e)}), 500
 
 
-@modeling_bp.route('/modeling/api/browse/images', methods=['GET'])
+@modeling_bp.route('/api/browse/images', methods=['GET'])
 def browse_images():
     """Browse saved image files"""
     try:
@@ -1987,7 +2013,8 @@ def browse_images():
 # SHAPE GENERATOR ENDPOINT
 # ============================================================================
 
-@modeling_bp.route('/modeling/api/generate/shape', methods=['POST'])
+@modeling_bp.route('/api/generate/shape', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def generate_shape_api():
     """Generate parametric shapes"""
     try:
@@ -2046,7 +2073,8 @@ def generate_shape_api():
 # FIDGET TOY GENERATOR ENDPOINT
 # ============================================================================
 
-@modeling_bp.route('/modeling/api/generate/fidget', methods=['POST'])
+@modeling_bp.route('/api/generate/fidget', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def generate_fidget_api():
     """Generate fidget toys"""
     try:

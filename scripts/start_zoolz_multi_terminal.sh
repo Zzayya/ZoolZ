@@ -4,6 +4,10 @@
 
 echo "🚀 Launching ZoolZ in Multi-Terminal Mode..."
 echo ""
+echo "💡 Git quick commands (run in ZoolZ folder):"
+echo "   git pull    # grab latest from origin"
+echo "   git status  # check local changes"
+echo ""
 
 # Get current directory
 ZOOLZ_DIR="$(cd "$(dirname "$0")" && pwd)"

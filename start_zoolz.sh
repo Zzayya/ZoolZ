@@ -3,6 +3,10 @@
 
 echo "🚀 Starting ZoolZ 3D Modeling Program..."
 echo ""
+echo "💡 Git quick commands (run in ZoolZ folder):"
+echo "   git pull    # grab latest from origin"
+echo "   git status  # check local changes"
+echo ""
 
 # Activate virtual environment
 if [ -d "venv" ]; then
