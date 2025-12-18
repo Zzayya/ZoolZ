@@ -16,7 +16,11 @@ class Config:
     """Base configuration"""
 
     # Flask settings
-    SECRET_KEY = os.getenv('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    if not SECRET_KEY or SECRET_KEY == 'dev-secret-key-change-in-production':
+        raise RuntimeError(
+            "SECRET_KEY missing. Run setup to create .env with a strong SECRET_KEY."
+        )
     DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
     # File upload settings

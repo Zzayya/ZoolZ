@@ -14,8 +14,9 @@ from config import config
 import os
 import json
 from datetime import datetime
-import hashlib
 import atexit
+from werkzeug.security import generate_password_hash, check_password_hash
+from zoolz.brain import generate_zoolz_reply
 
 # ZoolZmstr - Zoolz Master Control Logic
 from zoolz.ZoolZmstr import (
@@ -137,13 +138,17 @@ def save_users(data):
 
 
 def hash_password(password):
-    """Hash password with SHA-256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using werkzeug's salted PBKDF2."""
+    return generate_password_hash(password)
 
 
 def verify_password(password, hashed):
-    """Verify password against hash"""
-    return hash_password(password) == hashed
+    """Verify password against hash (supports legacy SHA-256)."""
+    if hashed.startswith('pbkdf2:'):
+        return check_password_hash(hashed, password)
+    # Legacy SHA-256 support
+    import hashlib
+    return hashlib.sha256(password.encode()).hexdigest() == hashed
 
 
 def generate_user_number():
@@ -193,6 +198,10 @@ def authenticate_user(username, password):
 
     if not verify_password(password, user['passwordHash']):
         return None, "Invalid password"
+
+    # Upgrade legacy hashes to salted hashes transparently
+    if not user['passwordHash'].startswith('pbkdf2:'):
+        user['passwordHash'] = hash_password(password)
 
     # Update last login
     user['lastLogin'] = datetime.utcnow().isoformat() + 'Z'
@@ -358,5 +367,21 @@ def health_check():
     })
 
 
+@app.route('/api/zoolz/chat', methods=['POST'])
+@login_required
+def zoolz_chat():
+    """
+    Lightweight local chat endpoint (no external AI calls).
+    """
+    data = request.get_json(silent=True) or {}
+    message = (data.get('message') or '').strip()
+    if not message:
+        return jsonify({'success': False, 'reply': "Type something to chat."}), 400
+
+    reply = generate_zoolz_reply(message, status_fetcher=process_manager.get_status)
+    return jsonify({'success': True, **reply})
+
+
 if __name__ == '__main__':
-    app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=5001)
+    port = int(os.getenv('PORT', 5001))
+    app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=port)

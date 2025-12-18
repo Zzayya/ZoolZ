@@ -149,9 +149,38 @@ class SelectionManager {
     }
 
     // Box select (select multiple objects in area)
+    // Box select (select multiple objects in area)
     boxSelect(startX, startY, endX, endY) {
-        // TODO: Implement box selection with raycasting
-        // For now, this is a placeholder
+        if (!window.camera || !window.renderer) return;
+
+        // Convert screen coordinates to normalized device coordinates
+        const canvas = window.renderer.domElement;
+        const rect = canvas.getBoundingClientRect();
+
+        // Normalize coordinates (-1 to 1)
+        const x1 = ((Math.min(startX, endX) - rect.left) / rect.width) * 2 - 1;
+        const y1 = -((Math.min(startY, endY) - rect.top) / rect.height) * 2 + 1;
+        const x2 = ((Math.max(startX, endX) - rect.left) / rect.width) * 2 - 1;
+        const y2 = -((Math.max(startY, endY) - rect.top) / rect.height) * 2 + 1;
+
+        // Check each object's screen position
+        const vector = new THREE.Vector3();
+        sceneObjects.forEach(obj => {
+            if (obj.locked) return;
+
+            // Project object center to screen space
+            vector.setFromMatrixPosition(obj.mesh.matrixWorld);
+            vector.project(window.camera);
+
+            // Check if within selection box
+            if (vector.x >= x1 && vector.x <= x2 && 
+                vector.y >= y2 && vector.y <= y1) {
+                this.selectedObjects.add(obj.id);
+                this.highlightObject(obj.id);
+            }
+        });
+
+        this.updateUI();
     }
 
     // Select all

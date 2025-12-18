@@ -10,15 +10,16 @@ import os
 import trimesh
 import numpy as np
 import logging
+import uuid
 
-from programs.Modeling.shared.cookie_logic import (
+from programs.Modeling.utils.cookie_logic import (
     generate_cookie_cutter,
     extract_outline_data,
     extract_inner_details,
     generate_cookie_cutter_from_outline,
     generate_detail_stamp_from_outlines
 )
-from programs.Modeling.shared.stamp_logic import generate_stamp
+from programs.Modeling.utils.stamp_logic import generate_stamp
 from programs.Modeling.utils import (
     mesh_utils,
     thicken,
@@ -34,6 +35,9 @@ from programs.Modeling.utils import (
     fidget_generators,
     advanced_operations
 )
+
+# Set up logger first
+logger = logging.getLogger(__name__)
 
 # Import Celery tasks for background processing
 try:
@@ -53,14 +57,32 @@ modeling_bp = Blueprint(
     __name__,
     template_folder='templates',
     static_folder='static',
-    static_url_path='/modeling/static'
+    static_url_path='/static'
 )
-logger = logging.getLogger(__name__)
 
 # Safety limits
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
 MAX_VERTICES = 10_000_000  # 10 million vertices
 MAX_ARRAY_COPIES = 1000  # Maximum array pattern copies
+
+
+def unique_secure_filename(filename: str) -> str:
+    """Return a collision-resistant filename while keeping the original stem."""
+    base, ext = os.path.splitext(secure_filename(filename))
+    return f"{base}_{uuid.uuid4().hex[:8]}{ext}"
+
+
+def save_upload(file_obj):
+    """
+    Save an uploaded file with a unique name to prevent collisions.
+
+    Returns:
+        tuple: (absolute_path, stored_filename)
+    """
+    stored_name = unique_secure_filename(file_obj.filename)
+    upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], stored_name)
+    file_obj.save(upload_path)
+    return upload_path, stored_name
 
 
 def convert_numpy_types(obj):
@@ -232,9 +254,7 @@ def generate():
             return jsonify({'error': 'Invalid file type. Use PNG, JPG, or GIF'}), 400
         
         # Save uploaded file
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Get default parameters from config
         defaults = current_app.config.get('COOKIE_CUTTER_DEFAULTS', {})
@@ -324,9 +344,7 @@ def extract_outline():
             return jsonify({'error': 'Invalid file type. Use PNG, JPG, or GIF'}), 400
 
         # Save uploaded file
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Get detail level parameter
         detail_level = float(request.form.get('detail_level', 0.5))
@@ -368,9 +386,7 @@ def extract_details():
             return jsonify({'error': 'Invalid file type. Use PNG, JPG, or GIF'}), 400
 
         # Save uploaded file
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Get precision parameter
         precision = float(request.form.get('precision', 0.5))
@@ -580,9 +596,7 @@ def analyze_stl():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded STL
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = mesh_utils.load_stl(upload_path)
@@ -640,9 +654,7 @@ def thicken_stl():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded STL
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = mesh_utils.load_stl(upload_path)
@@ -705,9 +717,7 @@ def hollow_stl():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded STL
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = mesh_utils.load_stl(upload_path)
@@ -764,9 +774,7 @@ def repair_stl():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded STL
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = mesh_utils.load_stl(upload_path)
@@ -819,9 +827,7 @@ def simplify_stl():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded STL
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = mesh_utils.load_stl(upload_path)
@@ -886,9 +892,7 @@ def mirror_stl():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded STL
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = mesh_utils.load_stl(upload_path)
@@ -1328,9 +1332,7 @@ def scale_stl():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded STL
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = mesh_utils.load_stl(upload_path)
@@ -1408,9 +1410,7 @@ def cut_stl():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded STL
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = mesh_utils.load_stl(upload_path)
@@ -1502,9 +1502,7 @@ def add_channels_stl():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded STL
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = mesh_utils.load_stl(upload_path)
@@ -1584,9 +1582,7 @@ def generate_async():
             return jsonify({'error': 'Invalid file type. Use PNG, JPG, or GIF'}), 400
         
         # Save uploaded file
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Get default parameters from config
         defaults = current_app.config.get('COOKIE_CUTTER_DEFAULTS', {})
@@ -1640,9 +1636,7 @@ def thicken_async():
             return jsonify({'error': 'No file selected'}), 400
         
         # Save uploaded file
-        filename = secure_filename(file.filename)
-        input_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(input_path)
+        input_path, filename = save_upload(file)
         
         # Get parameters
         params = {
@@ -1684,9 +1678,7 @@ def hollow_async():
             return jsonify({'error': 'No file selected'}), 400
         
         # Save uploaded file
-        filename = secure_filename(file.filename)
-        input_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(input_path)
+        input_path, filename = save_upload(file)
         
         # Get parameters
         params = {
@@ -1804,9 +1796,7 @@ def widen_hole_route():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded file
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = trimesh.load(upload_path)
@@ -1888,9 +1878,7 @@ def detect_holes_route():
             return jsonify({'error': 'No file selected'}), 400
 
         # Save uploaded file
-        filename = secure_filename(file.filename)
-        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(upload_path)
+        upload_path, filename = save_upload(file)
 
         # Load mesh
         mesh = trimesh.load(upload_path)

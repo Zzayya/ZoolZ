@@ -260,14 +260,86 @@ class MeshHollower:
         return trimesh.util.concatenate(lines) if lines else trimesh.Trimesh()
 
     def _generate_honeycomb_infill(self, bounds: np.ndarray, spacing: float) -> trimesh.Trimesh:
-        """Generate honeycomb infill pattern (placeholder - simplified)"""
-        # Simplified honeycomb using cylinders
-        return self._generate_grid_infill(bounds, spacing * 1.5)
+        """Generate honeycomb infill pattern (hexagonal cells)"""
+        import math
+
+        minx, miny, minz = bounds[0]
+        maxx, maxy, maxz = bounds[1]
+
+        # Hexagon dimensions
+        hex_size = spacing * 0.866  # Height of equilateral triangle
+        hex_width = spacing
+
+        lines = []
+
+        # Generate hexagonal pattern
+        row = 0
+        y = miny
+        while y < maxy:
+            # Offset every other row for honeycomb pattern
+            x_offset = (hex_width / 2) if row % 2 == 1 else 0
+            x = minx + x_offset
+
+            while x < maxx:
+                # Create hexagon vertices (6 points around center)
+                hex_points = []
+                for i in range(6):
+                    angle = math.pi / 3 * i  # 60 degrees
+                    px = x + hex_size * math.cos(angle)
+                    py = y + hex_size * math.sin(angle)
+                    hex_points.append([px, py])
+
+                # Create vertical lines through hex center
+                lines.append(trimesh.load_path([
+                    [x, y, minz],
+                    [x, y, maxz]
+                ]))
+
+                # Create hexagon outline at mid-height
+                mid_z = (minz + maxz) / 2
+                hex_3d = [[p[0], p[1], mid_z] for p in hex_points]
+                hex_3d.append(hex_3d[0])  # Close the loop
+                lines.append(trimesh.load_path(hex_3d))
+
+                x += hex_width
+
+            y += hex_size * 1.5  # Move to next row (3/4 of hex height)
+            row += 1
+
+        return trimesh.util.concatenate(lines) if lines else trimesh.Trimesh()
 
     def _generate_gyroid_infill(self, bounds: np.ndarray, spacing: float) -> trimesh.Trimesh:
-        """Generate gyroid infill pattern (placeholder - simplified)"""
-        # Gyroid is complex - use grid as placeholder
-        return self._generate_grid_infill(bounds, spacing)
+        """Generate gyroid infill pattern (mathematically defined surface)"""
+        import math
+
+        minx, miny, minz = bounds[0]
+        maxx, maxy, maxz = bounds[1]
+
+        # Gyroid is defined by: sin(x)cos(y) + sin(y)cos(z) + sin(z)cos(x) = 0
+        # We approximate with a grid of curved lines
+
+        lines = []
+        step = spacing
+
+        # Create sinusoidal paths in 3D space
+        for x in np.arange(minx, maxx, step):
+            for y in np.arange(miny, maxy, step):
+                # Create wavy vertical line
+                z_points = np.linspace(minz, maxz, 20)
+                path_points = []
+
+                for z in z_points:
+                    # Offset x,y based on gyroid equation
+                    freq = 2 * math.pi / (spacing * 3)
+                    offset_x = math.sin(freq * y) * math.cos(freq * z) * (spacing * 0.3)
+                    offset_y = math.sin(freq * z) * math.cos(freq * x) * (spacing * 0.3)
+
+                    path_points.append([x + offset_x, y + offset_y, z])
+
+                if len(path_points) > 1:
+                    lines.append(trimesh.load_path(path_points))
+
+        return trimesh.util.concatenate(lines) if lines else trimesh.Trimesh()
 
 
 def hollow_mesh(

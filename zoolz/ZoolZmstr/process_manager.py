@@ -102,6 +102,7 @@ class ProcessManager:
         self.running_processes: Dict[str, ProcessInfo] = {}
         self.program_requirements: Dict[str, ProgramRequirements] = {}
         self.active_programs: Set[str] = set()  # Which programs are currently in use
+        self.failed_processes: Set[str] = set()  # Avoid retry storms on missing deps
 
         # Register known program requirements
         self._register_default_requirements()
@@ -164,10 +165,16 @@ class ProcessManager:
         for process_name in requirements.requires:
             if self._is_process_running(process_name):
                 results[process_name] = 'already_running'
+            elif process_name in self.failed_processes:
+                results[process_name] = 'failed_cached'
             else:
                 # Start the process
                 success = self._start_process(process_name, requirements)
-                results[process_name] = 'started' if success else 'failed'
+                if success:
+                    results[process_name] = 'started'
+                else:
+                    results[process_name] = 'failed'
+                    self.failed_processes.add(process_name)
 
         return results
 

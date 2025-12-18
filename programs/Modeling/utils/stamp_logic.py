@@ -324,15 +324,86 @@ def _triangulate_polygon(points):
 
 
 def _apply_bevel(mesh, angle, depth):
-    """Apply beveled edge profile (for leather work)"""
-    # TODO: Implement proper beveling
-    # For now, return mesh as-is
-    # Full implementation would chamfer top edges at specified angle
-    return mesh
+    """
+    Apply beveled edge profile (for leather work)
+
+    Creates an angled edge by scaling the top face inward.
+    This gives a sharp beveled edge perfect for creasing leather.
+
+    Args:
+        mesh: Input mesh
+        angle: Bevel angle in degrees (15-60)
+        depth: How deep the bevel cuts in mm
+
+    Returns:
+        Beveled mesh
+    """
+    import math
+
+    # Get mesh bounds
+    bounds = mesh.bounds
+    height = bounds[1][2] - bounds[0][2]
+
+    if height < depth:
+        depth = height * 0.5  # Don't bevel more than half the height
+
+    # Calculate how much to scale top based on angle
+    # tan(angle) = opposite/adjacent = inset/depth
+    angle_rad = math.radians(angle)
+    inset_amount = depth * math.tan(angle_rad)
+
+    # Split mesh into top section (to bevel) and bottom (keep as-is)
+    split_z = bounds[1][2] - depth
+
+    vertices = mesh.vertices.copy()
+
+    # Find center point on XY plane for scaling
+    center_x = (bounds[0][0] + bounds[1][0]) / 2
+    center_y = (bounds[0][1] + bounds[1][1]) / 2
+
+    # Scale vertices in the top section toward center
+    for i, vertex in enumerate(vertices):
+        if vertex[2] > split_z:
+            # How far up in the bevel zone (0 = bottom of bevel, 1 = top)
+            progress = (vertex[2] - split_z) / depth
+
+            # Scale toward center based on progress
+            scale_factor = 1.0 - (progress * inset_amount / max(abs(vertex[0] - center_x), abs(vertex[1] - center_y), 0.001))
+
+            vertices[i][0] = center_x + (vertex[0] - center_x) * scale_factor
+            vertices[i][1] = center_y + (vertex[1] - center_y) * scale_factor
+
+    # Create new mesh with beveled vertices
+    beveled_mesh = trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
+
+    return beveled_mesh
 
 
 def _apply_chamfer(mesh, amount):
-    """Apply rounded chamfer to edges"""
-    # TODO: Implement edge chamfering
-    # For now, return mesh as-is
-    return mesh
+    """
+    Apply rounded chamfer to edges
+
+    Smooths sharp edges by subdividing and rounding.
+    Good for ergonomic stamps and cookie cutters.
+
+    Args:
+        mesh: Input mesh
+        amount: Chamfer amount in mm
+
+    Returns:
+        Chamfered mesh
+    """
+    try:
+        # Use trimesh's built-in subdivision to smooth
+        # Subdivide once to add geometry
+        subdivided = mesh.subdivide()
+
+        # Apply Laplacian smoothing to round edges
+        # This smooths the mesh while roughly preserving volume
+        smoothed = trimesh.smoothing.filter_laplacian(subdivided, lamb=0.5, iterations=2)
+
+        return smoothed
+    except Exception as e:
+        # If smoothing fails, return original
+        print(f"⚠️ Chamfering failed: {e}, returning original mesh")
+        return mesh

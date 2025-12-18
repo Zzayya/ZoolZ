@@ -55,3 +55,4 @@ test_*.py
 test_*.png
 test_*.stl
 TestImages/
+test_venv/

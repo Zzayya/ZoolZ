@@ -56,7 +56,7 @@ def generate_cookie_cutter_task(self, upload_path, params, output_folder):
     """
     try:
         # Import here to avoid circular imports and load only when needed
-        from shared.cookie_logic import generate_cookie_cutter
+        from programs.Modeling.utils.cookie_logic import generate_cookie_cutter
         import os
         from werkzeug.utils import secure_filename
 
@@ -131,7 +131,7 @@ def generate_cookie_cutter_task(self, upload_path, params, output_folder):
 def thicken_mesh_task(self, input_path, params, output_folder):
     """Thicken mesh walls in background"""
     try:
-        from programs.modeling.utils import thicken, mesh_utils
+        from programs.Modeling.utils import thicken, mesh_utils
         import os
         from werkzeug.utils import secure_filename
 
@@ -167,7 +167,7 @@ def thicken_mesh_task(self, input_path, params, output_folder):
 def hollow_mesh_task(self, input_path, params, output_folder):
     """Hollow out mesh in background"""
     try:
-        from programs.modeling.utils import hollow, mesh_utils
+        from programs.Modeling.utils import hollow, mesh_utils
         import os
         from werkzeug.utils import secure_filename
 
@@ -203,7 +203,8 @@ def hollow_mesh_task(self, input_path, params, output_folder):
 def boolean_operation_task(self, mesh1_path, mesh2_path, operation, output_folder):
     """Perform boolean operation in background"""
     try:
-        from programs.modeling.utils import mesh_utils
+        # Note: Modeling package uses capital M on disk; keep case for macOS/Linux
+        from programs.Modeling.utils import mesh_utils
         import os
         from werkzeug.utils import secure_filename
 

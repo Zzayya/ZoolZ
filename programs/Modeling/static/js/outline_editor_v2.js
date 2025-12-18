@@ -196,10 +196,6 @@ class OutlineEditorV2 {
         const rect = this.canvas.getBoundingClientRect();
         this.ctx.clearRect(0, 0, rect.width, rect.height);
 
-        // Draw background image if available
-        if (this.imageData) {
-            // TODO: Draw image
-        }
 
         // Transform for zoom/pan
         this.ctx.save();
@@ -604,15 +600,50 @@ class OutlineEditorV2 {
     }
 
     async generateStamp() {
+    async generateStamp() {
+        if (this.points.length < 3) {
+            showNotification('Need at least 3 points for stamp', 'error');
+            return;
+        }
+
         // Open stamp tool if not open
         if (!windowManager.has('tool-stamp')) {
             openToolWindow('stamp');
         }
 
-        showNotification('Stamp generation coming soon!', 'info');
-        // TODO: Implement stamp generation
-    }
+        try {
+            // Send outline data to stamp generation endpoint
+            const response = await fetch('/modeling/api/generate_stamp', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    outline_data: this.getOutlineData(),
+                    params: {
+                        stamp_type: 'positive',  // Default positive stamp
+                        detail_level: 0.5,
+                        edge_profile: 'sharp',
+                        base_thickness: 5.0,
+                        detail_height: 2.0,
+                        max_dimension: 80.0
+                    }
+                })
+            });
 
+            const result = await response.json();
+
+            if (result.error) {
+                showNotification('Stamp generation failed: ' + result.error, 'error');
+            } else {
+                showNotification('Stamp generated successfully!', 'success');
+                // Load generated stamp into scene
+                if (result.download_url && window.sceneManager) {
+                    window.sceneManager.loadSTL(result.download_url);
+                }
+            }
+        } catch (error) {
+            showNotification('Stamp generation failed: ' + error.message, 'error');
+        }
+    }
     // Get current outline data
     getOutlineData() {
         return {
